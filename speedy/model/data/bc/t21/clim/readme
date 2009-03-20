@@ -1,0 +1,29 @@
+--- MEMENTO -------------------------------------------------
+* Directory of interpolation routines (and interp data) is
+  /server/adamo/adamo/utilities/interp
+* Directory of original ERA monthly gribfiles is
+  /server/adamo/adamo/smam/gribfiles/SURF
+* Directory of degribbed ERA monthly gradsfiles is
+  /server/adamo/adamo/smam/ad0/CLIM8190/t106/monthly
+* climatologies: are in 
+  /server/adamo/adamo/smam/ad0/CLIM8190/t106/clim
+  /server/adamo/adamo/smam/ad0/CLIM8190/t21/clim
+* Directory of the ERA land-sea mask and orography:
+  /server/adamo/adamo/ad0/ecmwf_ra
+  file: e80orog_lsm.grd
+-------------------------------------------------------------
+The present dir contains the climatologies of the ERA
+monthly data on the period 1981-90. All the files have
+been interpolated to a T21 grid.
+
+fcsfh8190clim.t21.land : ST,SWL1,SWL2,SWL3 on the land
+
+fcsfh8190clim.t21.sea : ST,SWL1,SWL2,SWL3 on the sea
+
+msndep0093.grd : snow depth (land) N.B. is not a climatology
+
+sea_ice8190clim.t21 : sea-ice fraction (if st<0 and lsm=0.)
+
+veget009301.grd: vegetation (jan 93 - same as clim)
+
+
