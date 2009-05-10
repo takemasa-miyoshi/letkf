@@ -4,7 +4,7 @@ CDIR=`pwd`
 cd ..
 ROMS=`pwd`
 TRUEDIR=$ROMS/DATA/nature
-OBSDIR=$ROMS/DATA/obs/reg5x5x3
+OBSDIR=$ROMS/DATA/obs/custom001
 PGM=obsmake.s01
 # Initial time
 IT=0001
