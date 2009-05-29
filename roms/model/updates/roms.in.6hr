@@ -28,8 +28,8 @@ restart:          NRST, NRPFRST / filename
      output.nc
 
 history: LDEFHIS, NWRT, NRPFHIS / filename 
-            F       72   30
-     ee6_his.nc
+            F       18   1
+     hisout.nc
 
 averages: NTSAVG, NAVG, NRPFAVG / filename
             1      72     30 
@@ -39,7 +39,7 @@ primary_history_fields: zeta U,VBAR  U,V   wrtT(1:NT)
                           T   T T    T T   T T T T
 
 auxiliary_history_fields: rho Omega  W  Akv  Akt  Aks  HBL  HBBL
-                           F   F     F   F    T    F    T    F
+                           T   T     T   F    T    F    T    F
 
 primary_averages: zeta U,VBAR  U,V   wrtT(1:NT)
                     T    T T   T T      T T T T

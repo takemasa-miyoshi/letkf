@@ -10,11 +10,12 @@ ENDTIME=0720
 #INITRST=$ROMSDIR/model/bc/ee6_ini_ee10_rst.0011.nc
 INITRST=$ROMSDIR/DATA/spinup/rst04.1.nc
 #INITRST=$ROMSDIR/DATA/nature/$STARTIME.nc
-WKDIR=$ROMSDIR/model/tmp
+WKDIR=$ROMSDIR/tmp/run_nature
 rm -rf $WKDIR
 mkdir -p $WKDIR
 cd $WKDIR
 mkdir -p $SAVEDIR
+mkdir -p $SAVEDIR/his
 ### copy
 cp $ROMSDIR/model/src/roms .
 cp $ROMSDIR/model/bc/*.nc .
@@ -48,6 +49,7 @@ then
 TIME=0$TIME
 fi
 mv grd.nc $SAVEDIR/$TIME.nc
+mv hisout.0000.nc $SAVEDIR/his/$TIME.nc
 done
 
 echo "NORMAL END"
