@@ -308,8 +308,8 @@ SUBROUTINE write_grd(filename,v3d,v2d)
   IMPLICIT NONE
   INCLUDE 'netcdf.inc'
   CHARACTER(*),INTENT(IN) :: filename
-  REAL(r_size),INTENT(OUT) :: v3d(nlon,nlat,nlev,nv3d)
-  REAL(r_size),INTENT(OUT) :: v2d(nlon,nlat,nv2d)
+  REAL(r_size),INTENT(IN) :: v3d(nlon,nlat,nlev,nv3d)
+  REAL(r_size),INTENT(IN) :: v2d(nlon,nlat,nv2d)
   REAL(r_sngl) :: buf4(nlon,nlat,nlev)
   INTEGER :: i,j,k
   INTEGER :: ncid,istat,varid
@@ -433,8 +433,8 @@ SUBROUTINE write_grd4(filename,v3d,v2d)
   IMPLICIT NONE
   INCLUDE 'netcdf.inc'
   CHARACTER(*),INTENT(IN) :: filename
-  REAL(r_sngl),INTENT(OUT) :: v3d(nlon,nlat,nlev,nv3d)
-  REAL(r_sngl),INTENT(OUT) :: v2d(nlon,nlat,nv2d)
+  REAL(r_sngl),INTENT(IN) :: v3d(nlon,nlat,nlev,nv3d)
+  REAL(r_sngl),INTENT(IN) :: v2d(nlon,nlat,nv2d)
   INTEGER :: ncid,istat,varid
 
   istat = NF_OPEN(filename,NF_WRITE,ncid)
