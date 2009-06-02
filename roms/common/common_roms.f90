@@ -47,7 +47,7 @@ SUBROUTINE set_common_roms
   INCLUDE 'netcdf.inc'
   INTEGER :: ncid,istat,varid
 
-  PRINT *,'Hello from set_common_roms'
+  WRITE(6,'(A)') 'Hello from set_common_roms'
   !
   ! Elements
   !
@@ -62,10 +62,10 @@ SUBROUTINE set_common_roms
   !
   ! Lon, Lat, f, orography
   !
-  PRINT *,'  >> accessing to file: grd.nc'
+  WRITE(6,'(A)') '  >> accessing to file: grd.nc'
   istat = NF_OPEN('grd.nc',NF_NOWRITE,ncid)
   IF(istat /= NF_NOERR) THEN
-    PRINT '(A)','netCDF OPEN ERROR'
+    WRITE(6,'(A)') 'netCDF OPEN ERROR'
     STOP
   END IF
   istat = NF_INQ_VARID(ncid,'lon_rho',varid)
@@ -96,14 +96,14 @@ SUBROUTINE read_grd(filename,v3d,v2d)
 
   istat = NF_OPEN(filename,NF_NOWRITE,ncid)
   IF(istat /= NF_NOERR) THEN
-    PRINT '(A)','netCDF OPEN ERROR'
+    WRITE(6,'(A)') 'netCDF OPEN ERROR'
     STOP
   END IF
   !!! z
   istat = NF_INQ_VARID(ncid,'zeta',varid)
   istat = NF_GET_VAR_REAL(ncid,varid,buf4(:,:,1))
   IF(istat /= NF_NOERR) THEN
-    PRINT '(A)','netCDF READ ERROR (zeta)'
+    WRITE(6,'(A)') 'netCDF READ ERROR (zeta)'
     STOP
   END IF
   DO j=1,nlat
@@ -115,7 +115,7 @@ SUBROUTINE read_grd(filename,v3d,v2d)
   istat = NF_INQ_VARID(ncid,'ubar',varid)
   istat = NF_GET_VAR_REAL(ncid,varid,buf4(1:nlon-1,:,1))
   IF(istat /= NF_NOERR) THEN
-    PRINT '(A)','netCDF READ ERROR (ubar)'
+    WRITE(6,'(A)') 'netCDF READ ERROR (ubar)'
     STOP
   END IF
   DO j=1,nlat
@@ -130,7 +130,7 @@ SUBROUTINE read_grd(filename,v3d,v2d)
   istat = NF_INQ_VARID(ncid,'vbar',varid)
   istat = NF_GET_VAR_REAL(ncid,varid,buf4(:,1:nlat-1,1))
   IF(istat /= NF_NOERR) THEN
-    PRINT '(A)','netCDF READ ERROR (vbar)'
+    WRITE(6,'(A)') 'netCDF READ ERROR (vbar)'
     STOP
   END IF
   DO j=1,nlat-1
@@ -145,7 +145,7 @@ SUBROUTINE read_grd(filename,v3d,v2d)
   istat = NF_INQ_VARID(ncid,'u',varid)
   istat = NF_GET_VAR_REAL(ncid,varid,buf4(1:nlon-1,:,:))
   IF(istat /= NF_NOERR) THEN
-    PRINT '(A)','netCDF READ ERROR (u)'
+    WRITE(6,'(A)') 'netCDF READ ERROR (u)'
     STOP
   END IF
   DO k=1,nlev
@@ -164,7 +164,7 @@ SUBROUTINE read_grd(filename,v3d,v2d)
   istat = NF_INQ_VARID(ncid,'v',varid)
   istat = NF_GET_VAR_REAL(ncid,varid,buf4(:,1:nlat-1,:))
   IF(istat /= NF_NOERR) THEN
-    PRINT '(A)','netCDF READ ERROR (v)'
+    WRITE(6,'(A)') 'netCDF READ ERROR (v)'
     STOP
   END IF
   DO k=1,nlev
@@ -183,7 +183,7 @@ SUBROUTINE read_grd(filename,v3d,v2d)
   istat = NF_INQ_VARID(ncid,'temp',varid)
   istat = NF_GET_VAR_REAL(ncid,varid,buf4)
   IF(istat /= NF_NOERR) THEN
-    PRINT '(A)','netCDF READ ERROR (temp)'
+    WRITE(6,'(A)') 'netCDF READ ERROR (temp)'
     STOP
   END IF
   DO k=1,nlev
@@ -197,7 +197,7 @@ SUBROUTINE read_grd(filename,v3d,v2d)
   istat = NF_INQ_VARID(ncid,'salt',varid)
   istat = NF_GET_VAR_REAL(ncid,varid,buf4)
   IF(istat /= NF_NOERR) THEN
-    PRINT '(A)','netCDF READ ERROR (salt)'
+    WRITE(6,'(A)') 'netCDF READ ERROR (salt)'
     STOP
   END IF
   DO k=1,nlev
@@ -211,7 +211,7 @@ SUBROUTINE read_grd(filename,v3d,v2d)
   istat = NF_INQ_VARID(ncid,'hbl',varid)
   istat = NF_GET_VAR_REAL(ncid,varid,buf4(:,:,1))
   IF(istat /= NF_NOERR) THEN
-    PRINT '(A)','netCDF READ ERROR (hbl)'
+    WRITE(6,'(A)') 'netCDF READ ERROR (hbl)'
     STOP
   END IF
   DO j=1,nlat
@@ -235,21 +235,21 @@ SUBROUTINE read_grd4(filename,v3d,v2d)
 
   istat = NF_OPEN(filename,NF_NOWRITE,ncid)
   IF(istat /= NF_NOERR) THEN
-    PRINT '(A)','netCDF OPEN ERROR'
+    WRITE(6,'(A)') 'netCDF OPEN ERROR'
     STOP
   END IF
   !!! z
   istat = NF_INQ_VARID(ncid,'zeta',varid)
   istat = NF_GET_VAR_REAL(ncid,varid,v2d(:,:,iv2d_z))
   IF(istat /= NF_NOERR) THEN
-    PRINT '(A)','netCDF READ ERROR (zeta)'
+    WRITE(6,'(A)') 'netCDF READ ERROR (zeta)'
     STOP
   END IF
   !!! ubar
   istat = NF_INQ_VARID(ncid,'ubar',varid)
   istat = NF_GET_VAR_REAL(ncid,varid,v2d(1:nlon-1,:,iv2d_ubar))
   IF(istat /= NF_NOERR) THEN
-    PRINT '(A)','netCDF READ ERROR (ubar)'
+    WRITE(6,'(A)') 'netCDF READ ERROR (ubar)'
     STOP
   END IF
   v2d(nlon,:,iv2d_ubar) = 0.0
@@ -257,7 +257,7 @@ SUBROUTINE read_grd4(filename,v3d,v2d)
   istat = NF_INQ_VARID(ncid,'vbar',varid)
   istat = NF_GET_VAR_REAL(ncid,varid,v2d(:,1:nlat-1,iv2d_vbar))
   IF(istat /= NF_NOERR) THEN
-    PRINT '(A)','netCDF READ ERROR (vbar)'
+    WRITE(6,'(A)') 'netCDF READ ERROR (vbar)'
     STOP
   END IF
   v2d(:,nlat,iv2d_vbar) = 0.0
@@ -265,7 +265,7 @@ SUBROUTINE read_grd4(filename,v3d,v2d)
   istat = NF_INQ_VARID(ncid,'u',varid)
   istat = NF_GET_VAR_REAL(ncid,varid,v3d(1:nlon-1,:,:,iv3d_u))
   IF(istat /= NF_NOERR) THEN
-    PRINT '(A)','netCDF READ ERROR (u)'
+    WRITE(6,'(A)') 'netCDF READ ERROR (u)'
     STOP
   END IF
   v3d(nlon,:,:,iv3d_u) = 0.0
@@ -273,7 +273,7 @@ SUBROUTINE read_grd4(filename,v3d,v2d)
   istat = NF_INQ_VARID(ncid,'v',varid)
   istat = NF_GET_VAR_REAL(ncid,varid,v3d(:,1:nlat-1,:,iv3d_v))
   IF(istat /= NF_NOERR) THEN
-    PRINT '(A)','netCDF READ ERROR (v)'
+    WRITE(6,'(A)') 'netCDF READ ERROR (v)'
     STOP
   END IF
   v3d(:,nlat,:,iv3d_v) = 0.0
@@ -281,21 +281,21 @@ SUBROUTINE read_grd4(filename,v3d,v2d)
   istat = NF_INQ_VARID(ncid,'temp',varid)
   istat = NF_GET_VAR_REAL(ncid,varid,v3d(:,:,:,iv3d_t))
   IF(istat /= NF_NOERR) THEN
-    PRINT '(A)','netCDF READ ERROR (temp)'
+    WRITE(6,'(A)') 'netCDF READ ERROR (temp)'
     STOP
   END IF
   !!! s
   istat = NF_INQ_VARID(ncid,'salt',varid)
   istat = NF_GET_VAR_REAL(ncid,varid,v3d(:,:,:,iv3d_s))
   IF(istat /= NF_NOERR) THEN
-    PRINT '(A)','netCDF READ ERROR (salt)'
+    WRITE(6,'(A)') 'netCDF READ ERROR (salt)'
     STOP
   END IF
   !!! hbl
   istat = NF_INQ_VARID(ncid,'hbl',varid)
   istat = NF_GET_VAR_REAL(ncid,varid,v2d(:,:,iv2d_hbl))
   IF(istat /= NF_NOERR) THEN
-    PRINT '(A)','netCDF READ ERROR (hbl)'
+    WRITE(6,'(A)') 'netCDF READ ERROR (hbl)'
     STOP
   END IF
 
@@ -316,7 +316,7 @@ SUBROUTINE write_grd(filename,v3d,v2d)
 
   istat = NF_OPEN(filename,NF_WRITE,ncid)
   IF(istat /= NF_NOERR) THEN
-    PRINT '(A)','netCDF OPEN ERROR'
+    WRITE(6,'(A)') 'netCDF OPEN ERROR'
     STOP
   END IF
   !!! z
@@ -328,7 +328,7 @@ SUBROUTINE write_grd(filename,v3d,v2d)
   END DO
   istat = NF_PUT_VAR_REAL(ncid,varid,buf4(:,:,1))
   IF(istat /= NF_NOERR) THEN
-    PRINT '(A)','netCDF WRITE ERROR (zeta)'
+    WRITE(6,'(A)') 'netCDF WRITE ERROR (zeta)'
     STOP
   END IF
   !!! ubar
@@ -340,7 +340,7 @@ SUBROUTINE write_grd(filename,v3d,v2d)
   END DO
   istat = NF_PUT_VAR_REAL(ncid,varid,buf4(1:nlon-1,:,1))
   IF(istat /= NF_NOERR) THEN
-    PRINT '(A)','netCDF WRITE ERROR (ubar)'
+    WRITE(6,'(A)') 'netCDF WRITE ERROR (ubar)'
     STOP
   END IF
   !!! vbar
@@ -352,7 +352,7 @@ SUBROUTINE write_grd(filename,v3d,v2d)
   END DO
   istat = NF_PUT_VAR_REAL(ncid,varid,buf4(:,1:nlat-1,1))
   IF(istat /= NF_NOERR) THEN
-    PRINT '(A)','netCDF WRITE ERROR (vbar)'
+    WRITE(6,'(A)') 'netCDF WRITE ERROR (vbar)'
     STOP
   END IF
   !!! u
@@ -366,7 +366,7 @@ SUBROUTINE write_grd(filename,v3d,v2d)
   END DO
   istat = NF_PUT_VAR_REAL(ncid,varid,buf4(1:nlon-1,:,:))
   IF(istat /= NF_NOERR) THEN
-    PRINT '(A)','netCDF WRITE ERROR (u)'
+    WRITE(6,'(A)') 'netCDF WRITE ERROR (u)'
     STOP
   END IF
   !!! v
@@ -380,7 +380,7 @@ SUBROUTINE write_grd(filename,v3d,v2d)
   END DO
   istat = NF_PUT_VAR_REAL(ncid,varid,buf4(:,1:nlat-1,:))
   IF(istat /= NF_NOERR) THEN
-    PRINT '(A)','netCDF WRITE ERROR (v)'
+    WRITE(6,'(A)') 'netCDF WRITE ERROR (v)'
     STOP
   END IF
   !!! t
@@ -394,7 +394,7 @@ SUBROUTINE write_grd(filename,v3d,v2d)
   END DO
   istat = NF_PUT_VAR_REAL(ncid,varid,buf4)
   IF(istat /= NF_NOERR) THEN
-    PRINT '(A)','netCDF WRITE ERROR (temp)'
+    WRITE(6,'(A)') 'netCDF WRITE ERROR (temp)'
     STOP
   END IF
   !!! s
@@ -408,7 +408,7 @@ SUBROUTINE write_grd(filename,v3d,v2d)
   END DO
   istat = NF_PUT_VAR_REAL(ncid,varid,buf4)
   IF(istat /= NF_NOERR) THEN
-    PRINT '(A)','netCDF WRITE ERROR (salt)'
+    WRITE(6,'(A)') 'netCDF WRITE ERROR (salt)'
     STOP
   END IF
   !!! hbl
@@ -420,7 +420,7 @@ SUBROUTINE write_grd(filename,v3d,v2d)
   END DO
   istat = NF_PUT_VAR_REAL(ncid,varid,buf4(:,:,1))
   IF(istat /= NF_NOERR) THEN
-    PRINT '(A)','netCDF WRITE ERROR (hbl)'
+    WRITE(6,'(A)') 'netCDF WRITE ERROR (hbl)'
     STOP
   END IF
 
@@ -439,63 +439,63 @@ SUBROUTINE write_grd4(filename,v3d,v2d)
 
   istat = NF_OPEN(filename,NF_WRITE,ncid)
   IF(istat /= NF_NOERR) THEN
-    PRINT '(A)','netCDF OPEN ERROR'
+    WRITE(6,'(A)') 'netCDF OPEN ERROR'
     STOP
   END IF
   !!! z
   istat = NF_INQ_VARID(ncid,'zeta',varid)
   istat = NF_PUT_VAR_REAL(ncid,varid,v2d(:,:,iv2d_z))
   IF(istat /= NF_NOERR) THEN
-    PRINT '(A)','netCDF WRITE ERROR (zeta)'
+    WRITE(6,'(A)') 'netCDF WRITE ERROR (zeta)'
     STOP
   END IF
   !!! ubar
   istat = NF_INQ_VARID(ncid,'ubar',varid)
   istat = NF_PUT_VAR_REAL(ncid,varid,v2d(1:nlon-1,:,iv2d_ubar))
   IF(istat /= NF_NOERR) THEN
-    PRINT '(A)','netCDF WRITE ERROR (ubar)'
+    WRITE(6,'(A)') 'netCDF WRITE ERROR (ubar)'
     STOP
   END IF
   !!! vbar
   istat = NF_INQ_VARID(ncid,'vbar',varid)
   istat = NF_PUT_VAR_REAL(ncid,varid,v2d(:,1:nlat-1,iv2d_vbar))
   IF(istat /= NF_NOERR) THEN
-    PRINT '(A)','netCDF WRITE ERROR (vbar)'
+    WRITE(6,'(A)') 'netCDF WRITE ERROR (vbar)'
     STOP
   END IF
   !!! u
   istat = NF_INQ_VARID(ncid,'u',varid)
   istat = NF_PUT_VAR_REAL(ncid,varid,v3d(1:nlon-1,:,:,iv3d_u))
   IF(istat /= NF_NOERR) THEN
-    PRINT '(A)','netCDF WRITE ERROR (u)'
+    WRITE(6,'(A)') 'netCDF WRITE ERROR (u)'
     STOP
   END IF
   !!! v
   istat = NF_INQ_VARID(ncid,'v',varid)
   istat = NF_PUT_VAR_REAL(ncid,varid,v3d(:,1:nlat-1,:,iv3d_v))
   IF(istat /= NF_NOERR) THEN
-    PRINT '(A)','netCDF WRITE ERROR (v)'
+    WRITE(6,'(A)') 'netCDF WRITE ERROR (v)'
     STOP
   END IF
   !!! t
   istat = NF_INQ_VARID(ncid,'temp',varid)
   istat = NF_PUT_VAR_REAL(ncid,varid,v3d(:,:,:,iv3d_t))
   IF(istat /= NF_NOERR) THEN
-    PRINT '(A)','netCDF WRITE ERROR (temp)'
+    WRITE(6,'(A)') 'netCDF WRITE ERROR (temp)'
     STOP
   END IF
   !!! s
   istat = NF_INQ_VARID(ncid,'salt',varid)
   istat = NF_PUT_VAR_REAL(ncid,varid,v3d(:,:,:,iv3d_s))
   IF(istat /= NF_NOERR) THEN
-    PRINT '(A)','netCDF WRITE ERROR (salt)'
+    WRITE(6,'(A)') 'netCDF WRITE ERROR (salt)'
     STOP
   END IF
   !!! hbl
   istat = NF_INQ_VARID(ncid,'hbl',varid)
   istat = NF_PUT_VAR_REAL(ncid,varid,v2d(:,:,iv2d_hbl))
   IF(istat /= NF_NOERR) THEN
-    PRINT '(A)','netCDF WRITE ERROR (hbl)'
+    WRITE(6,'(A)') 'netCDF WRITE ERROR (hbl)'
     STOP
   END IF
 
@@ -513,14 +513,14 @@ SUBROUTINE monit_grd(v3d,v2d)
   INTEGER :: k,n
 
   DO k=1,nlev
-    PRINT '(I2,A)',k,'th level'
+    WRITE(6,'(I2,A)') k,'th level'
     DO n=1,nv3d
-      PRINT '(A,2ES10.2)',element(n),MAXVAL(v3d(:,:,k,n)),MINVAL(v3d(:,:,k,n))
+      WRITE(6,'(A,2ES10.2)') element(n),MAXVAL(v3d(:,:,k,n)),MINVAL(v3d(:,:,k,n))
     END DO
   END DO
 
   DO n=1,nv2d
-    PRINT '(A,2ES10.2)',element(nv3d+n),MAXVAL(v2d(:,:,n)),MINVAL(v2d(:,:,n))
+    WRITE(6,'(A,2ES10.2)') element(nv3d+n),MAXVAL(v2d(:,:,n)),MINVAL(v2d(:,:,n))
   END DO
 
   RETURN

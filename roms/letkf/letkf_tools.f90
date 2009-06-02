@@ -52,14 +52,14 @@ SUBROUTINE das_letkf(gues3d,gues2d,anal3d,anal2d)
   REAL(r_size) :: trans(nbv,nbv)
   INTEGER :: ij,ilev,n,m,i,j,k,nobsl,ierr
 
-  PRINT *,'Hello from das_letkf'
+  WRITE(6,'(A)') 'Hello from das_letkf'
   nobstotal = nobs
-  PRINT '(A,I8)','Target observation numbers : NOBS=',nobs
+  WRITE(6,'(A,I8)') 'Target observation numbers : NOBS=',nobs
   !
   ! In case of no obs
   !
   IF(nobstotal == 0) THEN
-    PRINT '(A)','No observation assimilated'
+    WRITE(6,'(A)') 'No observation assimilated'
 !$OMP PARALLEL WORKSHARE
     anal3d = gues3d
     anal2d = gues2d
@@ -222,9 +222,9 @@ SUBROUTINE das_letkf(gues3d,gues2d,anal3d,anal2d)
     END DO
 
     DEALLOCATE(work3d,work2d)
-    PRINT '(A)','===== Additive covariance inflation ====='
-    PRINT '(A,F10.4)','  parameter:',sp_infl_additive
-    PRINT '(A)','========================================='
+    WRITE(6,'(A)') '===== Additive covariance inflation ====='
+    WRITE(6,'(A,F10.4)') '  parameter:',sp_infl_additive
+    WRITE(6,'(A)') '========================================='
 !    parm = 0.7d0
 !    DO ilev=1,nlev
 !      parm_infl_damp(ilev) = 1.0d0 + parm &
