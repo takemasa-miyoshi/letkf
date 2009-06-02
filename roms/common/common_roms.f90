@@ -30,7 +30,7 @@ MODULE common_roms
   INTEGER,PARAMETER :: iv2d_vbar=3
   INTEGER,PARAMETER :: iv2d_hbl=4
   INTEGER,PARAMETER :: nij0=nlon*nlat
-  INTEGER,PARAMETER :: nlevall=nlev*(nv3d+nv2d)
+  INTEGER,PARAMETER :: nlevall=nlev*nv3d+nv2d
   INTEGER,PARAMETER :: ngpv=nij0*nlevall
   REAL(r_size),SAVE :: lon(nlon,nlat)
   REAL(r_size),SAVE :: lat(nlat,nlat)
