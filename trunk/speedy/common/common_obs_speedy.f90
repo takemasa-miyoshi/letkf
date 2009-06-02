@@ -82,7 +82,7 @@ SUBROUTINE set_common_obs_speedy
   CHARACTER(9) :: obsfile='obsTT.dat'
   CHARACTER(11) :: guesfile='gsTTNNN.grd'
 
-  PRINT *,'Hello from set_common_obs_speedy'
+  WRITE(6,'(A)') 'Hello from set_common_obs_speedy'
 
   dist_zero = sigma_obs * SQRT(10.0d0/3.0d0) * 2.0d0
   dist_zerov = sigma_obsv * SQRT(10.0d0/3.0d0) * 2.0d0
@@ -97,7 +97,7 @@ SUBROUTINE set_common_obs_speedy
     CALL get_nobs_mpi(obsfile,nobslots(islot))
   END DO
   nobs = SUM(nobslots)
-  PRINT '(I10,A)',nobs,' TOTAL OBSERVATIONS INPUT'
+  WRITE(6,'(I10,A)') nobs,' TOTAL OBSERVATIONS INPUT'
 !
 ! INITIALIZE GLOBAL VARIABLES
 !
@@ -130,7 +130,7 @@ SUBROUTINE set_common_obs_speedy
       im = myrank+1 + nprocs * l
       IF(im > nbv) EXIT
       WRITE(guesfile(3:7),'(I2.2,I3.3)') islot,im
-      PRINT '(A,I3.3,2A)','MYRANK ',myrank,' is reading a file ',guesfile
+      WRITE(6,'(A,I3.3,2A)') 'MYRANK ',myrank,' is reading a file ',guesfile
       CALL read_grd(guesfile,v3d,v2d)
       CALL calc_pfull(nlon,nlat,v2d(:,:,iv2d_ps),p_full)
 !$OMP PARALLEL DO SCHEDULE(DYNAMIC) PRIVATE(n,ri,rj,dz,tg,qg)
@@ -139,23 +139,23 @@ SUBROUTINE set_common_obs_speedy
           & tmplon(nn+n),tmplat(nn+n),tmplev(nn+n),ri,rj,tmpk(nn+n))
         IF(CEILING(ri) < 2 .OR. nlon+1 < CEILING(ri)) THEN
 !$OMP CRITICAL
-          PRINT '(A)','* X-coordinate out of range'
-          PRINT '(A,F6.2,A,F6.2)','*   ri=',ri,', rlon=',tmplon(nn+n)
+          WRITE(6,'(A)') '* X-coordinate out of range'
+          WRITE(6,'(A,F6.2,A,F6.2)') '*   ri=',ri,', rlon=',tmplon(nn+n)
 !$OMP END CRITICAL
           CYCLE
         END IF
         IF(CEILING(rj) < 2 .OR. nlat < CEILING(rj)) THEN
 !$OMP CRITICAL
-          PRINT '(A)','* Y-coordinate out of range'
-          PRINT '(A,F6.2,A,F6.2)','*   rj=',rj,', rlat=',tmplat(nn+n)
+          WRITE(6,'(A)') '* Y-coordinate out of range'
+          WRITE(6,'(A,F6.2,A,F6.2)') '*   rj=',rj,', rlat=',tmplat(nn+n)
 !$OMP END CRITICAL
           CYCLE
         END IF
         IF(CEILING(tmpk(n+nn)) > nlev) THEN
           CALL itpl_2d(phi0,ri,rj,dz)
 !$OMP CRITICAL
-          PRINT '(A)','* Z-coordinate out of range'
-          PRINT '(A,F6.2,A,F10.2,A,F6.2,A,F6.2,A,F10.2)',&
+          WRITE(6,'(A)') '* Z-coordinate out of range'
+          WRITE(6,'(A,F6.2,A,F10.2,A,F6.2,A,F6.2,A,F10.2)') &
            & '*   rk=',tmpk(nn+n),', rlev=',tmplev(nn+n),&
            & ', (lon,lat)=(',tmplon(nn+n),',',tmplat(nn+n),'), phi0=',dz
 !$OMP END CRITICAL
@@ -168,8 +168,8 @@ SUBROUTINE set_common_obs_speedy
           ELSE
             CALL itpl_2d(phi0,ri,rj,dz)
 !$OMP CRITICAL
-            PRINT '(A)','* Z-coordinate out of range'
-            PRINT '(A,F6.2,A,F10.2,A,F6.2,A,F6.2,A,F10.2)',&
+            WRITE(6,'(A)') '* Z-coordinate out of range'
+            WRITE(6,'(A,F6.2,A,F10.2,A,F6.2,A,F6.2,A,F10.2)') &
              & '*   rk=',tmpk(nn+n),', rlev=',tmplev(nn+n),&
              & ', (lon,lat)=(',tmplon(nn+n),',',tmplat(nn+n),'), phi0=',dz
 !$OMP END CRITICAL
@@ -240,7 +240,7 @@ SUBROUTINE set_common_obs_speedy
 !$OMP END PARALLEL DO
   DEALLOCATE(tmpqc0)
 
-  PRINT '(I10,A)',SUM(tmpqc),' OBSERVATIONS TO BE ASSIMILATED'
+  WRITE(6,'(I10,A)') SUM(tmpqc),' OBSERVATIONS TO BE ASSIMILATED'
 
   CALL monit_dep(nobs,tmpelm,tmpdep,tmpqc)
 !
@@ -284,7 +284,7 @@ SUBROUTINE set_common_obs_speedy
     tmpqc(nn) = tmpqc(n)
   END DO
   nobs = nn
-  PRINT '(I10,A,I3.3)',nobs,' OBSERVATIONS TO BE ASSIMILATED IN MYRANK ',myrank
+  WRITE(6,'(I10,A,I3.3)') nobs,' OBSERVATIONS TO BE ASSIMILATED IN MYRANK ',myrank
 !
 ! SORT
 !
@@ -369,9 +369,9 @@ SUBROUTINE set_common_obs_speedy
     END DO
     IF(nn /= nj(j)) THEN
 !$OMP CRITICAL
-      PRINT '(A,2I)','OBS DATA SORT ERROR: ',nn,nj(j)
-      PRINT '(F6.2,A,F6.2)',lat(j),'< LAT <',lat(j+1)
-      PRINT '(F6.2,A,F6.2)',MINVAL(tmp2lat(njs(j)+1:njs(j)+nj(j))),'< OBSLAT <',MAXVAL(tmp2lat(njs(j)+1:njs(j)+nj(j)))
+      WRITE(6,'(A,2I)') 'OBS DATA SORT ERROR: ',nn,nj(j)
+      WRITE(6,'(F6.2,A,F6.2)') lat(j),'< LAT <',lat(j+1)
+      WRITE(6,'(F6.2,A,F6.2)') MINVAL(tmp2lat(njs(j)+1:njs(j)+nj(j))),'< OBSLAT <',MAXVAL(tmp2lat(njs(j)+1:njs(j)+nj(j)))
 !$OMP END CRITICAL
     END IF
   END DO
@@ -756,14 +756,14 @@ SUBROUTINE monit_dep(nn,elm,dep,qc)
     bias_rh = bias_rh / REAL(irh,r_size)
   END IF
 
-  PRINT '(A)','== OBSERVATIONAL DEPARTURE ============================================='
-  PRINT '(6A12)','U','V','T','Q','PS','RH'
-  PRINT '(6ES12.3)',bias_u,bias_v,bias_t,bias_q,bias_ps,bias_rh
-  PRINT '(6ES12.3)',rmse_u,rmse_v,rmse_t,rmse_q,rmse_ps,rmse_rh
-  PRINT '(A)','== NUMBER OF OBSERVATIONS TO BE ASSIMILATED ============================'
-  PRINT '(6A12)','U','V','T','Q','PS','RH'
-  PRINT '(6I12)',iu,iv,it,iq,ips,irh
-  PRINT '(A)','========================================================================'
+  WRITE(6,'(A)') '== OBSERVATIONAL DEPARTURE ============================================='
+  WRITE(6,'(6A12)') 'U','V','T','Q','PS','RH'
+  WRITE(6,'(6ES12.3)') bias_u,bias_v,bias_t,bias_q,bias_ps,bias_rh
+  WRITE(6,'(6ES12.3)') rmse_u,rmse_v,rmse_t,rmse_q,rmse_ps,rmse_rh
+  WRITE(6,'(A)') '== NUMBER OF OBSERVATIONS TO BE ASSIMILATED ============================'
+  WRITE(6,'(6A12)') 'U','V','T','Q','PS','RH'
+  WRITE(6,'(6I12)') iu,iv,it,iq,ips,irh
+  WRITE(6,'(A)') '========================================================================'
 
   RETURN
 END SUBROUTINE monit_dep
@@ -888,14 +888,14 @@ SUBROUTINE monit_mean(file)
     bias_rh = bias_rh / REAL(irh,r_size)
   END IF
 
-  PRINT '(3A)','== PARTIAL OBSERVATIONAL DEPARTURE (',file,') =============================='
-  PRINT '(6A12)','U','V','T','Q','PS','RH'
-  PRINT '(6ES12.3)',bias_u,bias_v,bias_t,bias_q,bias_ps,bias_rh
-  PRINT '(6ES12.3)',rmse_u,rmse_v,rmse_t,rmse_q,rmse_ps,rmse_rh
-  PRINT '(A)','== NUMBER OF OBSERVATIONS =============================================='
-  PRINT '(6A12)','U','V','T','Q','PS','RH'
-  PRINT '(6I12)',iu,iv,it,iq,ips,irh
-  PRINT '(A)','========================================================================'
+  WRITE(6,'(3A)') '== PARTIAL OBSERVATIONAL DEPARTURE (',file,') =============================='
+  WRITE(6,'(6A12)') 'U','V','T','Q','PS','RH'
+  WRITE(6,'(6ES12.3)') bias_u,bias_v,bias_t,bias_q,bias_ps,bias_rh
+  WRITE(6,'(6ES12.3)') rmse_u,rmse_v,rmse_t,rmse_q,rmse_ps,rmse_rh
+  WRITE(6,'(A)') '== NUMBER OF OBSERVATIONS =============================================='
+  WRITE(6,'(6A12)') 'U','V','T','Q','PS','RH'
+  WRITE(6,'(6I12)') iu,iv,it,iq,ips,irh
+  WRITE(6,'(A)') '========================================================================'
 
   RETURN
 
@@ -923,7 +923,7 @@ SUBROUTINE get_nobs_mpi(cfile,nn)
   iunit=91
   INQUIRE(FILE=cfile,EXIST=ex)
   IF(ex) THEN
-    PRINT '(A,I3.3,2A)','MYRANK ',myrank,' is accessing a file ',cfile
+    WRITE(6,'(A,I3.3,2A)') 'MYRANK ',myrank,' is accessing a file ',cfile
     OPEN(iunit,FILE=cfile,FORM='unformatted',ACCESS='sequential')
     DO
       READ(iunit,IOSTAT=ios) wk
@@ -944,16 +944,16 @@ SUBROUTINE get_nobs_mpi(cfile,nn)
       END SELECT
       nn = nn + 1
     END DO
-    PRINT '(I10,A)',nn,' OBSERVATIONS INPUT'
-    PRINT '(A12,I10)','          U:',iu
-    PRINT '(A12,I10)','          V:',iv
-    PRINT '(A12,I10)','          T:',it
-    PRINT '(A12,I10)','          Q:',iq
-    PRINT '(A12,I10)','         RH:',irh
-    PRINT '(A12,I10)','         Ps:',ips
+    WRITE(6,'(I10,A)') nn,' OBSERVATIONS INPUT'
+    WRITE(6,'(A12,I10)') '          U:',iu
+    WRITE(6,'(A12,I10)') '          V:',iv
+    WRITE(6,'(A12,I10)') '          T:',it
+    WRITE(6,'(A12,I10)') '          Q:',iq
+    WRITE(6,'(A12,I10)') '         RH:',irh
+    WRITE(6,'(A12,I10)') '         Ps:',ips
     CLOSE(iunit)
   ELSE
-    PRINT '(2A)',cfile,' does not exist -- skipped'
+    WRITE(6,'(2A)') cfile,' does not exist -- skipped'
   END IF
 
   RETURN
@@ -973,7 +973,7 @@ SUBROUTINE read_obs_mpi(cfile,nn,elem,rlon,rlat,rlev,odat,oerr)
   INTEGER :: n,iunit
 
   iunit=91
-  PRINT '(A,I3.3,2A)','MYRANK ',myrank,' is reading a file ',cfile
+  WRITE(6,'(A,I3.3,2A)') 'MYRANK ',myrank,' is reading a file ',cfile
   OPEN(iunit,FILE=cfile,FORM='unformatted',ACCESS='sequential')
   DO n=1,nn
     READ(iunit) wk

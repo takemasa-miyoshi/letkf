@@ -46,7 +46,7 @@ SUBROUTINE set_common_speedy
   IMPLICIT NONE
   INTEGER :: i,j
 
-  PRINT *,'Hello from set_common_speedy'
+  WRITE(6,'(A)') 'Hello from set_common_speedy'
   !
   ! Elements
   !
@@ -315,14 +315,14 @@ SUBROUTINE monit_grd(v3d,v2d)
   INTEGER :: k,n
 
   DO k=1,nlev
-    PRINT '(I2,A)',k,'th level'
+    WRITE(6,'(I2,A)') k,'th level'
     DO n=1,nv3d
-      PRINT '(A,2ES10.2)',element(n),MAXVAL(v3d(:,:,k,n)),MINVAL(v3d(:,:,k,n))
+      WRITE(6,'(A,2ES10.2)') element(n),MAXVAL(v3d(:,:,k,n)),MINVAL(v3d(:,:,k,n))
     END DO
   END DO
 
   DO n=1,nv2d
-    PRINT '(A,2ES10.2)',element(nv3d+n),MAXVAL(v2d(:,:,n)),MINVAL(v2d(:,:,n))
+    WRITE(6,'(A,2ES10.2)') element(nv3d+n),MAXVAL(v2d(:,:,n)),MINVAL(v2d(:,:,n))
   END DO
 
   RETURN
