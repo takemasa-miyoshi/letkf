@@ -21,7 +21,7 @@ SUBROUTINE initialize_mpi
   CALL MPI_INIT(ierr)
   CALL MPI_COMM_SIZE(MPI_COMM_WORLD,nprocs,ierr)
   CALL MPI_COMM_RANK(MPI_COMM_WORLD,myrank,ierr)
-  PRINT '(A,I3.3,A,I3.3)','Hello from MYRANK ',myrank,'/',nprocs-1
+  WRITE(6,'(A,I3.3,A,I3.3)') 'Hello from MYRANK ',myrank,'/',nprocs-1
 
   RETURN
 END SUBROUTINE initialize_mpi
