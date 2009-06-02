@@ -85,7 +85,7 @@ SUBROUTINE set_common_obs_roms
   CHARACTER(9) :: obsfile='obsTT.dat'
   CHARACTER(10) :: guesfile='gsTTNNN.nc'
 
-  PRINT *,'Hello from set_common_obs_roms'
+  WRITE(6,'(A)') 'Hello from set_common_obs_roms'
 
   dist_zero = sigma_obs * SQRT(10.0d0/3.0d0) * 2.0d0
   dist_zerov = sigma_obsv * SQRT(10.0d0/3.0d0) * 2.0d0
@@ -95,7 +95,7 @@ SUBROUTINE set_common_obs_roms
     CALL get_nobs_mpi(obsfile,nobslots(islot))
   END DO
   nobs = SUM(nobslots)
-  PRINT '(I10,A)',nobs,' TOTAL OBSERVATIONS INPUT'
+  WRITE(6,'(I10,A)') nobs,' TOTAL OBSERVATIONS INPUT'
 !
 ! INITIALIZE GLOBAL VARIABLES
 !
@@ -130,7 +130,7 @@ SUBROUTINE set_common_obs_roms
       im = myrank+1 + nprocs * l
       IF(im > nbv) EXIT
       WRITE(guesfile(3:7),'(I2.2,I3.3)') islot,im
-      PRINT '(A,I3.3,2A)','MYRANK ',myrank,' is reading a file ',guesfile
+      WRITE(6,'(A,I3.3,2A)') 'MYRANK ',myrank,' is reading a file ',guesfile
       CALL read_grd(guesfile,v3d,v2d)
 !$OMP PARALLEL DO SCHEDULE(DYNAMIC) PRIVATE(n)
       DO n=1,nobslots(islot)
@@ -181,7 +181,7 @@ SUBROUTINE set_common_obs_roms
 !$OMP END PARALLEL DO
   DEALLOCATE(tmpqc0)
 
-  PRINT '(I10,A)',SUM(tmpqc),' OBSERVATIONS TO BE ASSIMILATED'
+  WRITE(6,'(I10,A)') SUM(tmpqc),' OBSERVATIONS TO BE ASSIMILATED'
 
   CALL monit_dep(nobs,tmpelm,tmpdep,tmpqc)
 !
@@ -227,7 +227,7 @@ SUBROUTINE set_common_obs_roms
     tmpqc(nn) = tmpqc(n)
   END DO
   nobs = nn
-  PRINT '(I10,A,I3.3)',nobs,' OBSERVATIONS TO BE ASSIMILATED IN MYRANK ',myrank
+  WRITE(6,'(I10,A,I3.3)') nobs,' OBSERVATIONS TO BE ASSIMILATED IN MYRANK ',myrank
 !
 ! SORT
 !
@@ -316,9 +316,9 @@ SUBROUTINE set_common_obs_roms
     END DO
     IF(nn /= nj(j)) THEN
 !$OMP CRITICAL
-      PRINT '(A,2I)','OBS DATA SORT ERROR: ',nn,nj(j)
-      PRINT '(F6.2,A,F6.2)',j,'< J <',j+1
-      PRINT '(F6.2,A,F6.2)',MINVAL(tmp2j(njs(j)+1:njs(j)+nj(j))),'< OBSJ <',MAXVAL(tmp2j(njs(j)+1:njs(j)+nj(j)))
+      WRITE(6,'(A,2I)') 'OBS DATA SORT ERROR: ',nn,nj(j)
+      WRITE(6,'(F6.2,A,F6.2)') j,'< J <',j+1
+      WRITE(6,'(F6.2,A,F6.2)') MINVAL(tmp2j(njs(j)+1:njs(j)+nj(j))),'< OBSJ <',MAXVAL(tmp2j(njs(j)+1:njs(j)+nj(j)))
 !$OMP END CRITICAL
     END IF
   END DO
@@ -465,14 +465,14 @@ SUBROUTINE monit_dep(nn,elm,dep,qc)
     bias_z = bias_z / REAL(iz,r_size)
   END IF
 
-  PRINT '(A)','== OBSERVATIONAL DEPARTURE ================================='
-  PRINT '(5A12)','U','V','T','SALT','ZETA'
-  PRINT '(5ES12.3)',bias_u,bias_v,bias_t,bias_s,bias_z
-  PRINT '(5ES12.3)',rmse_u,rmse_v,rmse_t,rmse_s,rmse_z
-  PRINT '(A)','== NUMBER OF OBSERVATIONS TO BE ASSIMILATED ================'
-  PRINT '(5A12)','U','V','T','SALT','ZETA'
-  PRINT '(5I12)',iu,iv,it,is,iz
-  PRINT '(A)','============================================================'
+  WRITE(6,'(A)') '== OBSERVATIONAL DEPARTURE ================================='
+  WRITE(6,'(5A12)') 'U','V','T','SALT','ZETA'
+  WRITE(6,'(5ES12.3)') bias_u,bias_v,bias_t,bias_s,bias_z
+  WRITE(6,'(5ES12.3)') rmse_u,rmse_v,rmse_t,rmse_s,rmse_z
+  WRITE(6,'(A)') '== NUMBER OF OBSERVATIONS TO BE ASSIMILATED ================'
+  WRITE(6,'(5A12)') 'U','V','T','SALT','ZETA'
+  WRITE(6,'(5I12)') iu,iv,it,is,iz
+  WRITE(6,'(A)') '============================================================'
 
   RETURN
 END SUBROUTINE monit_dep
@@ -572,14 +572,14 @@ SUBROUTINE monit_mean(file)
     bias_z = bias_z / REAL(iz,r_size)
   END IF
 
-  PRINT '(3A)','== PARTIAL OBSERVATIONAL DEPARTURE (',file,') =================='
-  PRINT '(5A12)','U','V','T','SALT','ZETA'
-  PRINT '(5ES12.3)',bias_u,bias_v,bias_t,bias_s,bias_z
-  PRINT '(5ES12.3)',rmse_u,rmse_v,rmse_t,rmse_s,rmse_z
-  PRINT '(A)','== NUMBER OF OBSERVATIONS =================================='
-  PRINT '(5A12)','U','V','T','SALT','ZETA'
-  PRINT '(5I12)',iu,iv,it,is,iz
-  PRINT '(A)','============================================================'
+  WRITE(6,'(3A)') '== PARTIAL OBSERVATIONAL DEPARTURE (',file,') =================='
+  WRITE(6,'(5A12)') 'U','V','T','SALT','ZETA'
+  WRITE(6,'(5ES12.3)') bias_u,bias_v,bias_t,bias_s,bias_z
+  WRITE(6,'(5ES12.3)') rmse_u,rmse_v,rmse_t,rmse_s,rmse_z
+  WRITE(6,'(A)') '== NUMBER OF OBSERVATIONS =================================='
+  WRITE(6,'(5A12)') 'U','V','T','SALT','ZETA'
+  WRITE(6,'(5I12)') iu,iv,it,is,iz
+  WRITE(6,'(A)') '============================================================'
 
   RETURN
 END SUBROUTINE monit_mean
@@ -605,7 +605,7 @@ SUBROUTINE get_nobs_mpi(cfile,nn)
   iunit=91
   INQUIRE(FILE=cfile,EXIST=ex)
   IF(ex) THEN
-    PRINT '(A,I3.3,2A)','MYRANK ',myrank,' is accessing a file ',cfile
+    WRITE(6,'(A,I3.3,2A)') 'MYRANK ',myrank,' is accessing a file ',cfile
     OPEN(iunit,FILE=cfile,FORM='unformatted',ACCESS='sequential')
     DO
       READ(iunit,IOSTAT=ios) wk
@@ -624,15 +624,15 @@ SUBROUTINE get_nobs_mpi(cfile,nn)
       END SELECT
       nn = nn + 1
     END DO
-    PRINT '(I10,A)',nn,' OBSERVATIONS INPUT'
-    PRINT '(A12,I10)','          U:',iu
-    PRINT '(A12,I10)','          V:',iv
-    PRINT '(A12,I10)','          T:',it
-    PRINT '(A12,I10)','       SALT:',is
-    PRINT '(A12,I10)','       ZETA:',iz
+    WRITE(6,'(I10,A)') nn,' OBSERVATIONS INPUT'
+    WRITE(6,'(A12,I10)') '          U:',iu
+    WRITE(6,'(A12,I10)') '          V:',iv
+    WRITE(6,'(A12,I10)') '          T:',it
+    WRITE(6,'(A12,I10)') '       SALT:',is
+    WRITE(6,'(A12,I10)') '       ZETA:',iz
     CLOSE(iunit)
   ELSE
-    PRINT '(2A)',cfile,' does not exist -- skipped'
+    WRITE(6,'(2A)') cfile,' does not exist -- skipped'
   END IF
 
   RETURN
@@ -652,7 +652,7 @@ SUBROUTINE read_obs_mpi(cfile,nn,elem,rlon,rlat,rlev,odat,oerr)
   INTEGER :: n,iunit
 
   iunit=91
-  PRINT '(A,I3.3,2A)','MYRANK ',myrank,' is reading a file ',cfile
+  WRITE(6,'(A,I3.3,2A)') 'MYRANK ',myrank,' is reading a file ',cfile
   OPEN(iunit,FILE=cfile,FORM='unformatted',ACCESS='sequential')
   DO n=1,nn
     READ(iunit) wk
