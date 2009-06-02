@@ -63,15 +63,15 @@ SUBROUTINE get_nobs(iunit)
     END SELECT
     nobs = nobs + 1
   END DO
-  PRINT '(I10,A)',nobs,' OBSERVATIONS INPUT'
-  PRINT '(A12,I10)','          U:',iu
-  PRINT '(A12,I10)','          V:',iv
-  PRINT '(A12,I10)','          T:',it
-  PRINT '(A12,I10)','          Q:',iq
-  PRINT '(A12,I10)','         RH:',irh
-  PRINT '(A12,I10)','         PS:',ips
-  PRINT '(A12,I10)','          Z:',iz
-  PRINT '(A12,I10)','       SALT:',is
+  WRITE(6,'(I10,A)') nobs,' OBSERVATIONS INPUT'
+  WRITE(6,'(A12,I10)') '          U:',iu
+  WRITE(6,'(A12,I10)') '          V:',iv
+  WRITE(6,'(A12,I10)') '          T:',it
+  WRITE(6,'(A12,I10)') '          Q:',iq
+  WRITE(6,'(A12,I10)') '         RH:',irh
+  WRITE(6,'(A12,I10)') '         PS:',ips
+  WRITE(6,'(A12,I10)') '          Z:',iz
+  WRITE(6,'(A12,I10)') '       SALT:',is
   REWIND(iunit)
 
   RETURN
