@@ -33,34 +33,34 @@ PROGRAM letkf
   CALL initialize_mpi
 !
   WRITE(stdoutf(6:8), '(I3.3)') myrank
-  PRINT '(3A,I3.3)','STDOUT goes to ',stdoutf,' for MYRANK ', myrank
+  WRITE(6,'(3A,I3.3)') 'STDOUT goes to ',stdoutf,' for MYRANK ', myrank
   OPEN(6,FILE=stdoutf)
-  PRINT '(A,I3.3,2A)','MYRANK=',myrank,', STDOUTF=',stdoutf
+  WRITE(6,'(A,I3.3,2A)') 'MYRANK=',myrank,', STDOUTF=',stdoutf
 !
-  PRINT '(A)','============================================='
-  PRINT '(A)','  LOCAL ENSEMBLE TRANSFORM KALMAN FILTERING  '
-  PRINT '(A)','                                             '
-  PRINT '(A)','   LL      EEEEEE  TTTTTT  KK  KK  FFFFFF    '
-  PRINT '(A)','   LL      EE        TT    KK KK   FF        '
-  PRINT '(A)','   LL      EEEEE     TT    KKK     FFFFF     '
-  PRINT '(A)','   LL      EE        TT    KK KK   FF        '
-  PRINT '(A)','   LLLLLL  EEEEEE    TT    KK  KK  FF        '
-  PRINT '(A)','                                             '
-  PRINT '(A)','             WITHOUT LOCAL PATCH             '
-  PRINT '(A)','                                             '
-  PRINT '(A)','          Coded by Takemasa Miyoshi          '
-  PRINT '(A)','  Based on Ott et al (2004) and Hunt (2005)  '
-  PRINT '(A)','  Tested by Miyoshi and Yamane (2006)        '
-  PRINT '(A)','============================================='
-  PRINT '(A)','              LETKF PARAMETERS               '
-  PRINT '(A)',' ------------------------------------------- '
-  PRINT '(A,I15)',  '   nbv        :',nbv
-  PRINT '(A,I15)',  '   nslots     :',nslots
-  PRINT '(A,I15)',  '   nbslot     :',nbslot
-  PRINT '(A,F15.2)','   sigma_obs  :',sigma_obs
-  PRINT '(A,F15.2)','   sigma_obsv :',sigma_obsv
-  PRINT '(A,F15.2)','   sigma_obst :',sigma_obst
-  PRINT '(A)','============================================='
+  WRITE(6,'(A)') '============================================='
+  WRITE(6,'(A)') '  LOCAL ENSEMBLE TRANSFORM KALMAN FILTERING  '
+  WRITE(6,'(A)') '                                             '
+  WRITE(6,'(A)') '   LL      EEEEEE  TTTTTT  KK  KK  FFFFFF    '
+  WRITE(6,'(A)') '   LL      EE        TT    KK KK   FF        '
+  WRITE(6,'(A)') '   LL      EEEEE     TT    KKK     FFFFF     '
+  WRITE(6,'(A)') '   LL      EE        TT    KK KK   FF        '
+  WRITE(6,'(A)') '   LLLLLL  EEEEEE    TT    KK  KK  FF        '
+  WRITE(6,'(A)') '                                             '
+  WRITE(6,'(A)') '             WITHOUT LOCAL PATCH             '
+  WRITE(6,'(A)') '                                             '
+  WRITE(6,'(A)') '          Coded by Takemasa Miyoshi          '
+  WRITE(6,'(A)') '  Based on Ott et al (2004) and Hunt (2005)  '
+  WRITE(6,'(A)') '  Tested by Miyoshi and Yamane (2006)        '
+  WRITE(6,'(A)') '============================================='
+  WRITE(6,'(A)') '              LETKF PARAMETERS               '
+  WRITE(6,'(A)') ' ------------------------------------------- '
+  WRITE(6,'(A,I15)')   '   nbv        :',nbv
+  WRITE(6,'(A,I15)')   '   nslots     :',nslots
+  WRITE(6,'(A,I15)')   '   nbslot     :',nbslot
+  WRITE(6,'(A,F15.2)') '   sigma_obs  :',sigma_obs
+  WRITE(6,'(A,F15.2)') '   sigma_obsv :',sigma_obsv
+  WRITE(6,'(A,F15.2)') '   sigma_obst :',sigma_obst
+  WRITE(6,'(A)') '============================================='
   CALL set_common_speedy
   CALL set_common_mpi_speedy
   ALLOCATE(gues3d(nij1,nlev,nbv,nv3d))
@@ -69,7 +69,7 @@ PROGRAM letkf
   ALLOCATE(anal2d(nij1,nbv,nv2d))
 !
   CALL CPU_TIME(rtimer)
-  PRINT '(A,2F10.2)', '### TIMER(INITIALIZE):',rtimer,rtimer-rtimer00
+  WRITE(6,'(A,2F10.2)') '### TIMER(INITIALIZE):',rtimer,rtimer-rtimer00
   rtimer00=rtimer
 !-----------------------------------------------------------------------
 ! Observations
@@ -80,7 +80,7 @@ PROGRAM letkf
   CALL set_common_obs_speedy
 !
   CALL CPU_TIME(rtimer)
-  PRINT '(A,2F10.2)', '### TIMER(READ_OBS):',rtimer,rtimer-rtimer00
+  WRITE(6,'(A,2F10.2)') '### TIMER(READ_OBS):',rtimer,rtimer-rtimer00
   rtimer00=rtimer
 !-----------------------------------------------------------------------
 ! First guess ensemble
@@ -98,7 +98,7 @@ PROGRAM letkf
   CALL write_ensmspr_mpi('gues',nbv,gues3d,gues2d)
 !
   CALL CPU_TIME(rtimer)
-  PRINT '(A,2F10.2)', '### TIMER(READ_GUES):',rtimer,rtimer-rtimer00
+  WRITE(6,'(A,2F10.2)') '### TIMER(READ_GUES):',rtimer,rtimer-rtimer00
   rtimer00=rtimer
 !-----------------------------------------------------------------------
 ! Data Assimilation
@@ -110,7 +110,7 @@ PROGRAM letkf
   CALL das_letkf(gues3d,gues2d,anal3d,anal2d)
 !
   CALL CPU_TIME(rtimer)
-  PRINT '(A,2F10.2)', '### TIMER(DAS_LETKF):',rtimer,rtimer-rtimer00
+  WRITE(6,'(A,2F10.2)') '### TIMER(DAS_LETKF):',rtimer,rtimer-rtimer00
   rtimer00=rtimer
 !-----------------------------------------------------------------------
 ! Analysis ensemble
@@ -127,7 +127,7 @@ PROGRAM letkf
   CALL write_ensmspr_mpi('anal',nbv,anal3d,anal2d)
 !
   CALL CPU_TIME(rtimer)
-  PRINT '(A,2F10.2)', '### TIMER(WRITE_ANAL):',rtimer,rtimer-rtimer00
+  WRITE(6,'(A,2F10.2)') '### TIMER(WRITE_ANAL):',rtimer,rtimer-rtimer00
   rtimer00=rtimer
 !-----------------------------------------------------------------------
 ! Monitor
@@ -136,7 +136,7 @@ PROGRAM letkf
   CALL monit_mean('anal')
 !
   CALL CPU_TIME(rtimer)
-  PRINT '(A,2F10.2)', '### TIMER(MONIT_MEAN):',rtimer,rtimer-rtimer00
+  WRITE(6,'(A,2F10.2)') '### TIMER(MONIT_MEAN):',rtimer,rtimer-rtimer00
   rtimer00=rtimer
 !-----------------------------------------------------------------------
 ! Finalize

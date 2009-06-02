@@ -31,11 +31,11 @@ SUBROUTINE set_common_mpi_speedy
   REAL(r_size),ALLOCATABLE :: v2d(:,:)
   INTEGER :: i
 
-  PRINT *,'Hello from set_common_mpi_speedy'
+  WRITE(6,'(A)') 'Hello from set_common_mpi_speedy'
   i = MOD(nlon*nlat,nprocs)
   nij1 = (nlon*nlat - i)/nprocs
   IF(myrank < i) nij1 = nij1 + 1
-  PRINT '(A,I3.3,A,I6)','MYRANK ',myrank,' number of grid points: nij1= ',nij1
+  WRITE(6,'(A,I3.3,A,I6)') 'MYRANK ',myrank,' number of grid points: nij1= ',nij1
 
   ALLOCATE(phi1(nij1))
   ALLOCATE(dx1(nij1))
@@ -181,7 +181,7 @@ SUBROUTINE read_ens_mpi(file,member,v3d,v2d)
     im = myrank+1 + (l-1)*nprocs
     IF(im <= member) THEN
       WRITE(filename(1:7),'(A4,I3.3)') file,im
-      PRINT '(A,I3.3,2A)','MYRANK ',myrank,' is reading a file ',filename
+      WRITE(6,'(A,I3.3,2A)') 'MYRANK ',myrank,' is reading a file ',filename
       CALL read_grd4(filename,v3dg,v2dg)
     END IF
 
@@ -220,7 +220,7 @@ SUBROUTINE write_ens_mpi(file,member,v3d,v2d)
     im = myrank+1 + (l-1)*nprocs
     IF(im <= member) THEN
       WRITE(filename(1:7),'(A4,I3.3)') file,im
-      PRINT '(A,I3.3,2A)','MYRANK ',myrank,' is writing a file ',filename
+      WRITE(6,'(A,I3.3,2A)') 'MYRANK ',myrank,' is writing a file ',filename
       CALL write_grd4(filename,v3dg,v2dg)
     END IF
   END DO
@@ -287,7 +287,7 @@ SUBROUTINE write_ensmspr_mpi(file,member,v3d,v2d)
   CALL gather_grd_mpi(0,v3dm,v2dm,v3dg,v2dg)
   IF(myrank == 0) THEN
     WRITE(filename(1:7),'(A4,A3)') file,'_me'
-    PRINT '(A,I3.3,2A)','MYRANK ',myrank,' is writing a file ',filename
+    WRITE(6,'(A,I3.3,2A)') 'MYRANK ',myrank,' is writing a file ',filename
     CALL write_grd4(filename,v3dg,v2dg)
   END IF
 
@@ -320,7 +320,7 @@ SUBROUTINE write_ensmspr_mpi(file,member,v3d,v2d)
   CALL gather_grd_mpi(0,v3ds,v2ds,v3dg,v2dg)
   IF(myrank == 0) THEN
     WRITE(filename(1:7),'(A4,A3)') file,'_sp'
-    PRINT '(A,I3.3,2A)','MYRANK ',myrank,' is writing a file ',filename
+    WRITE(6,'(A,I3.3,2A)') 'MYRANK ',myrank,' is writing a file ',filename
     CALL write_grd4(filename,v3dg,v2dg)
   END IF
 
