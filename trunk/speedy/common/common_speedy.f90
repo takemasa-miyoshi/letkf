@@ -26,7 +26,7 @@ MODULE common_speedy
   INTEGER,PARAMETER :: iv3d_q=4
   INTEGER,PARAMETER :: iv2d_ps=1
   INTEGER,PARAMETER :: nij0=nlon*nlat
-  INTEGER,PARAMETER :: nlevall=nlev*(nv3d+nv2d)
+  INTEGER,PARAMETER :: nlevall=nlev*nv3d+nv2d
   INTEGER,PARAMETER :: ngpv=nij0*nlevall
   REAL(r_size),SAVE :: lon(nlon)
   REAL(r_size),SAVE :: lat(nlat)
