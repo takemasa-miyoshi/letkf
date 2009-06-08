@@ -20,6 +20,7 @@ MODULE common_mpi_roms
   PUBLIC
 
   INTEGER,SAVE :: nij1
+  INTEGER,SAVE :: nij1max
   REAL(r_size),ALLOCATABLE,SAVE :: phi1(:)
   REAL(r_size),ALLOCATABLE,SAVE :: lon1(:),lat1(:)
   REAL(r_size),ALLOCATABLE,SAVE :: ri1(:),rj1(:)
@@ -34,8 +35,12 @@ SUBROUTINE set_common_mpi_roms
 
   WRITE(6,'(A)') 'Hello from set_common_mpi_roms'
   i = MOD(nlon*nlat,nprocs)
-  nij1 = (nlon*nlat - i)/nprocs
-  IF(myrank < i) nij1 = nij1 + 1
+  nij1max = (nlon*nlat - i)/nprocs + 1
+  IF(myrank < i) THEN
+    nij1 = nij1max
+  ELSE
+    nij1 = nij1max - 1
+  END IF
   WRITE(6,'(A,I3.3,A,I6)') 'MYRANK ',myrank,' number of grid points: nij1= ',nij1
 
   ALLOCATE(phi1(nij1))
@@ -73,8 +78,8 @@ SUBROUTINE scatter_grd_mpi(nrank,v3dg,v2dg,v3d,v2d)
   REAL(r_sngl),INTENT(IN) :: v2dg(nlon,nlat,nv2d)
   REAL(r_size),INTENT(OUT) :: v3d(nij1,nlev,nv3d)
   REAL(r_size),INTENT(OUT) :: v2d(nij1,nv2d)
-  REAL(r_sngl) :: bufs(nij1,nlevall,nprocs)
-  REAL(r_sngl) :: bufr(nij1,nlevall)
+  REAL(r_sngl) :: bufs(nij1max,nlevall,nprocs)
+  REAL(r_sngl) :: bufr(nij1max,nlevall)
   INTEGER :: j,k,n,ierr,n0
 
   IF(myrank == nrank) THEN
@@ -93,7 +98,7 @@ SUBROUTINE scatter_grd_mpi(nrank,v3dg,v2dg,v3d,v2d)
   END IF
 
   CALL MPI_BARRIER(MPI_COMM_WORLD,ierr)
-  n = nij1 * nlevall
+  n = nij1max * nlevall
   n0= n
   CALL MPI_SCATTER(bufs,n ,MPI_REAL,&
                  & bufr,n0,MPI_REAL,nrank,MPI_COMM_WORLD,ierr)
@@ -102,13 +107,13 @@ SUBROUTINE scatter_grd_mpi(nrank,v3dg,v2dg,v3d,v2d)
   DO n=1,nv3d
     DO k=1,nlev
       j = j+1
-      v3d(:,k,n) = REAL(bufr(:,j),r_size)
+      v3d(:,k,n) = REAL(bufr(1:nij1,j),r_size)
     END DO
   END DO
 
   DO n=1,nv2d
     j = j+1
-    v2d(:,n) = REAL(bufr(:,j),r_size)
+    v2d(:,n) = REAL(bufr(1:nij1,j),r_size)
   END DO
 
   CALL MPI_BARRIER(MPI_COMM_WORLD,ierr)
@@ -124,25 +129,25 @@ SUBROUTINE gather_grd_mpi(nrank,v3d,v2d,v3dg,v2dg)
   REAL(r_size),INTENT(IN) :: v2d(nij1,nv2d)
   REAL(r_sngl),INTENT(OUT) :: v3dg(nlon,nlat,nlev,nv3d)
   REAL(r_sngl),INTENT(OUT) :: v2dg(nlon,nlat,nv2d)
-  REAL(r_sngl) :: bufs(nij1,nlevall)
-  REAL(r_sngl) :: bufr(nij1,nlevall,nprocs)
+  REAL(r_sngl) :: bufs(nij1max,nlevall)
+  REAL(r_sngl) :: bufr(nij1max,nlevall,nprocs)
   INTEGER :: j,k,n,ierr,n0
 
   j=0
   DO n=1,nv3d
     DO k=1,nlev
       j = j+1
-      bufs(:,j) = REAL(v3d(:,k,n),r_sngl)
+      bufs(1:nij1,j) = REAL(v3d(:,k,n),r_sngl)
     END DO
   END DO
 
   DO n=1,nv2d
     j = j+1
-    bufs(:,j) = REAL(v2d(:,n),r_sngl)
+    bufs(1:nij1,j) = REAL(v2d(:,n),r_sngl)
   END DO
 
   CALL MPI_BARRIER(MPI_COMM_WORLD,ierr)
-  n = nij1 * nlevall
+  n = nij1max * nlevall
   n0= n
   CALL MPI_GATHER(bufs,n ,MPI_REAL,&
                 & bufr,n0,MPI_REAL,nrank,MPI_COMM_WORLD,ierr)
@@ -235,11 +240,11 @@ END SUBROUTINE write_ens_mpi
 !-----------------------------------------------------------------------
 SUBROUTINE grd_to_buf(grd,buf)
   REAL(r_sngl),INTENT(IN) :: grd(nlon,nlat)
-  REAL(r_sngl),INTENT(OUT) :: buf(nij1,nprocs)
+  REAL(r_sngl),INTENT(OUT) :: buf(nij1max,nprocs)
   INTEGER :: i,j,m,ilon,ilat
 
   DO m=1,nprocs
-    DO i=1,nij1
+    DO i=1,nij1max
       j = m-1 + nprocs * (i-1)
       ilon = MOD(j,nlon) + 1
       ilat = (j-ilon+1) / nlon + 1
@@ -253,12 +258,12 @@ END SUBROUTINE grd_to_buf
 ! buffer -> gridded data
 !-----------------------------------------------------------------------
 SUBROUTINE buf_to_grd(buf,grd)
-  REAL(r_sngl),INTENT(IN) :: buf(nij1,nprocs)
+  REAL(r_sngl),INTENT(IN) :: buf(nij1max,nprocs)
   REAL(r_sngl),INTENT(OUT) :: grd(nlon,nlat)
   INTEGER :: i,j,m,ilon,ilat
 
   DO m=1,nprocs
-    DO i=1,nij1
+    DO i=1,nij1max
       j = m-1 + nprocs * (i-1)
       ilon = MOD(j,nlon) + 1
       ilat = (j-ilon+1) / nlon + 1
