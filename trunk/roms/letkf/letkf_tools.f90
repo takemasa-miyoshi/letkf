@@ -46,9 +46,8 @@ SUBROUTINE das_letkf(gues3d,gues2d,anal3d,anal2d)
   REAL(r_size),ALLOCATABLE :: work3d(:,:,:)
   REAL(r_size),ALLOCATABLE :: work2d(:,:)
   REAL(r_size) :: parm_infl
-  REAL(r_size) :: parm,parm_max,parm_min
+  REAL(r_size) :: parm
   REAL(r_size) :: parm_infl_damp(nlev)
-  REAL(r_size) :: pu,pd
   REAL(r_size) :: trans(nbv,nbv)
   INTEGER :: ij,ilev,n,m,i,j,k,nobsl,ierr
 
