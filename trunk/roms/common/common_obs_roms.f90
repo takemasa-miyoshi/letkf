@@ -50,7 +50,6 @@ SUBROUTINE set_common_obs_roms
   REAL(r_size) :: v2d(nlon,nlat,nv2d)
   REAL(r_size),PARAMETER :: gross_error=10.0d0
   REAL(r_size) :: dz,tg,qg
-  REAL(r_size) :: ri,rj
   REAL(r_size) :: dlon1,dlon2,dlon,dlat
   REAL(r_size),ALLOCATABLE :: wk2d(:,:)
   INTEGER,ALLOCATABLE :: iwk2d(:,:)
