@@ -24,6 +24,7 @@ MODULE common_mpi_nhm
   REAL(r_size),ALLOCATABLE,SAVE :: phi1(:)
   REAL(r_size),ALLOCATABLE,SAVE :: dx1(:),dy1(:)
   REAL(r_size),ALLOCATABLE,SAVE :: lon1(:),lat1(:)
+  REAL(r_size),ALLOCATABLE,SAVE :: ri1(:),rj1(:)
 
 CONTAINS
 SUBROUTINE set_common_mpi_nhm
@@ -31,7 +32,7 @@ SUBROUTINE set_common_mpi_nhm
   REAL(r_sngl) :: v2dg(nlon,nlat,nv2d)
   REAL(r_size),ALLOCATABLE :: v3d(:,:,:)
   REAL(r_size),ALLOCATABLE :: v2d(:,:)
-  INTEGER :: i
+  INTEGER :: i,j
 
   WRITE(6,'(A)') 'Hello from set_common_mpi_nhm'
   i = MOD(nlon*nlat,nprocs)
@@ -49,13 +50,21 @@ SUBROUTINE set_common_mpi_nhm
 
   ALLOCATE(v3d(nij1,nlev,nv3d))
   ALLOCATE(v2d(nij1,nv2d))
-  v3dg(:,:,1,1) = SNGL(lon(:,:))
-  v3dg(:,:,1,2) = SNGL(lat(:,:))
-  v3dg(:,:,1,3) = SNGL(phi0(:,:))
+  v3dg(:,:,1,1) = REAL(lon(:,:),r_sngl)
+  v3dg(:,:,1,2) = REAL(lat(:,:),r_sngl)
+  v3dg(:,:,1,3) = REAL(phi0(:,:),r_sngl)
+  DO j=1,nlat
+    DO i=1,nlon
+      v3dg(i,j,1,4) = REAL(i,r_sngl)
+      v3dg(i,j,2,4) = REAL(j,r_sngl)
+    END DO
+  END DO
   CALL scatter_grd_mpi(0,v3dg,v2dg,v3d,v2d)
   lon1(:) = v3d(:,1,1)
   lat1(:) = v3d(:,1,2)
   phi1(:) = v3d(:,1,3)
+  ri1(:) = v3d(:,1,4)
+  rj1(:) = v3d(:,2,4)
 
   RETURN
 END SUBROUTINE set_common_mpi_nhm

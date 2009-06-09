@@ -310,155 +310,14 @@ SUBROUTINE obs_local(ij,ilev,hdxf,rdiag,dep,nobsl,logpfm)
 !
 ! data search
 !
-  minlon = lon1(ij) - dlon_zero(ij)
-  maxlon = lon1(ij) + dlon_zero(ij)
-  minlat = lat1(ij) - dlat_zero
-  maxlat = lat1(ij) + dlat_zero
+  imin = MAX(NINT(ri1(ij) - dist_zero/dx),1)
+  imax = MIN(NINT(ri1(ij) + dist_zero/dx),nlon)
+  jmin = MAX(NINT(rj1(ij) - dist_zero/dx),1)
+  jmax = MIN(NINT(rj1(ij) + dist_zero/dx),nlat)
 
-  DO jmin=1,nlat-2
-    IF(minlat < lat(jmin+1,1)) EXIT
-  END DO
-  DO jmax=1,nlat-2
-    IF(maxlat < lat(jmax+1,1)) EXIT
-  END DO
   nn = 1
-!TVS  tvnn = 1
-  IF(minlon >= 0 .AND. maxlon <= 360.0) THEN
-    DO imin=1,nlon-1
-      IF(minlon < lon(imin+1,1)) EXIT
-    END DO
-    DO imax=1,nlon-1
-      IF(maxlon < lon(imax+1,1)) EXIT
-    END DO
-    IF( nobs > 0 ) &
-    & CALL obs_local_sub(imin,imax,jmin,jmax,nn,nobs_use)
-!TVS    IF( ntvs > 0 ) &
-!TVS    & CALL tvs_local_sub(imin,imax,jmin,jmax,tvnn, &
-!TVS    &                    ntvs_use_prof,ntvs_use_inst,ntvs_use_slot)
-  ELSE IF(minlon >= 0 .AND. maxlon > 360.0) THEN
-    DO imin=1,nlon-1
-      IF(minlon < lon(imin+1,1)) EXIT
-    END DO
-    maxlon = maxlon - 360.0d0
-    IF(maxlon > 360.0d0) THEN
-      imin = 1
-      imax = nlon
-      IF( nobs > 0 ) &
-      & CALL obs_local_sub(imin,imax,jmin,jmax,nn,nobs_use)
-!TVS      IF( ntvs > 0 ) &
-!TVS      & CALL tvs_local_sub(imin,imax,jmin,jmax,tvnn, &
-!TVS      &                    ntvs_use_prof,ntvs_use_inst,ntvs_use_slot)
-    ELSE
-      DO imax=1,nlon-1
-        IF(maxlon < lon(imax+1,1)) EXIT
-      END DO
-      IF(imax > imin) THEN
-        imin = 1
-        imax = nlon
-        IF( nobs > 0 ) &
-        & CALL obs_local_sub(imin,imax,jmin,jmax,nn,nobs_use)
-!TVS        IF( ntvs > 0 ) &
-!TVS        & CALL tvs_local_sub(imin,imax,jmin,jmax,tvnn, &
-!TVS        &                    ntvs_use_prof,ntvs_use_inst,ntvs_use_slot)
-      ELSE
-        imin = 1
-        IF( nobs > 0 ) &
-        & CALL obs_local_sub(imin,imax,jmin,jmax,nn,nobs_use)
-!TVS        IF( ntvs > 0 ) &
-!TVS        & CALL tvs_local_sub(imin,imax,jmin,jmax,tvnn, &
-!TVS        &                    ntvs_use_prof,ntvs_use_inst,ntvs_use_slot)
-        DO imin=1,nlon-1
-          IF(minlon < lon(imin+1,1)) EXIT
-        END DO
-        imax = nlon
-        IF( nobs > 0 ) &
-        & CALL obs_local_sub(imin,imax,jmin,jmax,nn,nobs_use)
-!TVS        IF( ntvs > 0 ) &
-!TVS        & CALL tvs_local_sub(imin,imax,jmin,jmax,tvnn, &
-!TVS        &                    ntvs_use_prof,ntvs_use_inst,ntvs_use_slot)
-      END IF
-    END IF
-  ELSE IF(minlon < 0 .AND. maxlon <= 360.0d0) THEN
-    DO imax=1,nlon-1
-      IF(maxlon < lon(imax+1,1)) EXIT
-    END DO
-    minlon = minlon + 360.0d0
-    IF(minlon < 0) THEN
-      imin = 1
-      imax = nlon
-      IF( nobs > 0 ) &
-      & CALL obs_local_sub(imin,imax,jmin,jmax,nn,nobs_use)
-!TVS      IF( ntvs > 0 ) &
-!TVS      & CALL tvs_local_sub(imin,imax,jmin,jmax,tvnn, &
-!TVS      &                    ntvs_use_prof,ntvs_use_inst,ntvs_use_slot)
-    ELSE
-      DO imin=1,nlon-1
-        IF(minlon < lon(imin+1,1)) EXIT
-      END DO
-      IF(imin < imax) THEN
-        imin = 1
-        imax = nlon
-        IF( nobs > 0 ) &
-        & CALL obs_local_sub(imin,imax,jmin,jmax,nn,nobs_use)
-!TVS        IF( ntvs > 0 ) &
-!TVS        & CALL tvs_local_sub(imin,imax,jmin,jmax,tvnn, &
-!TVS        &                    ntvs_use_prof,ntvs_use_inst,ntvs_use_slot)
-      ELSE
-        imin = 1
-        IF( nobs > 0 ) &
-        & CALL obs_local_sub(imin,imax,jmin,jmax,nn,nobs_use)
-!TVS        IF( ntvs > 0 ) &
-!TVS        & CALL tvs_local_sub(imin,imax,jmin,jmax,tvnn, &
-!TVS        &                    ntvs_use_prof,ntvs_use_inst,ntvs_use_slot)
-        DO imin=1,nlon-1
-          IF(minlon < lon(imin+1,1)) EXIT
-        END DO
-        imax = nlon
-        IF( nobs > 0 ) &
-        & CALL obs_local_sub(imin,imax,jmin,jmax,nn,nobs_use)
-!TVS        IF( ntvs > 0 ) &
-!TVS        & CALL tvs_local_sub(imin,imax,jmin,jmax,tvnn, &
-!TVS        &                    ntvs_use_prof,ntvs_use_inst,ntvs_use_slot)
-      END IF
-    END IF
-  ELSE
-    maxlon = maxlon - 360.0d0
-    minlon = minlon + 360.0d0
-    IF(maxlon > 360.0 .OR. minlon < 0) THEN
-      imin = 1
-      imax = nlon
-      IF( nobs > 0 ) &
-      & CALL obs_local_sub(imin,imax,jmin,jmax,nn,nobs_use)
-!TVS      IF( ntvs > 0 ) &
-!TVS      & CALL tvs_local_sub(imin,imax,jmin,jmax,tvnn, &
-!TVS      &                    ntvs_use_prof,ntvs_use_inst,ntvs_use_slot)
-    ELSE
-      DO imin=1,nlon-1
-        IF(minlon < lon(imin+1,1)) EXIT
-      END DO
-      DO imax=1,nlon-1
-        IF(maxlon < lon(imax+1,1)) EXIT
-      END DO
-      IF(imin > imax) THEN
-        imin = 1
-        imax = nlon
-        IF( nobs > 0 ) &
-        & CALL obs_local_sub(imin,imax,jmin,jmax,nn,nobs_use)
-!TVS        IF( ntvs > 0 ) &
-!TVS        & CALL tvs_local_sub(imin,imax,jmin,jmax,tvnn, &
-!TVS        &                    ntvs_use_prof,ntvs_use_inst,ntvs_use_slot)
-      ELSE
-        IF( nobs > 0 ) &
-        & CALL obs_local_sub(imin,imax,jmin,jmax,nn,nobs_use)
-!TVS        IF( ntvs > 0 ) &
-!TVS        & CALL tvs_local_sub(imin,imax,jmin,jmax,tvnn, &
-!TVS        &                    ntvs_use_prof,ntvs_use_inst,ntvs_use_slot)
-      END IF
-    END IF
-  END IF
+  IF( nobs > 0 ) CALL obs_local_sub(imin,imax,jmin,jmax,nn,nobs_use)
   nn = nn-1
-!TVS  tvnn = tvnn -1
-!TVS  IF( nn < 1 .AND. tvnn < 1 ) THEN
   IF(nn < 1) THEN
     nobsl = 0
     RETURN
@@ -481,7 +340,7 @@ SUBROUTINE obs_local(ij,ilev,hdxf,rdiag,dep,nobsl,logpfm)
       tmplon=obslon(nobs_use(n))
       tmplat=obslat(nobs_use(n))
       CALL com_distll_1( tmplon, tmplat,lon1(ij), lat1(ij), dist)
-      IF(dist > dist_zero ) CYCLE
+      IF(dist > dist_zero) CYCLE
 
       nobsl = nobsl + 1
       hdxf(nobsl,:) = obshdxf(nobs_use(n),:)
@@ -494,42 +353,6 @@ SUBROUTINE obs_local(ij,ilev,hdxf,rdiag,dep,nobsl,logpfm)
         & * exp(0.5d0 * ((dist/sigma_obs)**2 + (dlev/sigma_obsv)**2))
     END DO
   END IF
-!TVS!
-!TVS! ATOVS
-!TVS!
-!TVS  IF(tvnn > 0) THEN
-!TVS    DO n=1,tvnn
-!TVS      tmplon=tvslon(ntvs_use_prof(n),ntvs_use_inst(n),ntvs_use_slot(n))
-!TVS      tmplat=tvslat(ntvs_use_prof(n),ntvs_use_inst(n),ntvs_use_slot(n))
-!TVS      CALL com_distll_1( tmplon, tmplat, lon1(ij), lat1(ij), dist)
-!TVS      IF( dist > dist_zero) CYCLE
-!TVS
-!TVS      DO ichan=1,ntvsch(ntvs_use_inst(n))
-!TVS        tmperr=tvserr(ichan,ntvs_use_prof(n),ntvs_use_inst(n),ntvs_use_slot(n))
-!TVS        tmpqc=tvsqc(ichan,ntvs_use_prof(n),ntvs_use_inst(n),ntvs_use_slot(n))
-!TVS        tmpwgt(:)=tvswgt(:,ichan, &
-!TVS                         & ntvs_use_prof(n), &
-!TVS                         & ntvs_use_inst(n), &
-!TVS                         & ntvs_use_slot(n))
-!TVS        IF( tmpqc == 1 .AND. tmpwgt(ilev) > 0.05D0 ) THEN
-!TVS          nobsl = nobsl + 1
-!TVS          DO im = 1, nbv
-!TVS            hdxf(nobsl,im) = tvshdxf(im,ichan, &
-!TVS                              & ntvs_use_prof(n), &
-!TVS                              & ntvs_use_inst(n), &
-!TVS                              & ntvs_use_slot(n))
-!TVS          END DO
-!TVS          dep(nobsl)    = tvsdep(ichan, &
-!TVS                              & ntvs_use_prof(n), &
-!TVS                              & ntvs_use_inst(n), &
-!TVS                              & ntvs_use_slot(n))
-!TVS          rdiag(nobsl)  = tmperr * tmperr &
-!TVS                        & * exp(0.5d0 * (dist/sigma_obs)**2) &
-!TVS                        & / (tmpwgt(ilev) * tmpwgt(ilev))
-!TVS        END IF
-!TVS      END DO
-!TVS    END DO
-!TVS  END IF
 !
 ! DEBUG
 ! IF( ILEV == 1 .AND. ILON == 1 ) &
@@ -537,7 +360,7 @@ SUBROUTINE obs_local(ij,ilev,hdxf,rdiag,dep,nobsl,logpfm)
 !
   IF( nobsl > nobstotal ) THEN
     WRITE(6,'(A,I5,A,I5)') 'FATAL ERROR, NOBSL=',nobsl,' > NOBSTOTAL=',nobstotal
-    WRITE(6,*) 'IJ,NN,TVNN=', ij, nn, tvnn
+    WRITE(6,*) 'IJ,NN,', ij, nn
     STOP 99
   END IF
 !

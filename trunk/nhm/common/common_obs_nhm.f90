@@ -23,18 +23,18 @@ MODULE common_obs_nhm
   INTEGER,PARAMETER :: nbslot=1 ! basetime slot
   REAL(r_size),PARAMETER :: sigma_obs=400.0d3
 !  REAL(r_size),PARAMETER :: sigma_obsv=0.4d0
-  REAL(r_size),PARAMETER :: sigma_obsv=0.1d0
+  REAL(r_size),PARAMETER :: sigma_obsv=1.0d0 ! vertical localization [grid]
   REAL(r_size),PARAMETER :: sigma_obst=3.0d0
   REAL(r_size),SAVE :: dist_zero
   REAL(r_size),SAVE :: dist_zerov
-  REAL(r_size),ALLOCATABLE,SAVE :: dlon_zero(:)
-  REAL(r_size),SAVE :: dlat_zero
   REAL(r_size),ALLOCATABLE,SAVE :: obselm(:)
   REAL(r_size),ALLOCATABLE,SAVE :: obslon(:)
   REAL(r_size),ALLOCATABLE,SAVE :: obslat(:)
   REAL(r_size),ALLOCATABLE,SAVE :: obslev(:)
   REAL(r_size),ALLOCATABLE,SAVE :: obsdat(:)
   REAL(r_size),ALLOCATABLE,SAVE :: obserr(:)
+  REAL(r_size),ALLOCATABLE,SAVE :: obsi(:)
+  REAL(r_size),ALLOCATABLE,SAVE :: obsj(:)
 !  REAL(r_size),ALLOCATABLE,SAVE :: obsk(:)
   REAL(r_size),ALLOCATABLE,SAVE :: obsdep(:)
   REAL(r_size),ALLOCATABLE,SAVE :: obshdxf(:,:)
@@ -51,7 +51,6 @@ SUBROUTINE set_common_obs_nhm
   REAL(r_size),PARAMETER :: threshold_dz=1000.0d0
   REAL(r_size),PARAMETER :: gross_error=10.0d0
   REAL(r_size) :: dz,tg,qg
-  REAL(r_size) :: ri,rj
   REAL(r_size) :: dlon1,dlon2,dlon,dlat
   REAL(r_size),ALLOCATABLE :: wk2d(:,:)
   INTEGER,ALLOCATABLE :: iwk2d(:,:)
@@ -61,6 +60,8 @@ SUBROUTINE set_common_obs_nhm
   REAL(r_size),ALLOCATABLE :: tmplev(:)
   REAL(r_size),ALLOCATABLE :: tmpdat(:)
   REAL(r_size),ALLOCATABLE :: tmperr(:)
+  REAL(r_size),ALLOCATABLE :: tmpi(:)
+  REAL(r_size),ALLOCATABLE :: tmpj(:)
   REAL(r_size),ALLOCATABLE :: tmpk(:)
   REAL(r_size),ALLOCATABLE :: tmpdep(:)
   REAL(r_size),ALLOCATABLE :: tmphdxf(:,:)
@@ -72,6 +73,8 @@ SUBROUTINE set_common_obs_nhm
   REAL(r_size),ALLOCATABLE :: tmp2lev(:)
   REAL(r_size),ALLOCATABLE :: tmp2dat(:)
   REAL(r_size),ALLOCATABLE :: tmp2err(:)
+  REAL(r_size),ALLOCATABLE :: tmp2i(:)
+  REAL(r_size),ALLOCATABLE :: tmp2j(:)
 !  REAL(r_size),ALLOCATABLE :: tmp2k(:)
   REAL(r_size),ALLOCATABLE :: tmp2dep(:)
   REAL(r_size),ALLOCATABLE :: tmp2hdxf(:,:)
@@ -86,11 +89,6 @@ SUBROUTINE set_common_obs_nhm
 
   dist_zero = sigma_obs * SQRT(10.0d0/3.0d0) * 2.0d0
   dist_zerov = sigma_obsv * SQRT(10.0d0/3.0d0) * 2.0d0
-  dlat_zero = dist_zero / pi / re * 180.0d0
-  ALLOCATE(dlon_zero(nij1))
-  DO i=1,nij1
-    dlon_zero(i) = dlat_zero / COS(pi*lat1(i)/180.0d0)
-  END DO
 
   DO islot=1,nslots
     WRITE(obsfile(4:5),'(I2.2)') islot
@@ -107,6 +105,8 @@ SUBROUTINE set_common_obs_nhm
   ALLOCATE( tmplev(nobs) )
   ALLOCATE( tmpdat(nobs) )
   ALLOCATE( tmperr(nobs) )
+  ALLOCATE( tmpi(nobs) )
+  ALLOCATE( tmpj(nobs) )
   ALLOCATE( tmpk(nobs) )
   ALLOCATE( tmpdep(nobs) )
   ALLOCATE( tmphdxf(nobs,nbv) )
@@ -135,23 +135,24 @@ SUBROUTINE set_common_obs_nhm
 !$OMP PARALLEL DO SCHEDULE(DYNAMIC) PRIVATE(n,ri,rj,dz,tg,qg)
       DO n=1,nobslots(islot)
         CALL phys2ijk(v3d(:,:,:,iv3d_p),tmpelm(nn+n),&
-          & tmplon(nn+n),tmplat(nn+n),tmplev(nn+n),ri,rj,tmpk(nn+n))
-        IF(CEILING(ri) < 2 .OR. nlon+1 < CEILING(ri)) THEN
+          & tmplon(nn+n),tmplat(nn+n),tmplev(nn+n),&
+          & tmpi(nn+n),tmpj(nn+n),tmpk(nn+n))
+        IF(CEILING(tmpi(nn+n)) < 2 .OR. nlon+1 < CEILING(tmpi(nn+n))) THEN
 !$OMP CRITICAL
           WRITE(6,'(A)') '* X-coordinate out of range'
-          WRITE(6,'(A,F6.2,A,F6.2)') '*   ri=',ri,', rlon=',tmplon(nn+n)
+          WRITE(6,'(A,F6.2,A,F6.2)') '*   ri=',tmpi(nn+n),', rlon=',tmplon(nn+n)
 !$OMP END CRITICAL
           CYCLE
         END IF
-        IF(CEILING(rj) < 2 .OR. nlat < CEILING(rj)) THEN
+        IF(CEILING(tmpj(nn+n)) < 2 .OR. nlat < CEILING(tmpj(nn+n))) THEN
 !$OMP CRITICAL
           WRITE(6,'(A)') '* Y-coordinate out of range'
-          WRITE(6,'(A,F6.2,A,F6.2)') '*   rj=',rj,', rlat=',tmplat(nn+n)
+          WRITE(6,'(A,F6.2,A,F6.2)') '*   rj=',tmpj(nn+n),', rlat=',tmplat(nn+n)
 !$OMP END CRITICAL
           CYCLE
         END IF
         IF(CEILING(tmpk(n+nn)) > nlev) THEN
-          CALL itpl_2d(phi0,ri,rj,dz)
+          CALL itpl_2d(phi0,tmpi(nn+n),tmpj(nn+n),dz)
 !$OMP CRITICAL
           WRITE(6,'(A)') '* Z-coordinate out of range'
           WRITE(6,'(A,F6.2,A,F10.2,A,F6.2,A,F6.2,A,F10.2)') &
@@ -165,7 +166,7 @@ SUBROUTINE set_common_obs_nhm
            & NINT(tmpelm(nn+n)) == id_v_obs) THEN
             tmpk(nn+n) = 1.00001d0
           ELSE
-            CALL itpl_2d(phi0,ri,rj,dz)
+            CALL itpl_2d(phi0,tmpi(nn+n),tmpj(nn+n),dz)
 !$OMP CRITICAL
             WRITE(6,'(A)') '* Z-coordinate out of range'
             WRITE(6,'(A,F6.2,A,F10.2,A,F6.2,A,F6.2,A,F10.2)') &
@@ -198,7 +199,7 @@ SUBROUTINE set_common_obs_nhm
         ! observational operator
         !
         CALL Trans_XtoY(tmpelm(nn+n),&
-          & ri,rj,tmpk(nn+n),v3d,v2d,tmphdxf(nn+n,im))
+          & tmpi(nn+n),tmpj(nn+n),tmpk(nn+n),v3d,v2d,tmphdxf(nn+n,im))
         tmpqc0(nn+n,im) = 1
       END DO
 !$OMP END PARALLEL DO
@@ -277,6 +278,8 @@ SUBROUTINE set_common_obs_nhm
     tmplev(nn) = tmplev(n)
     tmpdat(nn) = tmpdat(n)
     tmperr(nn) = tmperr(n)
+    tmpi(nn) = tmpi(n)
+    tmpj(nn) = tmpj(n)
     tmpk(nn) = tmpk(n)
     tmpdep(nn) = tmpdep(n)
     tmphdxf(nn,:) = tmphdxf(n,:)
@@ -293,6 +296,8 @@ SUBROUTINE set_common_obs_nhm
   ALLOCATE( tmp2lev(nobs) )
   ALLOCATE( tmp2dat(nobs) )
   ALLOCATE( tmp2err(nobs) )
+  ALLOCATE( tmp2i(nobs) )
+  ALLOCATE( tmp2j(nobs) )
 !  ALLOCATE( tmp2k(nobs) )
   ALLOCATE( tmp2dep(nobs) )
   ALLOCATE( tmp2hdxf(nobs,nbv) )
@@ -302,6 +307,8 @@ SUBROUTINE set_common_obs_nhm
   ALLOCATE( obslev(nobs) )
   ALLOCATE( obsdat(nobs) )
   ALLOCATE( obserr(nobs) )
+  ALLOCATE( obsi(nobs) )
+  ALLOCATE( obsj(nobs) )
 !  ALLOCATE( obsk(nobs) )
   ALLOCATE( obsdep(nobs) )
   ALLOCATE( obshdxf(nobs,nbv) )
@@ -311,7 +318,7 @@ SUBROUTINE set_common_obs_nhm
 !$OMP DO SCHEDULE(DYNAMIC)
   DO j=1,nlat-1
     DO n=1,nobs
-      IF(tmplat(n) < lat(j,1) .OR. lat(j+1,1) <= tmplat(n)) CYCLE
+      IF(tmpj(n) < j .OR. j+1 <= tmpj(n)) CYCLE
       nj(j) = nj(j) + 1
     END DO
   END DO
@@ -325,7 +332,7 @@ SUBROUTINE set_common_obs_nhm
   DO j=1,nlat-1
     nn = 0
     DO n=1,nobs
-      IF(tmplat(n) < lat(j,1) .OR. lat(j+1,1) <= tmplat(n)) CYCLE
+      IF(tmpj(n) < j .OR. j+1 <= tmpj(n)) CYCLE
       nn = nn + 1
       tmp2elm(njs(j)+nn) = tmpelm(n)
       tmp2lon(njs(j)+nn) = tmplon(n)
@@ -333,6 +340,8 @@ SUBROUTINE set_common_obs_nhm
       tmp2lev(njs(j)+nn) = tmplev(n)
       tmp2dat(njs(j)+nn) = tmpdat(n)
       tmp2err(njs(j)+nn) = tmperr(n)
+      tmp2i(njs(j)+nn) = tmpi(n)
+      tmp2j(njs(j)+nn) = tmpj(n)
 !      tmp2k(njs(j)+nn) = tmpk(n)
       tmp2dep(njs(j)+nn) = tmpdep(n)
       tmp2hdxf(njs(j)+nn,:) = tmphdxf(n,:)
@@ -348,11 +357,7 @@ SUBROUTINE set_common_obs_nhm
     nn = 0
     DO i=1,nlon
       DO n=njs(j)+1,njs(j)+nj(j)
-        IF(i < nlon) THEN
-          IF(tmp2lon(n) < lon(i,j) .OR. lon(i+1,j) <= tmp2lon(n)) CYCLE
-        ELSE
-          IF(tmp2lon(n) < lon(nlon,j) .OR. 360.0d0 <= tmp2lon(n)) CYCLE
-        END IF
+        IF(tmp2i(n) < i .OR. i+1 <= tmp2i(n)) CYCLE
         nn = nn + 1
         obselm(njs(j)+nn) = tmp2elm(n)
         obslon(njs(j)+nn) = tmp2lon(n)
@@ -360,6 +365,8 @@ SUBROUTINE set_common_obs_nhm
         obslev(njs(j)+nn) = tmp2lev(n)
         obsdat(njs(j)+nn) = tmp2dat(n)
         obserr(njs(j)+nn) = tmp2err(n)
+        obsi(njs(j)+nn) = tmp2i(n)
+        obsj(njs(j)+nn) = tmp2j(n)
 !        obsk(njs(j)+nn) = tmp2k(n)
         obsdep(njs(j)+nn) = tmp2dep(n)
         obshdxf(njs(j)+nn,:) = tmp2hdxf(n,:)
@@ -369,8 +376,8 @@ SUBROUTINE set_common_obs_nhm
     IF(nn /= nj(j)) THEN
 !$OMP CRITICAL
       WRITE(6,'(A,2I)') 'OBS DATA SORT ERROR: ',nn,nj(j)
-      WRITE(6,'(F6.2,A,F6.2)') lat(j,1),'< LAT <',lat(j+1,1)
-      WRITE(6,'(F6.2,A,F6.2)') MINVAL(tmp2lat(njs(j)+1:njs(j)+nj(j))),'< OBSLAT <',MAXVAL(tmp2lat(njs(j)+1:njs(j)+nj(j)))
+      WRITE(6,'(F6.2,A,F6.2)') j,'< J <',j+1
+      WRITE(6,'(F6.2,A,F6.2)') MINVAL(tmp2j(njs(j)+1:njs(j)+nj(j))),'< OBSJ <',MAXVAL(tmp2j(njs(j)+1:njs(j)+nj(j)))
 !$OMP END CRITICAL
     END IF
   END DO
@@ -382,6 +389,8 @@ SUBROUTINE set_common_obs_nhm
   DEALLOCATE( tmp2lev )
   DEALLOCATE( tmp2dat )
   DEALLOCATE( tmp2err )
+  DEALLOCATE( tmp2i )
+  DEALLOCATE( tmp2j )
 !  DEALLOCATE( tmp2k )
   DEALLOCATE( tmp2dep )
   DEALLOCATE( tmp2hdxf )
@@ -391,6 +400,8 @@ SUBROUTINE set_common_obs_nhm
   DEALLOCATE( tmplev )
   DEALLOCATE( tmpdat )
   DEALLOCATE( tmperr )
+  DEALLOCATE( tmpi )
+  DEALLOCATE( tmpj )
   DEALLOCATE( tmpk )
   DEALLOCATE( tmpdep )
   DEALLOCATE( tmphdxf )
