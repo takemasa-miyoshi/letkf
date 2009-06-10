@@ -21,10 +21,9 @@ MODULE common_obs_nhm
 
   INTEGER,PARAMETER :: nslots=1 ! number of time slots for 4D-LETKF
   INTEGER,PARAMETER :: nbslot=1 ! basetime slot
-  REAL(r_size),PARAMETER :: sigma_obs=400.0d3
-!  REAL(r_size),PARAMETER :: sigma_obsv=0.4d0
-  REAL(r_size),PARAMETER :: sigma_obsv=1.0d0 ! vertical localization [grid]
-  REAL(r_size),PARAMETER :: sigma_obst=3.0d0
+  REAL(r_size),PARAMETER :: sigma_obs=400.0d3!horizontal localization [m] 
+  REAL(r_size),PARAMETER :: sigma_obsv=0.4d0 !vertical localization [lnp]
+  REAL(r_size),PARAMETER :: sigma_obst=3.0d0 !time localization [time slots]
   REAL(r_size),SAVE :: dist_zero
   REAL(r_size),SAVE :: dist_zerov
   REAL(r_size),ALLOCATABLE,SAVE :: obselm(:)
