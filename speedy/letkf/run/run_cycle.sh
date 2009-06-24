@@ -9,13 +9,15 @@ set -e
 #-----------------------------------------------------------------------
 NODE=4
 MEMBER=20
+OBS=reg3
+EXP=M20L400I05
 ### directory settings
 CDIR=`pwd`
 cd ../..
 SPEEDY=`pwd`
-OUTPUT=$SPEEDY/DATA/test  # data directory
-OBSDIR=$SPEEDY/DATA/obs   # obs data directory
-TMPDIR=$SPEEDY/letkf/tmp  # work directory
+OUTPUT=$SPEEDY/DATA/$OBS/$EXP # data directory
+OBSDIR=$SPEEDY/DATA/$OBS/obs  # obs data directory
+TMPDIR=$SPEEDY/DATA/tmp/letkf # work directory
 LETKF=letkf020.m01
 ### initial date setting
 IYYYY=1982
