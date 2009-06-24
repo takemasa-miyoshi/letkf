@@ -2,8 +2,9 @@
 CDIR=`pwd`
 cd ..
 SPEEDY=`pwd`
+EXP=reg3
 TRUEDIR=$SPEEDY/DATA/nature
-OBSDIR=$SPEEDY/DATA/obs
+OBSDIR=$SPEEDY/DATA/$EXP/obs
 PGM=obsmake.s01
 source $SPEEDY/../common/timeinc.sh
 # Initial date
@@ -13,7 +14,7 @@ ID=01
 IH=00
 # Final date
 EY=1982
-EM=02
+EM=03
 ED=01
 EH=00
 # start

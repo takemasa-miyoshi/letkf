@@ -8,11 +8,13 @@ set -e
 # Modify below according to your environment
 #-----------------------------------------------------------------------
 MEMBER=20
+OBS=reg3
+EXP=M20L400I05
 ### directory settings
 cd ../..
 SPEEDY=`pwd`
-NATURE=$SPEEDY/DATA/nature # nature run
-OUTPUT=$SPEEDY/DATA/test   # directory for new experiment
+NATURE=$SPEEDY/DATA/nature     # nature run
+OUTPUT=$SPEEDY/DATA/$OBS/$EXP  # directory for new experiment
 ### initial date setting
 IYYYY=1982
 IMM=01
