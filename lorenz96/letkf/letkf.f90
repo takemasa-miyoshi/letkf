@@ -12,8 +12,8 @@ PROGRAM letkf
 
   INTEGER,PARAMETER :: ndays=360
   INTEGER,PARAMETER :: nt=ndays*4
-  REAL(r_size),PARAMETER :: xlocal=5.0d0 ! localization scale
-  REAL(r_size),PARAMETER :: parm_infl=0.02d0 ! inflation parameter
+  REAL(r_size),PARAMETER :: xlocal=1.0d0 ! localization scale
+  REAL(r_size),PARAMETER :: parm_infl=0.04d0 ! inflation parameter
   REAL(r_size) :: xmaxloc
   REAL(r_size) :: obserr=1.0d0
   REAL(r_sngl) :: y4(ny)
@@ -31,6 +31,7 @@ PROGRAM letkf
   REAL(r_size) :: d_loc(ny)
   REAL(r_size) :: hdxf_loc(ny,nbv)
   REAL(r_size) :: trans(nbv,nbv)
+  REAL(r_size) :: dist
   INTEGER :: ktoneday
   INTEGER :: ktcyc
   INTEGER :: i,j,it,ios
@@ -137,11 +138,12 @@ PROGRAM letkf
         DO j=1,nx
           IF(MAXVAL(h(i,:)) == h(i,j)) EXIT
         END DO
-        IF(REAL(ABS(j-ix),r_size) < xmaxloc) THEN
+        dist = REAL(MIN(ABS(j-ix),nx-ABS(j-ix)),r_size)
+        IF(dist < xmaxloc) THEN
           ny_loc = ny_loc+1
           d_loc(ny_loc) = d(i)
           rdiag_loc(ny_loc) = obserr**2 &
-            & * exp(0.5 * (REAL(j-ix,r_size)/xlocal)**2) ! obs localization
+            & * exp(0.5 * (dist/xlocal)**2) ! obs localization
           hdxf_loc(ny_loc,:) = hdxf(i,:)
         END IF
       END DO
