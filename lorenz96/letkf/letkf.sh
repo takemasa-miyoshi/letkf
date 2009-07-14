@@ -2,7 +2,7 @@
 set -e
 ORO=
 OBSNAME=regular13
-EXPNAME=L50I02
+EXPNAME=L10I04
 F90=pgf90
 CDIR=`pwd`
 cd ..
@@ -28,6 +28,7 @@ rm *.mod
 rm *.o
 ln -s $OUTDIR/$OBSNAME/obs.dat .
 ln -s $OUTDIR/spinup/init*.dat .
+ln -s $OUTDIR/nature.dat .
 time ./letkf
 mkdir -p $OUTDIR/$OBSNAME/$EXPNAME
 mv guesmean.dat $OUTDIR/$OBSNAME/$EXPNAME
