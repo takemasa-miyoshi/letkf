@@ -1,7 +1,7 @@
 #summary Documentation for SPEEDY-LETKF
 
 = SPEEDY-LETKF =
-<wiki:toc max_depth="3" />
+<wiki:toc max_depth="2" />
 
 == SPEEDY model ==
   * *SPEEDY* is a simplified AGCM (Atmospheric General Circulation Model) developed by [http://dx.doi.org/10.1007/s00382-002-0268-2 Molteni (2003)]. It has only 96x48x7 grid points for Earth's global atmosphere. It is feasible for single processor PC (like your desktop or laptop PC) with a Fortran 90 compiler and shell scripting environment. I have tested with a Linux PC with Intel Celeron D 2.16 GHz processor (about 5 years old), as well as very recent Intel Xeon quad-core 2.5 GHz processors. It takes about 2 seconds for 6-hr forecast with the Celeron D processor, and about 0.4 seconds with the Xeon processor (single process).
@@ -43,7 +43,7 @@ $sh make_obsmake.sh
 {{{
 $sh obsmake.sh
 }}}
-  # Run the SPEEDY-LETKF forecast/assimilation cycle experiment ===
+  # Run the SPEEDY-LETKF forecast/assimilation cycle experiment
     * Change directory to the LETKF directory
 {{{
 $cd ../letkf
