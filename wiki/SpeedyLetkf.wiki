@@ -10,6 +10,37 @@
 == Getting started ==
   # Download the latest release version from the [http://code.google.com/p/miyoshi/source/checkout Source tab].
   # Run the SPEEDY model
+    # Dig into the model directory
+{{{
+$cd speedy/model/run
+}}}
+    # Execute run_first.sh
+{{{
+$sh run_first.sh
+}}}
+    This executes 1-year integration. It may take time according to your computer. With an Intel Xeon 2.5GHz Quad-core processor, it takes about 6 min with a single process (without making use of multi-core function).
+    # Edit and execute run_cycle.sh<br>Edit the final date setting for your convenience. Just for testing, one day may be sufficient.
+{{{
+$sh run_cycle.sh
+}}}
+    # At this point, you already got the "nature run" of the SPEEDY model. You can visualize the data using [http://www.iges.org/grads/ GrADS software].
+{{{
+$cd ../DATA
+$grads
+ga-> open nature/yyyymmddhh.ctl
+}}}
   # Generate simulated observation data
+    # Change directory to the observation tools directory
+{{{
+$cd ../obs
+}}}
+    # Compile the program
+{{{
+$sh make_obsmake.sh
+}}}
+    # Edit and execute obsmake.sh<br>Edit the final date setting shorter than the one that you generated the nature run.
+{{{
+$sh obsmake.sh
+}}}
   # Run the SPEEDY-LETKF forecast/assimilation cycle experiment
   # Monitor the standard output
