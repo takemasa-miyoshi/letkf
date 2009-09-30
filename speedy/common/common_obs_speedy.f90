@@ -20,7 +20,7 @@ MODULE common_obs_speedy
 
   INTEGER,PARAMETER :: nslots=1 ! number of time slots for 4D-LETKF
   INTEGER,PARAMETER :: nbslot=1 ! basetime slot
-  REAL(r_size),PARAMETER :: sigma_obs=400.0d3
+  REAL(r_size),PARAMETER :: sigma_obs=700.0d3
 !  REAL(r_size),PARAMETER :: sigma_obsv=0.4d0
   REAL(r_size),PARAMETER :: sigma_obsv=0.1d0
   REAL(r_size),PARAMETER :: sigma_obst=3.0d0
@@ -246,12 +246,12 @@ SUBROUTINE set_common_obs_speedy
 !
 ! temporal observation localization
 !
-  nn = 0
-  DO islot=1,nslots
-    tmperr(nn+1:nn+nobslots(islot)) = tmperr(nn+1:nn+nobslots(islot)) &
-      & * exp(0.25d0 * (REAL(islot-nbslot,r_size) / sigma_obst)**2)
-    nn = nn + nobslots(islot)
-  END DO
+!  nn = 0
+!  DO islot=1,nslots
+!    tmperr(nn+1:nn+nobslots(islot)) = tmperr(nn+1:nn+nobslots(islot)) &
+!      & * exp(0.25d0 * (REAL(islot-nbslot,r_size) / sigma_obst)**2)
+!    nn = nn + nobslots(islot)
+!  END DO
 !
 ! SELECT OBS IN THE NODE
 !
