@@ -80,7 +80,7 @@ SUBROUTINE das_letkf(gues3d,gues2d,anal3d,anal2d)
   ! FCST PERTURBATIONS
   !
   ALLOCATE(mean3d(nij1,nlev,nv3d))
-  ALLOCATE(mean2d(nij1,nv3d))
+  ALLOCATE(mean2d(nij1,nv2d))
   CALL ensmean_grd(nbv,nij1,gues3d,gues2d,mean3d,mean2d)
   DO n=1,nv3d
 !$OMP PARALLEL DO PRIVATE(i,j,k)

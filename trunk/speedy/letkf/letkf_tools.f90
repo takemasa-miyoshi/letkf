@@ -25,8 +25,8 @@ MODULE letkf_tools
   INTEGER,SAVE :: nobstotal
 
 !  INTEGER,PARAMETER :: nlev_dampinfl = 15 ! number of levels for inflation damp
-  REAL(r_size),PARAMETER :: sp_inflation_n = 0.10d0 !SQRT of cov infl in NH
-  REAL(r_size),PARAMETER :: sp_inflation_s = 0.10d0 !SQRT of cov infl in SH
+  REAL(r_size),PARAMETER :: sp_inflation_n = 0.025d0 !SQRT of cov infl in NH
+  REAL(r_size),PARAMETER :: sp_inflation_s = 0.025d0 !SQRT of cov infl in SH
   REAL(r_size),PARAMETER :: sp_infl_additive = 0.d0 !additive inflation
 !TVS  LOGICAL,PARAMETER :: msw_vbc = .FALSE.
 
@@ -83,7 +83,7 @@ SUBROUTINE das_letkf(gues3d,gues2d,anal3d,anal2d)
   ! FCST PERTURBATIONS
   !
   ALLOCATE(mean3d(nij1,nlev,nv3d))
-  ALLOCATE(mean2d(nij1,nv3d))
+  ALLOCATE(mean2d(nij1,nv2d))
   CALL ensmean_grd(nbv,nij1,gues3d,gues2d,mean3d,mean2d)
   DO n=1,nv3d
 !$OMP PARALLEL DO PRIVATE(i,j,k)
