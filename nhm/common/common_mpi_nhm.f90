@@ -21,6 +21,7 @@ MODULE common_mpi_nhm
 
   INTEGER,SAVE :: nij1
   INTEGER,SAVE :: nij1max
+  INTEGER,ALLOCATABLE,SAVE :: nij1node(:)
   REAL(r_size),ALLOCATABLE,SAVE :: phi1(:)
   REAL(r_size),ALLOCATABLE,SAVE :: dx1(:),dy1(:)
   REAL(r_size),ALLOCATABLE,SAVE :: lon1(:),lat1(:)
@@ -32,7 +33,7 @@ SUBROUTINE set_common_mpi_nhm
   REAL(r_sngl) :: v2dg(nlon,nlat,nv2d)
   REAL(r_size),ALLOCATABLE :: v3d(:,:,:)
   REAL(r_size),ALLOCATABLE :: v2d(:,:)
-  INTEGER :: i,j
+  INTEGER :: i,j,n
 
   WRITE(6,'(A)') 'Hello from set_common_mpi_nhm'
   i = MOD(nlon*nlat,nprocs)
@@ -43,6 +44,14 @@ SUBROUTINE set_common_mpi_nhm
     nij1 = nij1max - 1
   END IF
   WRITE(6,'(A,I3.3,A,I6)') 'MYRANK ',myrank,' number of grid points: nij1= ',nij1
+  ALLOCATE(nij1node(nprocs))
+  DO n=1,nprocs
+    IF(n-1 < i) THEN
+      nij1node(n) = nij1max
+    ELSE
+      nij1node(n) = nij1max - 1
+    END IF
+  END DO
 
   ALLOCATE(lon1(nij1))
   ALLOCATE(lat1(nij1))
@@ -243,7 +252,7 @@ SUBROUTINE grd_to_buf(grd,buf)
   INTEGER :: i,j,m,ilon,ilat
 
   DO m=1,nprocs
-    DO i=1,nij1max
+    DO i=1,nij1node(m)
       j = m-1 + nprocs * (i-1)
       ilon = MOD(j,nlon) + 1
       ilat = (j-ilon+1) / nlon + 1
@@ -262,7 +271,7 @@ SUBROUTINE buf_to_grd(buf,grd)
   INTEGER :: i,j,m,ilon,ilat
 
   DO m=1,nprocs
-    DO i=1,nij1max
+    DO i=1,nij1node(m)
       j = m-1 + nprocs * (i-1)
       ilon = MOD(j,nlon) + 1
       ilat = (j-ilon+1) / nlon + 1
