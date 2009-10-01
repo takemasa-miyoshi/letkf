@@ -67,7 +67,7 @@ SUBROUTINE com_stdev(ndim,var,aout)
 
   dev(:) = var(:) - amean
 
-  aout = SQRT( SUM(dev*dev) / REAL(ndim,r_size) )
+  aout = SQRT( SUM(dev*dev) / REAL(ndim-1,r_size) )
 
   RETURN
 END SUBROUTINE com_stdev
@@ -91,7 +91,7 @@ SUBROUTINE com_covar(ndim,var1,var2,cov)
   dev1(:) = var1(:) - amean1
   dev2(:) = var2(:) - amean2
 
-  cov = SUM( dev1*dev2 ) / REAL(ndim,r_size)
+  cov = SUM( dev1*dev2 ) / REAL(ndim-1,r_size)
 
   RETURN
 END SUBROUTINE com_covar
@@ -175,21 +175,25 @@ SUBROUTINE com_filter_lanczos(ndim,fc,var)
   REAL(r_size),INTENT(IN) :: fc    ! critical frequency in [0,pi]
   REAL(r_size),INTENT(INOUT) :: var(ndim)
 
-  INTEGER,PARAMETER :: lresol=24
+  INTEGER,PARAMETER :: lresol=10
 
   REAL(r_size) :: weight(-lresol:lresol)
   REAL(r_size) :: varwk(1-lresol:ndim+lresol)
+  REAL(r_size) :: rl,rlresol
   INTEGER :: i,l
 !
 ! Weight
 !
+  rlresol = REAL(lresol,r_size)
   DO l=-lresol,-1
-    weight(l) = sin(fc*real(l,8)) * sin(pi*real(l,8)/real(lresol,8)) &
-      & * real(lresol,8) / pi / real(l,8) / pi / real(l,8)
+    rl = REAL(l,r_size)
+    weight(l) = SIN(fc*rl) * SIN(pi*rl/rlresol) &
+      & * rlresol / pi / rl / pi / rl
   END DO
   DO l=1,lresol
-    weight(l) = sin(fc*real(l,8)) * sin(pi*real(l,8)/real(lresol,8)) &
-      & * real(lresol,8) / pi / real(l,8) / pi / real(l,8)
+    rl = REAL(l,r_size)
+    weight(l) = SIN(fc*rl) * SIN(pi*rl/rlresol) &
+      & * rlresol / pi / rl / pi / rl
   END DO
   weight(0) = fc / pi
 !
