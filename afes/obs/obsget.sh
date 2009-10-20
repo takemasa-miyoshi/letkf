@@ -87,8 +87,8 @@ TM=`timeinc6hr $IY $IM $ID $IH | cut -c5-6`
 TD=`timeinc6hr $IY $IM $ID $IH | cut -c7-8`
 TH=`timeinc6hr $IY $IM $ID $IH | cut -c9-10`
 IY=$TY
-IM=$TY
-ID=$TY
-IH=$TY
+IM=$TM
+ID=$TD
+IH=$TH
 done
-
+echo "NORMAL END"
