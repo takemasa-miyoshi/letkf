@@ -28,7 +28,7 @@ PROGRAM dec_prepbufr
   CHARACTER(8) :: cs
   REAL(r_dble) :: prs(3,maxlev,maxevn)
   REAL(r_dble) :: obs(3,maxlev,maxevn)
-  REAL :: wk(6)
+  REAL(r_sngl) :: wk(6)
   !
   ! Open the input file
   !
