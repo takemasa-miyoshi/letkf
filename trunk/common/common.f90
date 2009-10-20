@@ -365,12 +365,9 @@ SUBROUTINE com_distll(ndim,alon,alat,blon,blat,dist)
   REAL(r_size),INTENT(IN) :: blon(ndim)
   REAL(r_size),INTENT(IN) :: blat(ndim)
   REAL(r_size),INTENT(OUT) :: dist(ndim)
-  REAL(r_size),PARAMETER :: e=0.006674d0
-  REAL(r_size),PARAMETER :: a=6334834.0d0
-  REAL(r_size),PARAMETER :: b=6377937.0d0
-  REAL(r_size) :: r180=1.0d0/180.0d0
+  REAL(r_size),PARAMETER :: r180=1.0d0/180.0d0
   REAL(r_size) :: lon1,lon2,lat1,lat2
-  REAL(r_size) :: p,dp,dr,tmp,m,n
+  REAL(r_size) :: cosd(ndim)
   INTEGER :: i
 
   DO i=1,ndim
@@ -379,15 +376,11 @@ SUBROUTINE com_distll(ndim,alon,alat,blon,blat,dist)
     lat1 = alat(i) * pi * r180
     lat2 = blat(i) * pi * r180
 
-    p = (lat1 + lat2) * 0.5d0
-    dr = ABS(lon1 - lon2)
-    dr = MIN(dr,2.0d0*pi - dr)
-    dp = ABS(lat1 - lat2)
-    tmp = 1.0d0 / SQRT(1.0d0 - e * SIN(p) ** 2)
-    m = a * tmp ** 3
-    n = b * tmp
+    cosd(i) = SIN(lat1)*SIN(lat2) + COS(lat1)*COS(lat2)*COS(lon2-lon1)
+    cosd(i) = MIN( 1.d0,cosd(i))
+    cosd(i) = MAX(-1.d0,cosd(i))
 
-    dist(i) = SQRT((m * dp)**2 + (n * COS(p) * dr)**2)
+    dist(i) = ACOS( cosd(i) ) * re
   END DO
 
   RETURN
@@ -403,27 +396,20 @@ SUBROUTINE com_distll_1(alon,alat,blon,blat,dist)
   REAL(r_size),INTENT(IN) :: blon
   REAL(r_size),INTENT(IN) :: blat
   REAL(r_size),INTENT(OUT) :: dist
-  REAL(r_size),PARAMETER :: e=0.006674d0
-  REAL(r_size),PARAMETER :: a=6334834.0d0
-  REAL(r_size),PARAMETER :: b=6377937.0d0
-  REAL(r_size) :: r180=1.0d0/180.0d0
+  REAL(r_size),PARAMETER :: r180=1.0d0/180.0d0
   REAL(r_size) :: lon1,lon2,lat1,lat2
-  REAL(r_size) :: p,dp,dr,tmp,m,n
+  REAL(r_size) :: cosd
 
   lon1 = alon * pi * r180
   lon2 = blon * pi * r180
   lat1 = alat * pi * r180
   lat2 = blat * pi * r180
 
-  p = (lat1 + lat2) * 0.5d0
-  dr = ABS(lon1 - lon2)
-  dr = MIN(dr,2.0d0*pi - dr)
-  dp = ABS(lat1 - lat2)
-  tmp = 1.0d0 / SQRT(1.0d0 - e * SIN(p) ** 2)
-  m = a * tmp ** 3
-  n = b * tmp
+  cosd = SIN(lat1)*SIN(lat2) + COS(lat1)*COS(lat2)*COS(lon2-lon1)
+  cosd = MIN( 1.d0,cosd)
+  cosd = MAX(-1.d0,cosd)
 
-  dist = SQRT((m * dp)**2 + (n * COS(p) * dr)**2)
+  dist = ACOS( cosd ) * re
 
   RETURN
 END SUBROUTINE com_distll_1
