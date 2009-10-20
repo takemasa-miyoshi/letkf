@@ -34,7 +34,7 @@ then
     DD=0$DD
   elif test $DD -eq 29
   then
-    ITMP=`expr $YYYY % 4`
+    ITMP=`expr $YYYY % 4` || test 1 -eq 1
     if test $MM -eq 02 -a $ITMP -ne 0
     then
       DD=01
@@ -42,7 +42,7 @@ then
     fi
   elif test $DD -eq 30
   then
-    ITMP=`expr $YYYY % 4`
+    ITMP=`expr $YYYY % 4` || test 1 -eq 1
     if test $MM -eq 02 -a $ITMP -eq 0
     then
       DD=01
