@@ -105,7 +105,14 @@ if test $DATASRC -eq 1
 then
 DATAF=$IY$IM$ID$IH.prepbufr.nr
 else
-DATAF=prepbufr.gdas.$IY$IM$ID$IH.wo40
+if test $IY$IM -ge 200807
+then
+NR=nr
+DATAF=prepbufr.gdas.$IY$IM$ID.t${IH}z.$NR
+else
+NR=wo40
+DATAF=prepbufr.gdas.$IY$IM$ID$IH.$NR
+fi
 fi
 if test ! -f $DATAF
 then
@@ -114,12 +121,12 @@ then
 $WGET $DATAURL/$IY$IM/$IY$IM$ID/gdas1.t${IH}z.prepbufr.nr
 mv gdas1.t${IH}z.prepbufr.nr $IY$IM$ID$IH.prepbufr.nr
 else
-$WGET $OPT $DATAURL/prepbufr.$IY$IM$ID.wo40.tar.gz
-tar zxvf prepbufr.$IY$IM$ID.wo40.tar.gz
-rm prepbufr.$IY$IM$ID.wo40.tar.gz
-mv $IY$IM$ID.wo40/* .
-rmdir $IY$IM$ID.wo40
-rm -rf $IY$IM$ID.wo40.tar.gz
+$WGET $OPT $DATAURL/prepbufr.$IY$IM$ID.$NR.tar.gz
+tar zxvf prepbufr.$IY$IM$ID.$NR.tar.gz
+rm prepbufr.$IY$IM$ID.$NR.tar.gz
+mv $IY$IM$ID.$NR/* .
+rmdir $IY$IM$ID.$NR
+rm -rf $IY$IM$ID.$NR.tar.gz
 fi
 fi
 #
