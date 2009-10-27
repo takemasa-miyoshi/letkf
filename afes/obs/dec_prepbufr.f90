@@ -22,13 +22,14 @@ PROGRAM dec_prepbufr
   INTEGER :: IREADNS
   INTEGER :: idate,idummy,nlev,n
   INTEGER :: ilev,ievn
-  INTEGER :: iobs(nobtype),iobs_out(nobtype)
+  INTEGER :: iobs(nobtype+1),iobs_out(nobtype+1)
   CHARACTER(6) :: obtypelist(nobtype)
-  REAL(r_dble) :: station(4)
+  REAL(r_dble) :: station(5)
   CHARACTER(8) :: cs
   REAL(r_dble) :: prs(3,maxlev,maxevn)
   REAL(r_dble) :: obs(3,maxlev,maxevn)
   REAL(r_sngl) :: wk(6)
+  INTEGER :: iunit
   !
   ! Open the input file
   !
@@ -49,22 +50,27 @@ PROGRAM dec_prepbufr
     ! next record
     !
     IF(IREADNS(11,obtype,idate) /= 0) EXIT
-!    PRINT *,obtype,idate
-    DO n=1,nobtype
-      IF(obtype == obtypelist(n)) THEN
+!    print *,obtype,idate ! for debugging
+!    IF(n < 5) CYCLE      ! for debugging
+!    READ(*,*)            ! for debugging
+    DO n=1,nobtype+1
+      IF(obtype == obtypelist(n) .OR. n > nobtype) THEN
         iobs(n) = iobs(n)+1
         EXIT
       END IF
     END DO
-!    IF(n < 19) CYCLE ! for debugging
     !
     ! station location (lon, lat)
     !
-    CALL UFBINT(11,station,4,1,idummy,'SID XOB YOB ELV')
+    CALL UFBINT(11,station,5,1,idummy,'SID XOB YOB ELV DHR')
     WRITE(cs(1:8),'(A8)') station(1)
-!    print '(A,3F10.3)',cs,station(2:4)
+!    IF(n < 2) CYCLE                                       ! for debugging
+!    print '(A,4F10.3,I)',cs,station(2:5),NINT(station(5)) ! for debugging
+!    READ(*,*)                                             ! for debugging
     wk(2:3) = station(2:3)
     wk(4) = station(4)
+    IF(NINT(station(5)) < -3 .OR. 3 < NINT(station(5))) CYCLE
+    iunit = 90+NINT(station(5))
     !
     ! obs
     !
@@ -96,6 +102,10 @@ PROGRAM dec_prepbufr
   PRINT '(10(2X,A))',obtypelist(11:20)
   PRINT '(10I8)',iobs(11:20)
   PRINT '(10I8)',iobs_out(11:20)
+  PRINT '(A)','--------------------------------------------------------------------------------'
+  PRINT '(2X,A)','OTHERS'
+  PRINT '(I8)',iobs(21)
+  PRINT '(I8)',iobs_out(21)
   PRINT '(A)','================================================================================'
 
   STOP
@@ -118,7 +128,7 @@ SUBROUTINE output(id)
     iqm = NINT(obs(3,ilev,1))
     IF(iqm < 0 .OR. 2 < iqm) CYCLE
     IF(wk(6) > 1.E10) CYCLE
-    WRITE(90) wk
+    WRITE(iunit) wk
     iobs_out(n) = iobs_out(n) + 1
   END DO
 
@@ -133,7 +143,7 @@ SUBROUTINE output_ps
   IF(iqm < 0 .OR. 2 < iqm) RETURN
   wk(5:6) = prs(1:2,1,1)
   IF(wk(6) > 1.E10) RETURN
-  WRITE(90) wk
+  WRITE(iunit) wk
   iobs_out(n) = iobs_out(n) + 1
 
   RETURN

@@ -139,7 +139,14 @@ time ./decoder
 #
 # SAVE
 #
-mv fort.90 $SAVEDIR/obs$IY$IM$ID$IH.dat
+mkdir -p $SAVEDIR/obs$IY$IM$ID$IH
+mv fort.87 $SAVEDIR/obs$IY$IM$ID$IH/t-3.dat
+mv fort.88 $SAVEDIR/obs$IY$IM$ID$IH/t-2.dat
+mv fort.89 $SAVEDIR/obs$IY$IM$ID$IH/t-1.dat
+mv fort.90 $SAVEDIR/obs$IY$IM$ID$IH/t.dat
+mv fort.91 $SAVEDIR/obs$IY$IM$ID$IH/t+1.dat
+mv fort.92 $SAVEDIR/obs$IY$IM$ID$IH/t+2.dat
+mv fort.93 $SAVEDIR/obs$IY$IM$ID$IH/t+3.dat
 #
 # Date change ### MAIN LOOP END ###
 #
