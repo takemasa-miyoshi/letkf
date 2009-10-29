@@ -120,7 +120,7 @@ SUBROUTINE output(id)
   END IF
   wk(1) = id
   DO ilev=1,nlev
-    wk(4) = prs(1,ilev,1) * 100.0d0 ! hPa -> Pa
+    wk(4) = prs(1,ilev,1) ! hPa
     iqm = NINT(prs(3,ilev,1))
     IF(iqm < 0 .OR. 2 < iqm) CYCLE
     wk(5:6) = obs(1:2,ilev,1)
