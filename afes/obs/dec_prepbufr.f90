@@ -124,7 +124,11 @@ SUBROUTINE output(id)
     iqm = NINT(prs(3,ilev,1))
     IF(iqm < 0 .OR. 2 < iqm) CYCLE
     wk(5:6) = obs(1:2,ilev,1)
-    IF(id == id_q_obs) wk(5:6) = wk(5:6) * 1.E-6 ! Mg/kg -> g/kg
+    IF(id == id_q_obs) THEN
+      wk(5) = wk(5) * 1.E-6 ! mg/kg -> kg/kg
+      wk(6) = MAX(wk(5)*wk(6)*0.15,1.0E-7)
+    END IF
+    IF(id == id_t_obs) wk(5) = wk(5) + t0c
     iqm = NINT(obs(3,ilev,1))
     IF(iqm < 0 .OR. 2 < iqm) CYCLE
     IF(wk(6) > 1.E10) CYCLE
