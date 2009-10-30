@@ -27,6 +27,7 @@ MODULE common
   REAL(r_size),PARAMETER :: cp=1005.7d0
   REAL(r_size),PARAMETER :: re=6371.3d3
   REAL(r_size),PARAMETER :: r_omega=7.292d-5
+  REAL(r_size),PARAMETER :: t0c=273.15d0
   REAL(r_size),PARAMETER :: undef=-9.99d33
 
 CONTAINS
