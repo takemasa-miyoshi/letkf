@@ -290,18 +290,6 @@ SUBROUTINE das_letkf(gues3d,gues2d,anal3d,anal2d)
       END DO
     END DO
   END IF
-  !
-  ! Force non-negative q
-  !
-!$OMP PARALLEL DO PRIVATE(ilev,ij)
-  DO m=1,nbv
-    DO ilev=1,nlev
-      DO ij=1,nij1
-        anal3d(ij,ilev,m,iv3d_q) = MAX(anal3d(ij,ilev,m,iv3d_q),0.0d0)
-      END DO
-    END DO
-  END DO
-!$OMP END PARALLEL DO
 
   DEALLOCATE(logpfm,mean3d,mean2d)
   RETURN
