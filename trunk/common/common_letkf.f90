@@ -35,35 +35,47 @@ CONTAINS
 !     nobsl            : total number of observation assimilated at the point
 !     hdxb(nobs,nbv)   : obs operator times fcst ens perturbations
 !     rdiag(nobs)      : observation error variance
+!     rloc(nobs)       : localization weighting function
 !     dep(nobs)        : observation departure (yo-Hxb)
 !     parm_infl        : covariance inflation parameter
 !   OUTPUT
 !     trans(nbv,nbv) : transformation matrix
 !=======================================================================
-SUBROUTINE letkf_core(nobs,nobsl,hdxb,rdiag,dep,parm_infl,trans)
+SUBROUTINE letkf_core(nobs,nobsl,hdxb,rdiag,rloc,dep,parm_infl,trans)
   IMPLICIT NONE
   INTEGER,INTENT(IN) :: nobs
   INTEGER,INTENT(IN) :: nobsl
   REAL(r_size),INTENT(IN) :: hdxb(1:nobs,1:nbv)
   REAL(r_size),INTENT(IN) :: rdiag(1:nobs)
+  REAL(r_size),INTENT(IN) :: rloc(1:nobs)
   REAL(r_size),INTENT(IN) :: dep(1:nobs)
-  REAL(r_size),INTENT(IN) :: parm_infl
+  REAL(r_size),INTENT(INOUT) :: parm_infl
   REAL(r_size),INTENT(OUT) :: trans(nbv,nbv)
-  REAL(r_size) :: hdxb_rinv(nobsl,nbv)
+  REAL(r_size),ALLOCATABLE :: hdxb_rinv(:,:)
   REAL(r_size) :: eivec(nbv,nbv)
   REAL(r_size) :: eival(nbv)
-  REAL(r_size) :: pa(nbv+1,nbv)
+  REAL(r_size) :: pa(nbv,nbv)
   REAL(r_size) :: work1(nbv,nbv)
-  REAL(r_size) :: work2(nbv+1,nobsl)
+  REAL(r_size),ALLOCATABLE :: work2(:,:)
   REAL(r_size) :: work3(nbv)
   REAL(r_size) :: rho
+  REAL(r_size) :: parm(3)
+  REAL(r_size),PARAMETER :: parm_infl_err = 0.002d0 !error stdev of parm_infl
   INTEGER :: i,j,k
+  IF(nobsl == 0) THEN
+    trans = 0.0d0
+    DO i=1,nbv
+      trans(i,i) = SQRT(parm_infl)
+    END DO
+    RETURN
+  ELSE
+  ALLOCATE(hdxb_rinv(nobsl,nbv),work2(nbv,nobsl))
 !-----------------------------------------------------------------------
 !  hdxb Rinv
 !-----------------------------------------------------------------------
   DO j=1,nbv
     DO i=1,nobsl
-      hdxb_rinv(i,j) = hdxb(i,j) / rdiag(i)
+      hdxb_rinv(i,j) = hdxb(i,j) / rdiag(i) * rloc(i)
     END DO
   END DO
 !-----------------------------------------------------------------------
@@ -80,7 +92,7 @@ SUBROUTINE letkf_core(nobs,nobsl,hdxb,rdiag,dep,parm_infl,trans)
 !-----------------------------------------------------------------------
 !  hdxb^T Rinv hdxb + (m-1) I / rho (covariance inflation)
 !-----------------------------------------------------------------------
-  rho = 1.0d0 / (1.0d0 + parm_infl)
+  rho = 1.0d0 / parm_infl
   DO i=1,nbv
     work1(i,i) = work1(i,i) + REAL(nbv-1,r_size) * rho
   END DO
@@ -149,8 +161,24 @@ SUBROUTINE letkf_core(nobs,nobsl,hdxb,rdiag,dep,parm_infl,trans)
       trans(i,j) = trans(i,j) + work3(i)
     END DO
   END DO
+!-----------------------------------------------------------------------
+!  Inflation estimation: d(a-b) * d(o-b)^T = hdxb hdxb^T / (m-1)
+!-----------------------------------------------------------------------
+  parm = 0.0d0
+  DO j=1,nbv
+    DO i=1,nobsl
+      parm(1) = parm(1) + hdxb_rinv(i,j) * work3(j) * dep(i)
+      parm(2) = parm(2) + hdxb_rinv(i,j) * hdxb(i,j) * rloc(i)
+    END DO
+  END DO
+  parm(3) = parm(1)*REAL(nbv-1,r_size)/parm(2)
+!  parm(3) = (parm(3) - parm_infl)*MAXVAL(rloc(1:nobsl)) + parm_infl
+!  parm_infl = (parm_infl/REAL(nobsl,r_size) + parm(3)*parm_infl_err**2) / (parm_infl_err**2 + 1.0d0/REAL(nobsl,r_size))
+  parm_infl = (parm_infl/REAL(nobsl,r_size)/MAXVAL(rloc(1:nobsl)) + parm(3)*parm_infl_err**2) / (parm_infl_err**2 + 1.0d0/REAL(nobsl,r_size)/MAXVAL(rloc(1:nobsl)))
 
+  DEALLOCATE(hdxb_rinv,work2)
   RETURN
+  END IF
 END SUBROUTINE letkf_core
 
 END MODULE common_letkf

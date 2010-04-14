@@ -10,7 +10,7 @@ set -e
 NODE=4
 MEMBER=20
 OBS=reg3
-EXP=M20L400I05
+EXP=M20L500I040
 ### directory settings
 CDIR=`pwd`
 cd ../..
@@ -26,7 +26,7 @@ IDD=01
 IHH=00
 ### final date setting
 EYYYY=1982
-EMM=03
+EMM=05
 EDD=01
 EHH=00
 #-----------------------------------------------------------------------
@@ -101,12 +101,21 @@ fi
 ln -s $OUTPUT/gues/$MEM/$IYYYY$IMM$IDD$IHH.grd gs01$MEM.grd
 MEM=`expr $MEM + 1`
 done
+if test -f $OUTPUT/infl_mul/$IYYYY$IMM$IDD$IHH.grd
+then
+ln -s $OUTPUT/infl_mul/$IYYYY$IMM$IDD$IHH.grd infl_mul.grd
+fi
 ln -s $OBSDIR/$IYYYY$IMM$IDD$IHH.dat obs01.dat
 ln -s $SPEEDY/common/orography_t30.dat fort.21
 ### mpiexec
-mpiexec -n $NODE ./$LETKF
+mpiexec -n $NODE ./$LETKF < /dev/null
 tail -n 17 NOUT-000
 ### outputs
+mv NOUT-000 $OUTPUT/log/$IYYYY$IMM$IDD$IHH.log
+if test -f infl_mul.grd
+then
+cp infl_mul.grd $OUTPUT/infl_mul/$TY$TM$TD$TH.grd
+fi
 mv gues_me.grd $OUTPUT/gues/mean/$IYYYY$IMM$IDD$IHH.grd
 mv gues_sp.grd $OUTPUT/gues/sprd/$IYYYY$IMM$IDD$IHH.grd
 mv anal_me.grd $OUTPUT/anal/mean/$IYYYY$IMM$IDD$IHH.grd

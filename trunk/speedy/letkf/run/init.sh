@@ -8,8 +8,8 @@ set -e
 # Modify below according to your environment
 #-----------------------------------------------------------------------
 MEMBER=20
-OBS=reg3
-EXP=M20L400I05
+OBS=raob
+EXP=M20L500IADP
 ### directory settings
 cd ../..
 SPEEDY=`pwd`
@@ -27,6 +27,9 @@ source $SPEEDY/../common/timeinc.sh
 ### clean
 rm -rf $OUTPUT
 ### mkdir
+mkdir -p $OUTPUT/log
+mkdir -p $OUTPUT/infl_mul
+cp $SPEEDY/common/yyyymmddhh*.ctl $OUTPUT/infl_mul
 MEM=1
 while test $MEM -le $MEMBER
 do

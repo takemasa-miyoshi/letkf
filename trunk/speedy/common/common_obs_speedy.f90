@@ -20,7 +20,7 @@ MODULE common_obs_speedy
 
   INTEGER,PARAMETER :: nslots=1 ! number of time slots for 4D-LETKF
   INTEGER,PARAMETER :: nbslot=1 ! basetime slot
-  REAL(r_size),PARAMETER :: sigma_obs=700.0d3
+  REAL(r_size),PARAMETER :: sigma_obs=500.0d3
 !  REAL(r_size),PARAMETER :: sigma_obsv=0.4d0
   REAL(r_size),PARAMETER :: sigma_obsv=0.1d0
   REAL(r_size),PARAMETER :: sigma_obst=3.0d0
