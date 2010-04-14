@@ -7,7 +7,6 @@ MODULE letkf_tools
 !   01/26/2009 Takemasa Miyoshi  created
 !
 !=======================================================================
-!$USE OMP_LIB
   USE common
   USE common_mpi
   USE common_obs
@@ -24,10 +23,10 @@ MODULE letkf_tools
 
   INTEGER,SAVE :: nobstotal
 
-!  INTEGER,PARAMETER :: nlev_dampinfl = 15 ! number of levels for inflation damp
-  REAL(r_size),PARAMETER :: sp_inflation_n = 0.025d0 !SQRT of cov infl in NH
-  REAL(r_size),PARAMETER :: sp_inflation_s = 0.025d0 !SQRT of cov infl in SH
-  REAL(r_size),PARAMETER :: sp_infl_additive = 0.d0 !additive inflation
+  REAL(r_size),PARAMETER :: cov_infl_mul = 1.04d0 !multiplicative inflation
+! > 0: globally constant covariance inflation
+! < 0: 3D inflation values input from a GPV file "infl_mul.grd"
+  REAL(r_size),PARAMETER :: sp_infl_add = 0.d0 !additive inflation
 !TVS  LOGICAL,PARAMETER :: msw_vbc = .FALSE.
 
 CONTAINS
@@ -36,6 +35,7 @@ CONTAINS
 !-----------------------------------------------------------------------
 SUBROUTINE das_letkf(gues3d,gues2d,anal3d,anal2d)
   IMPLICIT NONE
+  CHARACTER(12) :: inflfile='infl_mul.grd'
   REAL(r_size),INTENT(INOUT) :: gues3d(nij1,nlev,nbv,nv3d) ! background ensemble
   REAL(r_size),INTENT(INOUT) :: gues2d(nij1,nbv,nv2d)      !  output: destroyed
   REAL(r_size),INTENT(OUT) :: anal3d(nij1,nlev,nbv,nv3d) ! analysis ensemble
@@ -44,15 +44,16 @@ SUBROUTINE das_letkf(gues3d,gues2d,anal3d,anal2d)
   REAL(r_size),ALLOCATABLE :: mean2d(:,:)
   REAL(r_size),ALLOCATABLE :: hdxf(:,:)
   REAL(r_size),ALLOCATABLE :: rdiag(:)
+  REAL(r_size),ALLOCATABLE :: rloc(:)
   REAL(r_size),ALLOCATABLE :: dep(:)
   REAL(r_size),ALLOCATABLE :: work3d(:,:,:)
   REAL(r_size),ALLOCATABLE :: work2d(:,:)
+  REAL(r_sngl),ALLOCATABLE :: work3dg(:,:,:,:)
+  REAL(r_sngl),ALLOCATABLE :: work2dg(:,:,:)
   REAL(r_size),ALLOCATABLE :: logpfm(:,:)
-!  REAL(r_size),ALLOCATABLE :: parm_infl(:,:) ! spread inflation parameter
-  REAL(r_size) :: parm_infl_n,parm_infl_s
   REAL(r_size) :: parm
-  REAL(r_size) :: parm_infl_damp(nlev)
   REAL(r_size) :: trans(nbv,nbv)
+  LOGICAL :: ex
   INTEGER :: ij,ilev,n,m,i,j,k,nobsl,ierr
 
   WRITE(6,'(A)') 'Hello from das_letkf'
@@ -63,22 +64,10 @@ SUBROUTINE das_letkf(gues3d,gues2d,anal3d,anal2d)
   !
   IF(nobstotal == 0) THEN
     WRITE(6,'(A)') 'No observation assimilated'
-!$OMP PARALLEL WORKSHARE
     anal3d = gues3d
     anal2d = gues2d
-!$OMP END PARALLEL WORKSHARE
     RETURN
   END IF
-  !
-  ! INFLATION PARAMETER ESTIMATION
-  !
-  parm_infl_n = (1.0d0 + sp_inflation_n)**2 - 1.0d0
-  parm_infl_s = (1.0d0 + sp_inflation_s)**2 - 1.0d0
-  parm_infl_damp(:) = 1.0d0
-!  DO ilev=1,nlev
-!    parm_infl_damp(ilev) = REAL(nlev-ilev,r_size)/REAL(nlev_dampinfl,r_size)
-!    parm_infl_damp(ilev) = MIN(parm_infl_damp(ilev),1.0d0)
-!  END DO
   !
   ! FCST PERTURBATIONS
   !
@@ -86,7 +75,6 @@ SUBROUTINE das_letkf(gues3d,gues2d,anal3d,anal2d)
   ALLOCATE(mean2d(nij1,nv2d))
   CALL ensmean_grd(nbv,nij1,gues3d,gues2d,mean3d,mean2d)
   DO n=1,nv3d
-!$OMP PARALLEL DO PRIVATE(i,j,k)
     DO m=1,nbv
       DO k=1,nlev
         DO i=1,nij1
@@ -94,70 +82,66 @@ SUBROUTINE das_letkf(gues3d,gues2d,anal3d,anal2d)
         END DO
       END DO
     END DO
-!$OMP END PARALLEL DO
   END DO
   DO n=1,nv2d
-!$OMP PARALLEL DO PRIVATE(i,j,k)
     DO m=1,nbv
       DO i=1,nij1
         gues2d(i,m,n) = gues2d(i,m,n) - mean2d(i,n)
       END DO
     END DO
-!$OMP END PARALLEL DO
   END DO
+  !
+  ! multiplicative inflation
+  !
+  IF(cov_infl_mul > 0.0d0) THEN ! fixed multiplicative inflation parameter
+    ALLOCATE( work3d(nij1,nlev,nv3d) )
+    ALLOCATE( work2d(nij1,nv2d) )
+    work3d = cov_infl_mul
+    work2d = cov_infl_mul
+  END IF
+  IF(cov_infl_mul <= 0.0d0) THEN ! 3D parameter values are read-in
+    ALLOCATE( work3dg(nlon,nlat,nlev,nv3d) )
+    ALLOCATE( work2dg(nlon,nlat,nv2d) )
+    ALLOCATE( work3d(nij1,nlev,nv3d) )
+    ALLOCATE( work2d(nij1,nv2d) )
+    INQUIRE(FILE=inflfile,EXIST=ex)
+    IF(ex) THEN
+      IF(myrank == 0) THEN
+        WRITE(6,'(A,I3.3,2A)') 'MYRANK ',myrank,' is reading.. ',inflfile
+        CALL read_grd4(inflfile,work3dg,work2dg)
+      END IF
+      CALL scatter_grd_mpi(0,work3dg,work2dg,work3d,work2d)
+    ELSE
+      WRITE(6,'(2A)') '!!WARNING: no such file exist: ',inflfile
+      work3d = -1.0d0 * cov_infl_mul
+    END IF
+  END IF
   !
   ! p_full for background ensemble mean
   !
   ALLOCATE(logpfm(nij1,nlev))
   CALL calc_pfull(nij1,1,mean2d(:,iv2d_ps),logpfm)
-!$OMP PARALLEL WORKSHARE
   logpfm = DLOG(logpfm)
-!$OMP END PARALLEL WORKSHARE
   !
   ! MAIN ASSIMILATION LOOP
   !
-!$OMP PARALLEL PRIVATE(ij,ilev,n,i,k,hdxf,rdiag,dep,trans,parm,nobsl)
-  ALLOCATE( hdxf(1:nobstotal,1:nbv),rdiag(1:nobstotal),dep(1:nobstotal) )
-!--- For ILEV = 1
-! Remark by YS:
-!   Incomprehensible error was occured when
-!   the ilev loop was iterated from 1 to NLEV.
-!---
-  ilev=1
-!$OMP DO SCHEDULE(DYNAMIC)
+  ALLOCATE( hdxf(1:nobstotal,1:nbv),rdiag(1:nobstotal),rloc(1:nobstotal),dep(1:nobstotal) )
+  DO ilev=1,nlev
+    WRITE(6,'(A,I3)') 'ilev = ',ilev
     DO ij=1,nij1
-
-      CALL obs_local(ij,ilev,hdxf,rdiag,dep,nobsl,logpfm)
-
-      IF( nobsl /= 0 ) THEN
-!!!!! INFLATION SETTING !!!!!
-        IF(MAX(sp_inflation_n,sp_inflation_s) == 0.0) THEN
-          parm = 0.0d0
-        ELSE
-          IF(sp_inflation_n == sp_inflation_s) THEN
-            parm = parm_infl_n
-          ELSE
-            IF(lat1(ij) > 20.d0) THEN
-              parm = parm_infl_n
-            ELSE IF(lat1(ij) < -20.d0) THEN
-              parm = parm_infl_s
-            ELSE
-              parm = (lat1(ij) + 20.d0) / 40.d0
-              parm = parm * parm_infl_n + (1.d0 - parm) * parm_infl_s
-            END IF
-          END IF
-        END IF
-        CALL letkf_core(nobstotal,nobsl,hdxf,rdiag,dep,parm,trans)
-
-        DO n=1,nv3d
-          DO m=1,nbv
-            anal3d(ij,ilev,m,n) = mean3d(ij,ilev,n)
-            DO k=1,nbv
-              anal3d(ij,ilev,m,n) = anal3d(ij,ilev,m,n) &
-                & + gues3d(ij,ilev,k,n) * trans(k,m)
-            END DO
+      CALL obs_local(ij,ilev,hdxf,rdiag,rloc,dep,nobsl,logpfm)
+      parm = work3d(ij,ilev,1)
+      CALL letkf_core(nobstotal,nobsl,hdxf,rdiag,rloc,dep,parm,trans)
+      DO n=1,nv3d
+        DO m=1,nbv
+          anal3d(ij,ilev,m,n) = mean3d(ij,ilev,n)
+          DO k=1,nbv
+            anal3d(ij,ilev,m,n) = anal3d(ij,ilev,m,n) &
+              & + gues3d(ij,ilev,k,n) * trans(k,m)
           END DO
         END DO
+      END DO
+      IF(ilev == 1) THEN !update 2d variable at ilev=1
         DO n=1,nv2d
           DO m=1,nbv
             anal2d(ij,m,n)  = mean2d(ij,n)
@@ -166,83 +150,30 @@ SUBROUTINE das_letkf(gues3d,gues2d,anal3d,anal2d)
             END DO
           END DO
         END DO
-
-      ELSE ! no observation for this analysis
-        DO n=1,nv3d
-          DO m=1,nbv
-            anal3d(ij,ilev,m,n)  = mean3d(ij,ilev,n) + gues3d(ij,ilev,m,n)
-          END DO
-        END DO
-        DO n=1,nv2d
-          DO m=1,nbv
-            anal2d(ij,m,n)  = mean2d(ij,n) + gues2d(ij,m,n)
-          END DO
-        END DO
       END IF
-
-    END DO
-!$OMP END DO
-!--- For ILEV = 2 - NLEV
-!$OMP DO SCHEDULE(DYNAMIC)
-  DO ilev=2,nlev
-    DO ij=1,nij1
-
-      CALL obs_local(ij,ilev,hdxf,rdiag,dep,nobsl,logpfm)
-
-      IF( nobsl /= 0 ) THEN
-!!!!! INFLATION SETTING !!!!!
-        IF(MAX(sp_inflation_n,sp_inflation_s) == 0.0) THEN
-          parm = 0.0d0
-        ELSE
-          IF(sp_inflation_n == sp_inflation_s) THEN
-            parm = parm_infl_n
-          ELSE
-            IF(lat1(ij) > 20.d0) THEN
-              parm = parm_infl_n
-            ELSE IF(lat1(ij) < -20.d0) THEN
-              parm = parm_infl_s
-            ELSE
-              parm = (lat1(ij) + 20.d0) / 40.d0
-              parm = parm * parm_infl_n + (1.d0 - parm) * parm_infl_s
-            END IF
-          END IF
-          parm = parm * parm_infl_damp(ilev)
-        END IF
-        CALL letkf_core(nobstotal,nobsl,hdxf,rdiag,dep,parm,trans)
-
-        DO n=1,nv3d
-          DO m=1,nbv
-            anal3d(ij,ilev,m,n) = mean3d(ij,ilev,n)
-            DO k=1,nbv
-              anal3d(ij,ilev,m,n) = anal3d(ij,ilev,m,n) &
-                & + gues3d(ij,ilev,k,n) * trans(k,m)
-            END DO
-          END DO
-        END DO
-
-      ELSE ! no observation for this analysis
-        DO n=1,nv3d
-          DO m=1,nbv
-            anal3d(ij,ilev,m,n)  = mean3d(ij,ilev,n) + gues3d(ij,ilev,m,n)
-          END DO
-        END DO
+      IF(cov_infl_mul < 0.0d0) THEN ! update the inflation parameter
+        work3d(ij,ilev,:) = parm
       END IF
-
     END DO
   END DO
-!$OMP END DO
-  DEALLOCATE(hdxf,rdiag,dep)
-!$OMP END PARALLEL
+  DEALLOCATE(hdxf,rdiag,rloc,dep)
+  IF(cov_infl_mul < 0.0d0) THEN
+    CALL gather_grd_mpi(0,work3d,work2d,work3dg,work2dg)
+    IF(myrank == 0) THEN
+      WRITE(6,'(A,I3.3,2A)') 'MYRANK ',myrank,' is writing.. ',inflfile
+      CALL write_grd4(inflfile,work3dg,work2dg)
+    END IF
+    DEALLOCATE(work3dg,work2dg,work3d,work2d)
+  END IF
   !
   ! Additive inflation
   !
-  IF(sp_infl_additive > 0.0d0) THEN
+  IF(sp_infl_add > 0.0d0) THEN
     CALL read_ens_mpi('addi',nbv,gues3d,gues2d)
     ALLOCATE( work3d(nij1,nlev,nv3d) )
     ALLOCATE( work2d(nij1,nv2d) )
     CALL ensmean_grd(nbv,nij1,gues3d,gues2d,work3d,work2d)
     DO n=1,nv3d
-!$OMP PARALLEL DO PRIVATE(i,j,k)
       DO m=1,nbv
         DO k=1,nlev
           DO i=1,nij1
@@ -250,21 +181,18 @@ SUBROUTINE das_letkf(gues3d,gues2d,anal3d,anal2d)
           END DO
         END DO
       END DO
-!$OMP END PARALLEL DO
     END DO
     DO n=1,nv2d
-!$OMP PARALLEL DO PRIVATE(i,j,k)
       DO m=1,nbv
         DO i=1,nij1
           gues2d(i,m,n) = gues2d(i,m,n) - work2d(i,n)
         END DO
       END DO
-!$OMP END PARALLEL DO
     END DO
 
     DEALLOCATE(work3d,work2d)
     WRITE(6,'(A)') '===== Additive covariance inflation ====='
-    WRITE(6,'(A,F10.4)') '  parameter:',sp_infl_additive
+    WRITE(6,'(A,F10.4)') '  parameter:',sp_infl_add
     WRITE(6,'(A)') '========================================='
 !    parm = 0.7d0
 !    DO ilev=1,nlev
@@ -277,7 +205,7 @@ SUBROUTINE das_letkf(gues3d,gues2d,anal3d,anal2d)
         DO ilev=1,nlev
           DO ij=1,nij1
             anal3d(ij,ilev,m,n) = anal3d(ij,ilev,m,n) &
-              & + gues3d(ij,ilev,m,n) * sp_infl_additive
+              & + gues3d(ij,ilev,m,n) * sp_infl_add
           END DO
         END DO
       END DO
@@ -285,7 +213,7 @@ SUBROUTINE das_letkf(gues3d,gues2d,anal3d,anal2d)
     DO n=1,nv2d
       DO m=1,nbv
         DO ij=1,nij1
-          anal2d(ij,m,n) = anal2d(ij,m,n) + gues2d(ij,m,n) * sp_infl_additive
+          anal2d(ij,m,n) = anal2d(ij,m,n) + gues2d(ij,m,n) * sp_infl_add
         END DO
       END DO
     END DO
@@ -298,12 +226,13 @@ END SUBROUTINE das_letkf
 ! Project global observations to local
 !     (hdxf_g,dep_g,rdiag_g) -> (hdxf,dep,rdiag)
 !-----------------------------------------------------------------------
-SUBROUTINE obs_local(ij,ilev,hdxf,rdiag,dep,nobsl,logpfm)
+SUBROUTINE obs_local(ij,ilev,hdxf,rdiag,rloc,dep,nobsl,logpfm)
   IMPLICIT NONE
   INTEGER,INTENT(IN) :: ij,ilev
   REAL(r_size),INTENT(IN) :: logpfm(nij1,nlev)
   REAL(r_size),INTENT(OUT) :: hdxf(nobstotal,nbv)
   REAL(r_size),INTENT(OUT) :: rdiag(nobstotal)
+  REAL(r_size),INTENT(OUT) :: rloc(nobstotal)
   REAL(r_size),INTENT(OUT) :: dep(nobstotal)
   INTEGER,INTENT(OUT) :: nobsl
   REAL(r_size) :: minlon,maxlon,minlat,maxlat,dist,dlev
@@ -507,8 +436,8 @@ SUBROUTINE obs_local(ij,ilev,hdxf,rdiag,dep,nobsl,logpfm)
       ! Observational localization
       !
       tmperr=obserr(nobs_use(n))
-      rdiag(nobsl) = tmperr * tmperr &
-        & * exp(0.5d0 * ((dist/sigma_obs)**2 + (dlev/sigma_obsv)**2))
+      rdiag(nobsl) = tmperr * tmperr
+      rloc(nobsl) =EXP(-0.5d0 * ((dist/sigma_obs)**2 + (dlev/sigma_obsv)**2))
     END DO
   END IF
 !TVS!

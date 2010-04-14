@@ -1,8 +1,8 @@
 #!/bin/sh
 set -e
 ORO=
-OBSNAME=regular13
-EXPNAME=L10I04
+OBSNAME=ocean20
+EXPNAME=L30IAD
 F90=pgf90
 CDIR=`pwd`
 cd ..
@@ -35,6 +35,9 @@ mv guesmean.dat $OUTDIR/$OBSNAME/$EXPNAME
 mv analmean.dat $OUTDIR/$OBSNAME/$EXPNAME
 mv gues.dat $OUTDIR/$OBSNAME/$EXPNAME
 mv anal.dat $OUTDIR/$OBSNAME/$EXPNAME
+mv infl.dat $OUTDIR/$OBSNAME/$EXPNAME
+mv rmse_t.dat $OUTDIR/$OBSNAME/$EXPNAME
+mv rmse_x.dat $OUTDIR/$OBSNAME/$EXPNAME
 cp $CDIR/*.ctl $OUTDIR/$OBSNAME/$EXPNAME
 
 echo "NORMAL END"

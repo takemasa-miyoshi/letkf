@@ -14,9 +14,14 @@ PROGRAM letkf
   INTEGER,PARAMETER :: nt=ndays*4
   INTEGER,PARAMETER :: nwindow=1 ! time window for 4D-LETKF
   INTEGER,PARAMETER :: nspinup=180*4 ! time steps for spin-up
-  REAL(r_size),PARAMETER :: xlocal=1.0d0 ! localization scale
+  REAL(r_size),PARAMETER :: xlocal=3.0d0 ! localization scale
   REAL(r_size),PARAMETER :: tlocal=3.0d0 ! time localization scale
-  REAL(r_size),PARAMETER :: parm_infl=0.04d0 ! inflation parameter
+  REAL(r_size),PARAMETER :: msw_infl=-1.05d0 ! inflation mode switch
+! msw_infl : inflation mode switch
+!  < 0 : adaptive inflation
+!  > 0 : fixed inflation value
+  REAL(r_size) :: parm_infl(nx,nt) ! inflation parameter
+  REAL(r_size) :: parm
   REAL(r_size) :: xmaxloc
   REAL(r_size) :: obserr=1.0d0
   REAL(r_sngl) :: y4(ny)
@@ -33,11 +38,14 @@ PROGRAM letkf
   REAL(r_size) :: hxfm(ny,nwindow)
   REAL(r_size) :: hdxf(ny,nbv,nwindow)
   REAL(r_size) :: rdiag_loc(ny*nwindow)
+  REAL(r_size) :: rloc_loc(ny*nwindow)
   REAL(r_size) :: d_loc(ny*nwindow)
   REAL(r_size) :: hdxf_loc(ny*nwindow,nbv)
   REAL(r_size) :: trans(nbv,nbv)
   REAL(r_size) :: dist,tdif
-  REAL(r_size) :: rmse
+  REAL(r_size) :: rmse_t(nt),sprd_t(nt)
+  REAL(r_size) :: rmse_x(nx),sprd_x(nx)
+  REAL(r_size) :: rmseave,sprdave
   INTEGER :: irmse
   INTEGER :: ktoneday
   INTEGER :: ktcyc
@@ -75,6 +83,12 @@ PROGRAM letkf
 !-----------------------------------------------------------------------
 ! main
 !-----------------------------------------------------------------------
+  rmse_t = 0.0d0
+  rmse_x = 0.0d0
+  sprd_t = 0.0d0
+  sprd_x = 0.0d0
+  parm_infl(:,1) = 1.00d0
+  IF(msw_infl > 0.0d0) parm_infl(:,1) = msw_infl
   !
   ! input files
   !
@@ -89,8 +103,6 @@ PROGRAM letkf
   !>>>
   !>>> LOOP START
   !>>>
-  rmse = 0.0d0
-  irmse = 0
   it=1
   DO
     !
@@ -179,6 +191,7 @@ PROGRAM letkf
     DO nn=1,nwindow
       DO ix=1,nx
         ny_loc = 0
+        parm = parm_infl(ix,it)
         DO n=1,nwindow
           tdif = REAL(ABS(nn-n),r_size)
           DO i=1,ny
@@ -189,26 +202,22 @@ PROGRAM letkf
             IF(dist < xmaxloc) THEN
               ny_loc = ny_loc+1
               d_loc(ny_loc) = d(i,n)
-              rdiag_loc(ny_loc) = obserr**2 &
-                & * exp(0.5 * (dist/xlocal)**2) &! obs localization
-                & * exp(0.5 * (tdif/tlocal)**2)  ! time localization
+              rdiag_loc(ny_loc) = obserr**2
+              rloc_loc(ny_loc) = EXP(-0.5 * (dist/xlocal)**2) &! space
+                & * EXP(-0.5 * (tdif/tlocal)**2) ! time
               hdxf_loc(ny_loc,:) = hdxf(i,:,n)
             END IF
           END DO
         END DO
-        IF(ny_loc > 0) THEN
-          CALL letkf_core(ny*nwindow,ny_loc,hdxf_loc,rdiag_loc,d_loc,parm_infl,trans)
-          DO j=1,nbv
-            xa(ix,j,nn) = xm(ix,nn)
-            DO i=1,nbv
-              xa(ix,j,nn) = xa(ix,j,nn) + dxf(ix,i,nn) * trans(i,j)
-            END DO
+        CALL letkf_core(ny*nwindow,ny_loc,hdxf_loc,rdiag_loc,rloc_loc,d_loc,parm,trans)
+        IF(msw_infl > 0.0d0) parm = msw_infl
+        DO j=1,nbv
+          xa(ix,j,nn) = xm(ix,nn)
+          DO i=1,nbv
+            xa(ix,j,nn) = xa(ix,j,nn) + dxf(ix,i,nn) * trans(i,j)
           END DO
-        ELSE
-          DO j=1,nbv
-            xa(ix,j,nn) = xm(ix,nn) + dxf(ix,j,nn)
-          END DO
-        END IF
+        END DO
+        parm_infl(ix,it+1) = parm
       END DO
     END DO
     !
@@ -231,12 +240,22 @@ PROGRAM letkf
       END DO
     END DO
     !
-    ! RMSE
+    ! RMSE,SPRD
     !
-    IF(it > nspinup) THEN
-      rmse = rmse + SQRT(SUM((xm(:,nwindow)-xnature(:,it+nwindow-1))**2)/REAL(nx,r_size))
-      irmse = irmse + 1
-    END IF
+    DO n=1,nwindow
+      rmse_t(it+n-1) = SQRT(SUM((xm(:,n)-xnature(:,it+n-1))**2)/REAL(nx,r_size))
+      DO i=1,nx
+        sprd_t(it+n-1) = sprd_t(it+n-1) + SUM((xa(i,:,n)-xm(i,n))**2)
+      END DO
+      sprd_t(it+n-1) = SQRT(sprd_t(it+n-1)/REAL(nx*nbv,r_size))
+      IF(it > nspinup) THEN
+        DO i=1,nx
+          rmse_x(i) = rmse_x(i) + (xm(i,n)-xnature(i,it+n-1))**2
+          sprd_x(i) = sprd_x(i) + SUM((xa(i,:,n)-xm(i,n))**2)/REAL(nbv,r_size)
+        END DO
+        irmse = irmse + 1
+      END IF
+    END DO
     !---------------
     ! forecast step
     !---------------
@@ -255,8 +274,31 @@ PROGRAM letkf
   CLOSE(92)
   CLOSE(93)
 
-  rmse = rmse / REAL(irmse,r_size)
-  PRINT '(A,F12.5)','RMSE = ',rmse
+  OPEN(10,FILE='infl.dat',FORM='unformatted')
+  DO i=1,nt
+    x4 = REAL(parm_infl(:,i),r_sngl)
+    WRITE(10) x4
+  END DO
+  CLOSE(10)
+
+  OPEN(10,FILE='rmse_t.dat',FORM='formatted')
+  DO i=1,nt
+    WRITE(10,'(3F12.4)') REAL(i-1)/4.0,rmse_t(i),sprd_t(i)
+  END DO
+  CLOSE(10)
+
+  rmse_x = SQRT(rmse_x / REAL(irmse))
+  sprd_x = SQRT(sprd_x / REAL(irmse))
+  OPEN(10,FILE='rmse_x.dat',FORM='formatted')
+  DO i=1,nx
+    WRITE(10,'(I4,2F12.4)') i,rmse_x(i),sprd_x(i)
+  END DO
+  CLOSE(10)
+
+  rmseave = SUM(rmse_t(nspinup+1:nt))/REAL(nt-nspinup,r_size)
+  sprdave = SUM(sprd_t(nspinup+1:nt))/REAL(nt-nspinup,r_size)
+  PRINT '(A,F12.5)','RMSE = ',rmseave
+  PRINT '(A,F12.5)','SPRD = ',sprdave
 
   STOP
 END PROGRAM letkf
