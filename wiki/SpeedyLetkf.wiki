@@ -1,13 +1,12 @@
 #summary Documentation for SPEEDY-LETKF
 
-= SPEEDY-LETKF =
 <wiki:toc max_depth="2" />
 
-== SPEEDY model ==
+= SPEEDY model =
   * *SPEEDY* is a simplified AGCM (Atmospheric General Circulation Model) developed by [http://dx.doi.org/10.1007/s00382-002-0268-2 Molteni (2003)]. It has only 96x48x7 grid points for Earth's global atmosphere. It is feasible for single processor PC (like your desktop or laptop PC) with a Fortran 90 compiler and shell scripting environment. I have tested with a Linux PC with Intel Celeron D 2.16 GHz processor (about 5 years old), as well as very recent Intel Xeon quad-core 2.5 GHz processors. It takes about 2 seconds for 6-hr forecast with the Celeron D processor, and about 0.4 seconds with the Xeon processor (single process).
   * [http://users.ictp.it/~moltenif/index.html Franco Molteni] and [http://users.ictp.it/~kucharsk/ Fred Kucharski] should be acknowledged for the use of SPEEDY model.
 
-== Getting started ==
+= Getting started =
   # Download the latest release version from the [http://code.google.com/p/miyoshi/source/checkout Source tab].
   # Run the SPEEDY model
     * Dig into the model directory
@@ -91,3 +90,10 @@ $sh run_cycle.sh
 ### TIMER(MONIT_MEAN):      2.32      0.05
 }}}
   This line indicates how many seconds it took for the LETKF computation. In this case, 2.32 seconds.
+
+= LETKF parameter settings =
+|| *parameter* || *source file* || *variable name* || *unit* ||
+|| ensemble size || common/common_letkf.f90 || nbv || members ||
+|| horizontal localization || speedy/common/common_obs_speedy.f90 || sigma_obs || meters ||
+|| vertical localization || speedy/common/common_obs_speedy.f90 || sigma_obsv || ln p ||
+|| multiplicative inflation || speedy/letkf/letkf_tools.f90 || cov_infl_mul || n/a ||
