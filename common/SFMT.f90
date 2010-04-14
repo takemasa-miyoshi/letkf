@@ -328,7 +328,9 @@ subroutine gen_rand_all()
 
     do i=0,N - POS1 - 1
          
-        call do_recursion(psfmt64(i*2 + 1),psfmt64(i*2), psfmt64(i*2 + 1),psfmt64(i*2), psfmt64((i + POS1)*2+1), psfmt64((i + POS1)*2), r1Top, r1Btm, r2Top, r2Btm);
+        call do_recursion(psfmt64(i*2 + 1),psfmt64(i*2), psfmt64(i*2 + 1),&
+          & psfmt64(i*2), psfmt64((i + POS1)*2+1), psfmt64((i + POS1)*2),&
+          & r1Top, r1Btm, r2Top, r2Btm)
         r1Btm = r2Btm
         r1Top = r2Top
         r2Btm = psfmt64(i*2)
@@ -336,7 +338,9 @@ subroutine gen_rand_all()
         
     end do
     do i=N - POS1, N-1
-        call do_recursion(psfmt64(i*2 + 1),psfmt64(i*2), psfmt64(i*2 + 1),psfmt64(i*2), psfmt64((i + POS1 - N)*2+1), psfmt64((i + POS1 - N)*2), r1Top, r1Btm, r2Top, r2Btm);
+        call do_recursion(psfmt64(i*2 + 1),psfmt64(i*2), psfmt64(i*2 + 1),&
+          & psfmt64(i*2), psfmt64((i + POS1 - N)*2+1),&
+          & psfmt64((i + POS1 - N)*2), r1Top, r1Btm, r2Top, r2Btm)
         r1Btm = r2Btm
         r1Top = r2Top
         r2Btm = psfmt64(i*2)
