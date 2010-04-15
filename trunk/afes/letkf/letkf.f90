@@ -133,17 +133,23 @@ PROGRAM letkf
 !-----------------------------------------------------------------------
 ! Monitor
 !-----------------------------------------------------------------------
-  CALL monit_mean('gues')
-  CALL monit_mean('anal')
-!
-  CALL CPU_TIME(rtimer)
-  WRITE(6,'(A,2F10.2)') '### TIMER(MONIT_MEAN):',rtimer,rtimer-rtimer00
-  rtimer00=rtimer
+!  IF(myrank == 0) THEN
+!    CALL monit_mean('gues')
+!    CALL monit_mean('anal')
+!  END IF
+!!
+!  CALL CPU_TIME(rtimer)
+!  WRITE(6,'(A,2F10.2)') '### TIMER(MONIT_MEAN):',rtimer,rtimer-rtimer00
+!  rtimer00=rtimer
 !-----------------------------------------------------------------------
 ! Finalize
 !-----------------------------------------------------------------------
   CALL MPI_BARRIER(MPI_COMM_WORLD,ierr)
   CALL finalize_mpi
+!
+  CALL CPU_TIME(rtimer)
+  WRITE(6,'(A,2F10.2)') '### TIMER(FINALIZE_MPI):',rtimer,rtimer-rtimer00
+  rtimer00=rtimer
 
   STOP
 END PROGRAM letkf
