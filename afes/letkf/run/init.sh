@@ -7,14 +7,14 @@ set -e
 #-----------------------------------------------------------------------
 # Modify below according to your environment
 #-----------------------------------------------------------------------
-MEMBER=10
-OBS=test
-EXP=M10
+MEMBER=7
+OBS=test.regular
+EXP=M07vopttest
 ### directory settings
 cd ../..
 AFES=`pwd`
 OUTPUT=/S/data04/G4015/y0266/alera2/$OBS/$EXP  # directory for new experiment
-INDIR=/S/data04/G4015/y0260/alera2/sample
+INDIR=/S/data04/G4015/y0260/alera2/amip
 ### initial date setting
 IYYYY=1982
 IMM=01
@@ -26,6 +26,7 @@ IHH=00
 ### clean
 rm -rf $OUTPUT
 ### mkdir
+mkdir -p $OUTPUT/log
 MEM=1
 while test $MEM -le $MEMBER
 do
@@ -63,7 +64,7 @@ if test $MEM -lt 10
 then
 MEM=0$MEM
 fi
-cp $INDIR/0$MEM/IC.grd $OUTPUT/gues/$MEM/$IYYYY$IMM$IDD$IHH.grd
+cp $INDIR/$MEM/2008010100.grd $OUTPUT/gues/$MEM/$IYYYY$IMM$IDD$IHH.grd
 MEM=`expr $MEM + 1`
 done
 
