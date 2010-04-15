@@ -383,14 +383,14 @@ END SUBROUTINE ensmean_grd
       guess = 2*x(l+1) - x(l+2)
       call newton(jMid, an, guess, x(l))
     end do
-    x(jMax:jMid+1:-1) = pi-x(1:jMid)
     do j = 1, jMid
       call legendre_dP(jMid, an, x(j), dpn)
       w(j) = (2.d0*jMax + 1.d0)/(dpn)**2
     end do
 
     w(jMax:jMid+1:-1) = w(1:jMid)
-    x = cos(x)
+    x(1:jMid) = cos(x(1:jMid))
+    x(jMax:jMid+1:-1) = -x(1:jMid)
 
   end subroutine f_scgaus
 !***********************************************************************

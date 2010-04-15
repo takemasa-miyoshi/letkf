@@ -18,8 +18,8 @@ MODULE common_obs_afes
   IMPLICIT NONE
   PUBLIC
 
-  INTEGER,PARAMETER :: nslots=1 ! number of time slots for 4D-LETKF
-  INTEGER,PARAMETER :: nbslot=1 ! basetime slot
+  INTEGER,PARAMETER :: nslots=7 ! number of time slots for 4D-LETKF
+  INTEGER,PARAMETER :: nbslot=4 ! basetime slot
   REAL(r_size),PARAMETER :: sigma_obs=400.0d3
   REAL(r_size),PARAMETER :: sigma_obsv=0.4d0
   REAL(r_size),PARAMETER :: sigma_obst=3.0d0
@@ -178,22 +178,22 @@ SUBROUTINE set_common_obs_afes
         IF(NINT(tmpelm(nn+n)) == id_ps_obs .AND. tmpdat(nn+n) < -100.0d0) THEN
           CYCLE
         END IF
-!       IF(NINT(tmpelm(nn+n)) == id_ps_obs) THEN
-!         CALL itpl_2d(phi0,ri,rj,dz)
-!         dz = dz - tmplev(nn+n)
-!         IF(ABS(dz) < threshold_dz) THEN ! pressure adjustment threshold
-!           CALL itpl_2d(t(:,:,1),ri,rj,tg)
-!           CALL itpl_2d(q(:,:,1),ri,rj,qg)
-!           CALL prsadj(tmpdat(nn+n),dz,tg,qg)
-!         ELSE
-!!OMP CRITICAL
-!           PRINT '(A)','PS obs vertical adjustment beyond threshold'
-!           PRINT '(A,F10.2,A,F6.2,A,F6.2,A)',&
-!             & '  dz=',dz,', (lon,lat)=(',tmplon(nn+n),',',tmplat(nn+n),')'
-!!OMP END CRITICAL
-!           CYCLE
-!         END IF
-!       END IF
+        IF(NINT(tmpelm(nn+n)) == id_ps_obs) THEN
+          CALL itpl_2d(phi0,ri,rj,dz)
+          dz = dz - tmplev(nn+n)
+          IF(ABS(dz) < threshold_dz) THEN ! pressure adjustment threshold
+            CALL itpl_2d(v3d(:,:,1,iv3d_t),ri,rj,tg)
+            CALL itpl_2d(v3d(:,:,1,iv3d_q),ri,rj,qg)
+            CALL prsadj(tmpdat(nn+n),dz,tg,qg)
+          ELSE
+!OMP CRITICAL
+            PRINT '(A)','PS obs vertical adjustment beyond threshold'
+            PRINT '(A,F10.2,A,F6.2,A,F6.2,A)',&
+              & '  dz=',dz,', (lon,lat)=(',tmplon(nn+n),',',tmplat(nn+n),')'
+!OMP END CRITICAL
+            CYCLE
+          END IF
+        END IF
         !
         ! observational operator
         !
@@ -245,12 +245,12 @@ SUBROUTINE set_common_obs_afes
 !
 ! temporal observation localization
 !
-!  nn = 0
-!  DO islot=1,nslots
-!    tmperr(nn+1:nn+nobslots(islot)) = tmperr(nn+1:nn+nobslots(islot)) &
-!      & * exp(0.25d0 * (REAL(islot-nbslot,r_size) / sigma_obst)**2)
-!    nn = nn + nobslots(islot)
-!  END DO
+  nn = 0
+  DO islot=1,nslots
+    tmperr(nn+1:nn+nobslots(islot)) = tmperr(nn+1:nn+nobslots(islot)) &
+      & * exp(0.25d0 * (REAL(islot-nbslot,r_size) / sigma_obst)**2)
+    nn = nn + nobslots(islot)
+  END DO
 !
 ! SELECT OBS IN THE NODE
 !
@@ -456,7 +456,6 @@ END SUBROUTINE Trans_XtoY
 !-----------------------------------------------------------------------
 SUBROUTINE calc_rh(t,q,p,rh)
   IMPLICIT NONE
-  REAL(r_size),PARAMETER :: t0=273.15d0
   REAL(r_size),PARAMETER :: e0c=6.11d0
   REAL(r_size),PARAMETER :: al=17.3d0
   REAL(r_size),PARAMETER :: bl=237.3d0
@@ -469,7 +468,7 @@ SUBROUTINE calc_rh(t,q,p,rh)
 
   e = q * p * 0.01d0 / (0.378d0 * q + 0.622d0)
 
-  tc = t-t0
+  tc = t-t0c
   IF(tc >= 0.0d0) THEN
     es = e0c * exp(al*tc/(bl+tc))
   ELSE IF(tc <= -15.d0) THEN

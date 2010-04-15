@@ -24,9 +24,8 @@ MODULE letkf_tools
 
   INTEGER,SAVE :: nobstotal
 
-!  INTEGER,PARAMETER :: nlev_dampinfl = 15 ! number of levels for inflation damp
-  REAL(r_size),PARAMETER :: sp_inflation_n = 0.10d0 !SQRT of cov infl in NH
-  REAL(r_size),PARAMETER :: sp_inflation_s = 0.10d0 !SQRT of cov infl in SH
+  INTEGER,PARAMETER :: nlev_dampinfl = 15 ! levels for vertical inflation damping
+  REAL(r_size),PARAMETER :: sp_inflation = 0.10d0 !SQRT of cov infl
   REAL(r_size),PARAMETER :: sp_infl_additive = 0.d0 !additive inflation
 !TVS  LOGICAL,PARAMETER :: msw_vbc = .FALSE.
 
@@ -48,37 +47,24 @@ SUBROUTINE das_letkf(gues3d,gues2d,anal3d,anal2d)
   REAL(r_size),ALLOCATABLE :: work3d(:,:,:)
   REAL(r_size),ALLOCATABLE :: work2d(:,:)
   REAL(r_size),ALLOCATABLE :: logpfm(:,:)
-!  REAL(r_size),ALLOCATABLE :: parm_infl(:,:) ! spread inflation parameter
-  REAL(r_size) :: parm_infl_n,parm_infl_s
-  REAL(r_size) :: parm
-  REAL(r_size) :: parm_infl_damp(nlev)
+  REAL(r_size),ALLOCATABLE :: parm_infl(:,:) ! spread inflation parameter
   REAL(r_size) :: trans(nbv,nbv)
   INTEGER :: ij,ilev,n,m,i,j,k,nobsl,ierr
 
   WRITE(6,'(A)') 'Hello from das_letkf'
   nobstotal = nobs !+ ntvs
   WRITE(6,'(A,I8)') 'Target observation numbers : NOBS=',nobs!,', NTVS=',ntvs
+!$OMP PARALLEL WORKSHARE
+  anal3d = gues3d
+  anal2d = gues2d
+!$OMP END PARALLEL WORKSHARE
   !
   ! In case of no obs
   !
   IF(nobstotal == 0) THEN
     WRITE(6,'(A)') 'No observation assimilated'
-!$OMP PARALLEL WORKSHARE
-    anal3d = gues3d
-    anal2d = gues2d
-!$OMP END PARALLEL WORKSHARE
     RETURN
   END IF
-  !
-  ! INFLATION PARAMETER ESTIMATION
-  !
-  parm_infl_n = (1.0d0 + sp_inflation_n)**2 - 1.0d0
-  parm_infl_s = (1.0d0 + sp_inflation_s)**2 - 1.0d0
-  parm_infl_damp(:) = 1.0d0
-!  DO ilev=1,nlev
-!    parm_infl_damp(ilev) = REAL(nlev-ilev,r_size)/REAL(nlev_dampinfl,r_size)
-!    parm_infl_damp(ilev) = MIN(parm_infl_damp(ilev),1.0d0)
-!  END DO
   !
   ! FCST PERTURBATIONS
   !
@@ -106,6 +92,34 @@ SUBROUTINE das_letkf(gues3d,gues2d,anal3d,anal2d)
 !$OMP END PARALLEL DO
   END DO
   !
+  ! MULTIPLICATIVE INFLATION
+  !
+  IF(sp_inflation > 0.0d0) THEN
+    ALLOCATE(parm_infl(nij1,nlev))
+    DO k=1,nlev
+      DO i=1,nij1
+        parm_infl(i,k) = 1.0d0 + sp_inflation * MIN(1.0d0, REAL(nlev-k,r_size)/REAL(nlev_dampinfl,r_size))
+      END DO
+    END DO
+    DO n=1,nv3d
+      DO m=1,nbv
+        DO k=1,nlev
+          DO i=1,nij1
+            gues3d(i,k,m,n) = gues3d(i,k,m,n) * parm_infl(i,k)
+          END DO
+        END DO
+      END DO
+    END DO
+    DO n=1,nv2d
+      DO m=1,nbv
+        DO i=1,nij1
+          gues2d(i,m,n) = gues2d(i,m,n) * parm_infl(i,1)
+        END DO
+      END DO
+    END DO
+    DEALLOCATE(parm_infl)
+  END IF
+  !
   ! p_full for background ensemble mean
   !
   ALLOCATE(logpfm(nij1,nlev))
@@ -116,7 +130,7 @@ SUBROUTINE das_letkf(gues3d,gues2d,anal3d,anal2d)
   !
   ! MAIN ASSIMILATION LOOP
   !
-!$OMP PARALLEL PRIVATE(ij,ilev,n,i,k,hdxf,rdiag,dep,trans,parm,nobsl)
+!$OMP PARALLEL PRIVATE(ij,ilev,n,i,k,hdxf,rdiag,dep,trans,nobsl)
   ALLOCATE( hdxf(1:nobstotal,1:nbv),rdiag(1:nobstotal),dep(1:nobstotal) )
 !--- For ILEV = 1
 ! Remark by YS:
@@ -124,31 +138,12 @@ SUBROUTINE das_letkf(gues3d,gues2d,anal3d,anal2d)
 !   the ilev loop was iterated from 1 to NLEV.
 !---
   ilev=1
+write(6,*) 'ilev =',ilev
 !$OMP DO SCHEDULE(DYNAMIC)
     DO ij=1,nij1
-
       CALL obs_local(ij,ilev,hdxf,rdiag,dep,nobsl,logpfm)
-
       IF( nobsl /= 0 ) THEN
-!!!!! INFLATION SETTING !!!!!
-        IF(MAX(sp_inflation_n,sp_inflation_s) == 0.0) THEN
-          parm = 0.0d0
-        ELSE
-          IF(sp_inflation_n == sp_inflation_s) THEN
-            parm = parm_infl_n
-          ELSE
-            IF(lat1(ij) > 20.d0) THEN
-              parm = parm_infl_n
-            ELSE IF(lat1(ij) < -20.d0) THEN
-              parm = parm_infl_s
-            ELSE
-              parm = (lat1(ij) + 20.d0) / 40.d0
-              parm = parm * parm_infl_n + (1.d0 - parm) * parm_infl_s
-            END IF
-          END IF
-        END IF
-        CALL letkf_core(nobstotal,nobsl,hdxf,rdiag,dep,parm,trans)
-
+        CALL letkf_core(nobstotal,nobsl,hdxf,rdiag,dep,0.0d0,trans)
         DO n=1,nv3d
           DO m=1,nbv
             anal3d(ij,ilev,m,n) = mean3d(ij,ilev,n)
@@ -166,50 +161,17 @@ SUBROUTINE das_letkf(gues3d,gues2d,anal3d,anal2d)
             END DO
           END DO
         END DO
-
-      ELSE ! no observation for this analysis
-        DO n=1,nv3d
-          DO m=1,nbv
-            anal3d(ij,ilev,m,n)  = mean3d(ij,ilev,n) + gues3d(ij,ilev,m,n)
-          END DO
-        END DO
-        DO n=1,nv2d
-          DO m=1,nbv
-            anal2d(ij,m,n)  = mean2d(ij,n) + gues2d(ij,m,n)
-          END DO
-        END DO
       END IF
-
     END DO
 !$OMP END DO
 !--- For ILEV = 2 - NLEV
 !$OMP DO SCHEDULE(DYNAMIC)
   DO ilev=2,nlev
+write(6,*) 'ilev =',ilev
     DO ij=1,nij1
-
       CALL obs_local(ij,ilev,hdxf,rdiag,dep,nobsl,logpfm)
-
       IF( nobsl /= 0 ) THEN
-!!!!! INFLATION SETTING !!!!!
-        IF(MAX(sp_inflation_n,sp_inflation_s) == 0.0) THEN
-          parm = 0.0d0
-        ELSE
-          IF(sp_inflation_n == sp_inflation_s) THEN
-            parm = parm_infl_n
-          ELSE
-            IF(lat1(ij) > 20.d0) THEN
-              parm = parm_infl_n
-            ELSE IF(lat1(ij) < -20.d0) THEN
-              parm = parm_infl_s
-            ELSE
-              parm = (lat1(ij) + 20.d0) / 40.d0
-              parm = parm * parm_infl_n + (1.d0 - parm) * parm_infl_s
-            END IF
-          END IF
-          parm = parm * parm_infl_damp(ilev)
-        END IF
-        CALL letkf_core(nobstotal,nobsl,hdxf,rdiag,dep,parm,trans)
-
+        CALL letkf_core(nobstotal,nobsl,hdxf,rdiag,dep,0.0d0,trans)
         DO n=1,nv3d
           DO m=1,nbv
             anal3d(ij,ilev,m,n) = mean3d(ij,ilev,n)
@@ -219,15 +181,7 @@ SUBROUTINE das_letkf(gues3d,gues2d,anal3d,anal2d)
             END DO
           END DO
         END DO
-
-      ELSE ! no observation for this analysis
-        DO n=1,nv3d
-          DO m=1,nbv
-            anal3d(ij,ilev,m,n)  = mean3d(ij,ilev,n) + gues3d(ij,ilev,m,n)
-          END DO
-        END DO
       END IF
-
     END DO
   END DO
 !$OMP END DO
@@ -290,19 +244,6 @@ SUBROUTINE das_letkf(gues3d,gues2d,anal3d,anal2d)
       END DO
     END DO
   END IF
-  !
-  ! Force non-negative q
-  !
-!$OMP PARALLEL DO PRIVATE(ilev,ij)
-  DO m=1,nbv
-    DO ilev=1,nlev
-      DO ij=1,nij1
-        anal3d(ij,ilev,m,iv3d_q) = MAX(anal3d(ij,ilev,m,iv3d_q),0.0d0)
-        anal3d(ij,ilev,m,iv3d_cw) = MAX(anal3d(ij,ilev,m,iv3d_cw),0.0d0)
-      END DO
-    END DO
-  END DO
-!$OMP END PARALLEL DO
 
   DEALLOCATE(logpfm,mean3d,mean2d)
   RETURN
@@ -325,7 +266,7 @@ SUBROUTINE obs_local(ij,ilev,hdxf,rdiag,dep,nobsl,logpfm)
   INTEGER,ALLOCATABLE:: nobs_use(:)
 !TVS  INTEGER,ALLOCATABLE:: ntvs_use_prof(:),ntvs_use_inst(:),ntvs_use_slot(:)
   INTEGER :: imin,imax,jmin,jmax,im,ichan
-  INTEGER :: n,nn,tvnn
+  INTEGER :: n,nn,tvnn,m
 !
 ! INITIALIZE
 !
@@ -510,11 +451,15 @@ SUBROUTINE obs_local(ij,ilev,hdxf,rdiag,dep,nobsl,logpfm)
 
       tmplon=obslon(nobs_use(n))
       tmplat=obslat(nobs_use(n))
+!CDIR IEXPAND
       CALL com_distll_1( tmplon, tmplat,lon1(ij), lat1(ij), dist)
       IF(dist > dist_zero ) CYCLE
 
       nobsl = nobsl + 1
-      hdxf(nobsl,:) = obshdxf(nobs_use(n),:)
+!CDIR EXPAND=100
+      DO m=1,nbv
+        hdxf(nobsl,m) = obshdxf(nobs_use(n),m)
+      END DO
       dep(nobsl)    = obsdep(nobs_use(n))
       !
       ! Observational localization
