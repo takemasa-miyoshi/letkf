@@ -33,7 +33,7 @@ MODULE common_roms
   INTEGER,PARAMETER :: nlevall=nlev*nv3d+nv2d
   INTEGER,PARAMETER :: ngpv=nij0*nlevall
   REAL(r_size),SAVE :: lon(nlon,nlat)
-  REAL(r_size),SAVE :: lat(nlat,nlat)
+  REAL(r_size),SAVE :: lat(nlon,nlat)
   REAL(r_size),SAVE :: fcori(nlon,nlat)
   REAL(r_size),SAVE :: phi0(nlon,nlat)
   CHARACTER(4),SAVE :: element(nv3d+nv2d)
