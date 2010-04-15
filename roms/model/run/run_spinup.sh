@@ -1,14 +1,24 @@
 #!/bin/sh
-set -e
-export OMP_NUM_THREADS=4
-CDIR=`pwd`
+#PBS -l walltime=12:00:00
+#PBS -l select=1:ncpus=16:ompthreads=16
+#PBS -o run_spinup.log
+#PBS -e run_spinup.logerr
+#PBS -q longp
+set -ex
+export OMP_NUM_THREADS=16
+CDIR=/home/kayoide/enkf/roms/model/run
+cd $CDIR
+rm -f run_spinup.log
+rm -f run_spinup.logerr
 cd ../..
 ROMSDIR=`pwd`
 SAVEDIR=$ROMSDIR/DATA/spinup
 STARTYEAR=00
-ENDYEAR=10
+ENDYEAR=05
 INITRST=$ROMSDIR/model/bc/ee6_ini_ee10_rst.0011.nc
-WKDIR=$ROMSDIR/model/tmp
+#WKDIR=/workp/bco/kayoide/tmp/run_spinup
+#WKDIR=/lscratch/kayoide/run_spinup
+WKDIR=$ROMSDIR/DATA/wkdir/spinup
 rm -rf $WKDIR
 mkdir -p $WKDIR
 cd $WKDIR
@@ -52,4 +62,6 @@ fi
 mv grd.nc $SAVEDIR/rst$YEAR.1.nc
 done
 
+mv roms.log $SAVEDIR
+rm -rf $WKDIR
 echo "NORMAL END"
