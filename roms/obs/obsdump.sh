@@ -1,8 +1,8 @@
 #!/bin/sh
-F90=pgf90
-OBS=../DATA/obs/0001.dat
+F90=ifort
+OBS=../DATA/obs/regular/2004010100_obs.dat
 ln -s $OBS fort.3
-$F90 -byteswapio obsdump.f90
+$F90 obsdump.f90
 ./a.out
 rm a.out
 rm fort.3

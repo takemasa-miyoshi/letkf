@@ -1,12 +1,14 @@
 #!/bin/sh
 set -ex
 PGM=station.s01
-F90=pgf90
+F90=ifort
 OMP=
-F90OPT='-byteswapio -tp p7-64 -fast -O3'
-INLINE="-Minline"
-INCLUDE_NETCDF="-I/usr/local/netcdf/include"
-LIB_NETCDF="-L/usr/local/netcdf/lib -lnetcdf"
+F90OPT='-O3'
+INLINE=
+#INCLUDE_NETCDF="-I/usr/local/netcdf/include"
+#LIB_NETCDF="-L/usr/local/netcdf/lib -lnetcdf"
+INCLUDE_NETCDF="-I/home/zhc/netcdf-3.6.0-p1/include"
+LIB_NETCDF="-L/home/zhc/netcdf-3.6.0-p1/lib -lnetcdf"
 
 sh ulnkcommon.sh
 sh lnkcommon.sh
