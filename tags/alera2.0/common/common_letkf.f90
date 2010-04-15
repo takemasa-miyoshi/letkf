@@ -25,7 +25,7 @@ MODULE common_letkf
 !=======================================================================
 !  LEKF Model Independent Parameters
 !=======================================================================
-  INTEGER,PARAMETER :: nbv=20    ! ensemble size
+  INTEGER,PARAMETER :: nbv=63    ! ensemble size
 
 CONTAINS
 !=======================================================================
@@ -52,9 +52,9 @@ SUBROUTINE letkf_core(nobs,nobsl,hdxb,rdiag,dep,parm_infl,trans)
   REAL(r_size) :: hdxb_rinv(nobsl,nbv)
   REAL(r_size) :: eivec(nbv,nbv)
   REAL(r_size) :: eival(nbv)
-  REAL(r_size) :: pa(nbv+1,nbv)
+  REAL(r_size) :: pa(nbv,nbv)
   REAL(r_size) :: work1(nbv,nbv)
-  REAL(r_size) :: work2(nbv+1,nobsl)
+  REAL(r_size) :: work2(nbv,nobsl)
   REAL(r_size) :: work3(nbv)
   REAL(r_size) :: rho
   INTEGER :: i,j,k
