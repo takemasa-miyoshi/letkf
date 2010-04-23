@@ -9,11 +9,8 @@ PROGRAM obsmake
 !=======================================================================
 !$USE OMP_LIB
   USE common
-!  USE common_mpi
-  USE common_obs
   USE common_speedy
-!  USE common_mpi_speedy
-!  USE common_obs_speedy
+  USE common_obs_speedy
 
   IMPLICIT NONE
 
@@ -141,9 +138,7 @@ PROGRAM obsmake
   ! Count number of obs
   !
   IF(verbose) THEN
-    OPEN(10,FILE=obsf,FORM='unformatted',ACCESS='sequential')
-    CALL get_nobs(10)
-    CLOSE(10)
+    CALL get_nobs(obsf,nn)
   END IF
 
   DEALLOCATE(v3d,v2d,error)

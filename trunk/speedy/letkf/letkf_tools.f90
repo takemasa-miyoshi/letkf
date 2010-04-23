@@ -9,12 +9,10 @@ MODULE letkf_tools
 !=======================================================================
   USE common
   USE common_mpi
-  USE common_obs
   USE common_speedy
   USE common_mpi_speedy
-  USE common_obs_speedy
-!TVS  USE common_tvs_speedy
   USE common_letkf
+  USE letkf_obs
 
   IMPLICIT NONE
 
@@ -23,7 +21,7 @@ MODULE letkf_tools
 
   INTEGER,SAVE :: nobstotal
 
-  REAL(r_size),PARAMETER :: cov_infl_mul = 1.04d0 !multiplicative inflation
+  REAL(r_size),PARAMETER :: cov_infl_mul = -1.01d0 !multiplicative inflation
 ! > 0: globally constant covariance inflation
 ! < 0: 3D inflation values input from a GPV file "infl_mul.grd"
   REAL(r_size),PARAMETER :: sp_infl_add = 0.d0 !additive inflation
