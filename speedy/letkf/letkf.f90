@@ -10,11 +10,10 @@ PROGRAM letkf
 !$USE OMP_LIB
   USE common
   USE common_mpi
-  USE common_obs
   USE common_speedy
   USE common_mpi_speedy
-  USE common_obs_speedy
   USE common_letkf
+  USE letkf_obs
   USE letkf_tools
 
   IMPLICIT NONE
@@ -77,7 +76,7 @@ PROGRAM letkf
   !
   ! CONVENTIONAL OBS
   !
-  CALL set_common_obs_speedy
+  CALL set_letkf_obs
 !
   CALL CPU_TIME(rtimer)
   WRITE(6,'(A,2F10.2)') '### TIMER(READ_OBS):',rtimer,rtimer-rtimer00
