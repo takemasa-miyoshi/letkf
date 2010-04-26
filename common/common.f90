@@ -200,8 +200,8 @@ SUBROUTINE com_filter_lanczos(ndim,fc,var)
 !
 ! Cyclic boundary
 !
-  DO i=1-lresol,0
-    varwk(i) = var(ndim-i)
+  DO i=0,1-lresol,-1
+    varwk(i) = var(ndim+i)
   END DO
   DO i=ndim+1,ndim+lresol
     varwk(i) = var(i-ndim)
