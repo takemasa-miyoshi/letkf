@@ -366,15 +366,86 @@ SUBROUTINE Trans_XtoY(elm,ri,rj,rk,v3d,v2d,yobs)
   CASE(id_v_obs) ! V
     yobs = v3d(NINT(ri),NINT(rj),NINT(rk),iv3d_v)
   CASE(id_t_obs) ! T
-    yobs = v3d(NINT(ri),NINT(rj),NINT(rk),iv3d_t)
+    CALL itpl_3d(v3d(:,:,:,iv3d_t),ri,rj,rk,yobs)
   CASE(id_s_obs) ! S
-    yobs = v3d(NINT(ri),NINT(rj),NINT(rk),iv3d_s)
+    CALL itpl_3d(v3d(:,:,:,iv3d_s),ri,rj,rk,yobs)
   CASE(id_z_obs) ! Z
     yobs = v2d(NINT(ri),NINT(rj),iv2d_z)
   END SELECT
 
   RETURN
 END SUBROUTINE Trans_XtoY
+!-----------------------------------------------------------------------
+! Interpolation
+!-----------------------------------------------------------------------
+SUBROUTINE itpl_2d(var,ri,rj,var5)
+  IMPLICIT NONE
+  REAL(r_size),INTENT(IN) :: var(nlon,nlat)
+  REAL(r_size),INTENT(IN) :: ri
+  REAL(r_size),INTENT(IN) :: rj
+  REAL(r_size),INTENT(OUT) :: var5
+  REAL(r_size) :: ai,aj
+  INTEGER :: i,j
+
+  i = CEILING(ri)
+  ai = ri - REAL(i-1,r_size)
+  j = CEILING(rj)
+  aj = rj - REAL(j-1,r_size)
+
+  IF(i <= nlon) THEN
+    var5 = var(i-1,j-1) * (1-ai) * (1-aj) &
+       & + var(i  ,j-1) *    ai  * (1-aj) &
+       & + var(i-1,j  ) * (1-ai) *    aj  &
+       & + var(i  ,j  ) *    ai  *    aj
+  ELSE
+    var5 = var(i-1,j-1) * (1-ai) * (1-aj) &
+       & + var(1  ,j-1) *    ai  * (1-aj) &
+       & + var(i-1,j  ) * (1-ai) *    aj  &
+       & + var(1  ,j  ) *    ai  *    aj
+  END IF
+
+  RETURN
+END SUBROUTINE itpl_2d
+
+SUBROUTINE itpl_3d(var,ri,rj,rk,var5)
+  IMPLICIT NONE
+  REAL(r_size),INTENT(IN) :: var(nlon,nlat,nlev)
+  REAL(r_size),INTENT(IN) :: ri
+  REAL(r_size),INTENT(IN) :: rj
+  REAL(r_size),INTENT(IN) :: rk
+  REAL(r_size),INTENT(OUT) :: var5
+  REAL(r_size) :: ai,aj,ak
+  INTEGER :: i,j,k
+
+  i = CEILING(ri)
+  ai = ri - REAL(i-1,r_size)
+  j = CEILING(rj)
+  aj = rj - REAL(j-1,r_size)
+  k = CEILING(rk)
+  ak = rk - REAL(k-1,r_size)
+
+  IF(i <= nlon) THEN
+    var5 = var(i-1,j-1,k-1) * (1-ai) * (1-aj) * (1-ak) &
+       & + var(i  ,j-1,k-1) *    ai  * (1-aj) * (1-ak) &
+       & + var(i-1,j  ,k-1) * (1-ai) *    aj  * (1-ak) &
+       & + var(i  ,j  ,k-1) *    ai  *    aj  * (1-ak) &
+       & + var(i-1,j-1,k  ) * (1-ai) * (1-aj) *    ak  &
+       & + var(i  ,j-1,k  ) *    ai  * (1-aj) *    ak  &
+       & + var(i-1,j  ,k  ) * (1-ai) *    aj  *    ak  &
+       & + var(i  ,j  ,k  ) *    ai  *    aj  *    ak
+  ELSE
+    var5 = var(i-1,j-1,k-1) * (1-ai) * (1-aj) * (1-ak) &
+       & + var(1  ,j-1,k-1) *    ai  * (1-aj) * (1-ak) &
+       & + var(i-1,j  ,k-1) * (1-ai) *    aj  * (1-ak) &
+       & + var(1  ,j  ,k-1) *    ai  *    aj  * (1-ak) &
+       & + var(i-1,j-1,k  ) * (1-ai) * (1-aj) *    ak  &
+       & + var(1  ,j-1,k  ) *    ai  * (1-aj) *    ak  &
+       & + var(i-1,j  ,k  ) * (1-ai) *    aj  *    ak  &
+       & + var(1  ,j  ,k  ) *    ai  *    aj  *    ak
+  END IF
+
+  RETURN
+END SUBROUTINE itpl_3d
 !-----------------------------------------------------------------------
 ! Monitor departure
 !-----------------------------------------------------------------------
