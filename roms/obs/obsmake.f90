@@ -19,25 +19,61 @@ PROGRAM obsmake
   INTEGER,PARAMETER :: id_hrf   =1
   INTEGER,PARAMETER :: id_prof  =2
   INTEGER,PARAMETER :: id_sst   =3
-  INTEGER,PARAMETER :: id_ssh   =4
-  INTEGER,PARAMETER :: id_glider=5
+  INTEGER,PARAMETER :: kprof = 17
   REAL(r_size),ALLOCATABLE :: v3d(:,:,:,:)
   REAL(r_size),ALLOCATABLE :: v2d(:,:,:)
   REAL(r_size),ALLOCATABLE :: error(:)
   REAL(r_sngl) :: wk(6)
-  REAL(r_sngl) :: wk2(6)
-  REAL(r_size) :: alon,depth,cs(nlev)
-  REAL(r_size) :: err
-  INTEGER :: id,i,j,k,elm,nn,ios
+  REAL(r_size) :: alon,depth(nlev),surfd
+  REAL(r_size) :: profdep(kprof)
+  REAL(r_size) :: rk,wk1,wk2
+  REAL(r_size) :: wk1prof(kprof),wk2prof(kprof)
+  INTEGER :: id,i,j,k,kk,elm,nn,ios
+  INTEGER :: nobkind,nu,nv,nt,ns,nz,obelm(5)
+  REAL(r_size) :: a,oberr(5)
   CHARACTER(100) :: cdummy
-
   CHARACTER(7) :: truef='true.nc'
+  LOGICAL :: ex
   !
   ! Initial settings
   !
   CALL set_common_roms
-  cs=(/ -0.921962804129276, -0.783682417800398, -0.666141723246888, -0.566230075492245, -0.481303371858989, -0.409114077354825, -0.347751744988103, -0.295592456917874, -0.251255848428496, -0.213568577393686, -0.181533272470966, -0.154302138258862, -0.131154518892926, -0.111477826314426, -0.0947513284896102, -0.0805323685443561, -0.0684446501117523, -0.0581682788712608, -0.0494312967346868, -0.0420024846361897, -0.0356852434564318, -0.0303123911431393, -0.0257417383369477, -0.0218523254140864, -0.0185412213614628, -0.0157207997682656, -0.0133164198448193, -0.0112644510982221, -0.00951058938897752, -0.00800841980405428, -0.0067181883136592, -0.00560574970434628, -0.00464166394613383, -0.00380041707951966, -0.00305974600362987, -0.00240004929641906, -0.00180386847462664, -0.00125542596534104, -0.000740207561862293, -0.000244578313804319 /)
-
+  profdep=(/ 0.0, -5.0, -10.0, -15.0, -20.0, -30.0, -40.0, -50.0, -60.0, -75.0, -100.0, -125.0, -150.0, -200.0, -250.0, -300.0, -400.0 /)
+  !
+  ! read table obserr.tbl
+  !
+  OPEN(11,FILE='obserr.tbl')
+  READ(11,'(A)') cdummy
+  READ(11,'(A)') cdummy
+  nobkind = 0
+  DO
+    READ(11,'(L1,X,I5,X,ES9.2)',IOSTAT=ios) ex,i,a
+    IF(ios /= 0) EXIT
+    IF(ex) THEN
+      nobkind = nobkind+1
+      obelm(nobkind) = i
+      oberr(nobkind) = a
+    END IF
+  END DO
+  CLOSE(11)
+  !
+  ! find n
+  !
+  DO nu=1,nobkind
+    IF(obelm(nu) == id_u_obs) EXIT
+  END DO
+  DO nv=1,nobkind
+    IF(obelm(nv) == id_v_obs) EXIT
+  END DO
+  DO nt=1,nobkind
+    IF(obelm(nt) == id_t_obs) EXIT
+  END DO
+  DO ns=1,nobkind
+    IF(obelm(ns) == id_s_obs) EXIT
+  END DO
+  DO nz=1,nobkind
+    IF(obelm(nz) == id_z_obs) EXIT
+  END DO
   !
   ! Read true (nature run)
   !
@@ -52,9 +88,11 @@ PROGRAM obsmake
   READ(10,'(A)') cdummy
   nobs = 0
   DO
-    READ(10,'(3I4,I3,I6,ES9.2)',IOSTAT=ios) id,i,j,k,elm,err
+    READ(10,'(3I4)',IOSTAT=ios) id,i,j
     IF(ios /= 0) EXIT
-    nobs = nobs + 1
+    IF(id == id_hrf) nobs = nobs + 2
+    IF(id == id_prof) nobs = nobs + kprof*2
+    IF(id == id_sst) nobs = nobs + 1
   END DO
   CLOSE(10)
   IF(verbose) PRINT '(A,I)','nobs = ',nobs
@@ -63,6 +101,7 @@ PROGRAM obsmake
   !
   ALLOCATE(error(nobs))
   CALL com_randn(nobs,error)
+!  error = 0.0d0 !! for testing purpose
   !
   ! Output OBS
   !
@@ -75,95 +114,90 @@ PROGRAM obsmake
   OPEN(81,FILE='hrf.ascii',FORM='formatted')
   WRITE(81,'(A)') '%   lon       lat       u        v       speed      Uerr      Verr'
   WRITE(81,'(A)') '%  (deg)     (deg)    (cm/s)   (cm/s)    (cm/s)    (cm/s)    (cm/s))'
-  ! ship_sst
-  OPEN(92,FILE='sst.letkf',FORM='unformatted',ACCESS='sequential')
-  OPEN(82,FILE='sst.ascii',FORM='formatted')
-  ! ship_ssh
-  OPEN(93,FILE='ssh.letkf',FORM='unformatted',ACCESS='sequential')
-  OPEN(83,FILE='ssh.ascii',FORM='formatted')
   ! prof
-  OPEN(94,FILE='prof.letkf',FORM='unformatted',ACCESS='sequential')
-  OPEN(84,FILE='prof.ascii',FORM='formatted')
-  ! prof uv
-  OPEN(95,FILE='profuv.letkf',FORM='unformatted',ACCESS='sequential')
-  OPEN(85,FILE='profuv.ascii',FORM='formatted')
+  OPEN(92,FILE='prof.letkf',FORM='unformatted',ACCESS='sequential')
+  OPEN(82,FILE='prof.ascii',FORM='formatted')
+  ! ship_sst
+  OPEN(93,FILE='sst.letkf',FORM='unformatted',ACCESS='sequential')
+  OPEN(83,FILE='sst.ascii',FORM='formatted')
   DO
-    READ(10,'(3I4,I3,I6,ES9.2)',IOSTAT=ios) id,i,j,k,elm,err
-    IF(ios /= 0) EXIT
-    !
-    ! LETKF obs format
-    !
-    wk(1)=REAL(elm,r_sngl)
-    wk(2)=REAL(i,r_sngl)
-    wk(3)=REAL(j,r_sngl)
-    wk(4)=REAL(k,r_sngl)
-    nn = nn+1
-    SELECT CASE(elm)
-    CASE(id_u_obs)
-      wk(5)=REAL(v3d(i,j,k,iv3d_u)+error(nn)*err,r_sngl)
-    CASE(id_v_obs)
-      wk(5)=REAL(v3d(i,j,k,iv3d_v)+error(nn)*err,r_sngl)
-    CASE(id_t_obs)
-      wk(5)=REAL(v3d(i,j,k,iv3d_t)+error(nn)*err,r_sngl)
-    CASE(id_s_obs)
-      wk(5)=REAL(v3d(i,j,k,iv3d_s)+error(nn)*err,r_sngl)
-    CASE(id_z_obs)
-      wk(5)=REAL(v2d(i,j,iv2d_z)+error(nn)*err,r_sngl)
-    END SELECT
-    wk(6)=REAL(err,r_sngl)
-    !
-    ! real obs format
-    !
+    READ(10,'(3I4)',IOSTAT=ios) id,i,j
     alon = lon(i,j)
     IF(alon > 180.0d0) alon = alon - 360.0d0
-    !! hfradar_uv
-    IF(id == id_hrf .AND. elm == id_u_obs) wk2 = wk
-    IF(id == id_hrf .AND. elm == id_v_obs) THEN
-      WRITE(81,'(7(F9.4X))') lat(i,j),alon,wk2(5)*100.0,wk(5)*100.0,SQRT(wk(5)**2+wk2(5)**2)*100.0,wk2(6)*100.0,wk(6)*100.0
-      WRITE(91) wk2
+    IF(ios /= 0) EXIT
+    SELECT CASE(id)
+    !
+    ! hfradar_uv
+    !
+    CASE(id_hrf)
+      wk1=v3d(i,j,nlev,iv3d_u)+error(nn+1)*oberr(nu)
+      wk2=v3d(i,j,nlev,iv3d_v)+error(nn+2)*oberr(nv)
+      WRITE(81,'(7(F9.4X))') lat(i,j),alon,wk1*100.0,wk2*100.0,SQRT(wk1**2+wk2**2)*100.0,oberr(nu)*100.0,oberr(nv)*100.0
+      wk(1)=REAL(id_u_obs,r_sngl)
+      wk(2)=REAL(i,r_sngl)
+      wk(3)=REAL(j,r_sngl)
+      wk(4)=0.0d0
+      wk(5)=REAL(wk1,r_sngl)
+      wk(6)=REAL(oberr(nu),r_sngl)
       WRITE(91) wk
-    END IF
-    !! sst
-    IF(id == id_sst) THEN
-      WRITE(82,'(4(X,F9.4))') alon,lat(i,j),wk(5),-999.0
-      WRITE(92) wk
-    END IF
-    !! ssh
-    IF(id == id_ssh) THEN
-      WRITE(83,'(4(X,F9.4))') alon,lat(i,j),wk(5),-999.0
+      wk(1)=REAL(id_v_obs,r_sngl)
+      wk(5)=REAL(wk2,r_sngl)
+      wk(6)=REAL(oberr(nv),r_sngl)
+      WRITE(91) wk
+      nn = nn+2
+    !
+    ! profile
+    !
+    CASE(id_prof)
+      CALL calc_depth(v2d(i,j,iv2d_z),phi0(i,j),depth)
+      CALL com_interp_spline(nlev,depth,v3d(i,j,:,iv3d_t),kprof,profdep,wk1prof)
+      CALL com_interp_spline(nlev,depth,v3d(i,j,:,iv3d_s),kprof,profdep,wk2prof)
+      DO k=1,kprof
+        IF(k == 1) THEN
+          wk1 =-999.0d0
+          wk2 =-999.0d0
+        ELSE
+          wk1 = wk1prof(k) + error(nn+1)*oberr(nt)
+          wk2 = wk2prof(k) + error(nn+2)*oberr(ns)
+        END IF
+        WRITE(82,'(5(X,F9.4))') alon,lat(i,j),profdep(k),wk1,wk2
+        IF(k /= 1) THEN
+          wk(1)=REAL(id_t_obs,r_sngl)
+          wk(2)=REAL(i,r_sngl)
+          wk(3)=REAL(j,r_sngl)
+          wk(4)=profdep(k)
+          wk(5)=REAL(wk1,r_sngl)
+          wk(6)=REAL(oberr(nt),r_sngl)
+          WRITE(92) wk
+          wk(1)=REAL(id_s_obs,r_sngl)
+          wk(5)=REAL(wk2,r_sngl)
+          wk(6)=REAL(oberr(ns),r_sngl)
+          WRITE(92) wk
+        END IF
+        nn = nn+2
+      END DO
+    !
+    ! SST
+    !
+    CASE(id_sst)
+      wk1=v3d(i,j,nlev,iv3d_t)+error(nn+1)*oberr(nt)
+      WRITE(83,'(4(X,F9.4))') alon,lat(i,j),wk1,-999.0
+      wk(1)=REAL(id_t_obs,r_sngl)
+      wk(2)=REAL(i,r_sngl)
+      wk(3)=REAL(j,r_sngl)
+      wk(4)=0.0d0
+      wk(5)=REAL(wk1,r_sngl)
+      wk(6)=REAL(oberr(nt),r_sngl)
       WRITE(93) wk
-    END IF
-    !! profile
-    IF(id == id_prof .AND. elm == id_t_obs) wk2 = wk
-    IF(id == id_prof .AND. elm == id_s_obs) THEN
-      depth = v2d(i,j,iv2d_z)+(v2d(i,j,iv2d_z)+3500.0d0)* &
-        & (10.0d0*(REAL(k,r_size)-REAL(nlev,r_size)-0.5d0)/ &
-        & REAL(nlev,r_size)+cs(k)*3500.0d0)/3510.0d0
-      WRITE(84,'(5(X,F9.4))') alon,lat(i,j),depth,wk2(5),wk(5)
-      WRITE(94) wk2
-      WRITE(94) wk
-    END IF
-    !! profile uv
-    IF(id == id_prof .AND. elm == id_u_obs) wk2 = wk
-    IF(id == id_prof .AND. elm == id_v_obs) THEN
-      depth = v2d(i,j,iv2d_z)+(v2d(i,j,iv2d_z)+3500.0d0)* &
-        & (10.0d0*(REAL(k,r_size)-REAL(nlev,r_size)-0.5d0)/ &
-        & REAL(nlev,r_size)+cs(k)*3500.0d0)/3510.0d0
-      WRITE(85,'(5(X,F9.4))') alon,lat(i,j),depth,wk2(5)*100.0,wk(5)*100.0
-      WRITE(95) wk2
-      WRITE(95) wk
-    END IF
+      nn = nn+1
+    END SELECT
   END DO
-  CLOSE(91)
-  CLOSE(92)
-  CLOSE(93)
-  CLOSE(94)
-  CLOSE(95)
   CLOSE(81)
   CLOSE(82)
   CLOSE(83)
-  CLOSE(84)
-  CLOSE(85)
+  CLOSE(91)
+  CLOSE(92)
+  CLOSE(93)
 
   DEALLOCATE(v3d,v2d,error)
 

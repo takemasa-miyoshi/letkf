@@ -7,9 +7,10 @@ set -e
 ### input for this shell
 ROMS=$1
 OUTPUT=$2
-TIME=$3
-MEM=$4
-NODE=$5
+YMDH=$3
+TYMDH=$4
+MEM=$5
+NODE=$6
 ###
 if test 5$5 -eq 5
 then
@@ -25,23 +26,10 @@ cp $ROMS/ncio/chtimestep $NODE
 cp $ROMS/model/updates/roms.in.6hr $NODE/roms.in
 ### run
 cd $NODE
-ln -fs $OUTPUT/anal/$MEM/$TIME.nc input.nc
+ln -fs $OUTPUT/anal/$MEM/${YMDH}_rst.nc input.nc
 ./roms > roms.log
 rm input.nc
 mv output.0001.nc grd.nc
 ./chtimestep
-TIME=`expr $TIME + 1`
-if test $TIME -lt 1000
-then
-TIME=0$TIME
-fi
-if test $TIME -lt 100
-then
-TIME=0$TIME
-fi
-if test $TIME -lt 10
-then
-TIME=0$TIME
-fi
-mv grd.nc $OUTPUT/gues/$MEM/$TIME.nc
+mv grd.nc $OUTPUT/gues/$MEM/${TYMDH}_rst.nc
 exit 0

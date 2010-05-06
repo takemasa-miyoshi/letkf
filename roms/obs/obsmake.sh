@@ -3,8 +3,9 @@ set -e
 CDIR=`pwd`
 cd ..
 ROMS=`pwd`
+source $ROMS/../common/timeinc.sh
 TRUEDIR=$ROMS/DATA/nature
-EXP=surfonly
+EXP=5x20
 ASCIIOBS=$ROMS/DATA/$EXP/insitu_obs
 LETKFOBS=$ROMS/DATA/$EXP/letkf_obs
 PGM=obsmake.s01
@@ -22,7 +23,7 @@ EH=00
 cd $CDIR
 mkdir -p $ASCIIOBS
 mkdir -p $LETKFOBS
-for OBTYPE in hfradar_uv ship_sst ship_ssh profiles prof_uv
+for OBTYPE in hfradar_uv ship_sst profiles
 do
 mkdir -p $ASCIIOBS/$OBTYPE
 mkdir -p $LETKFOBS/$OBTYPE
@@ -31,12 +32,12 @@ cp station.tbl $ASCIIOBS
 cp obserr.tbl $ASCIIOBS
 cp station.tbl $LETKFOBS
 cp obserr.tbl $LETKFOBS
-ln -s $ROMS/model/bc/ee6_grd.nc grd.nc
+ln -fs $ROMS/model/bc/ee6_grd.nc grd.nc
 # main loop
 while test $IY$IM$ID$IH -le $EY$EM$ED$EH
 do
 echo "PROCESSING $IY/$IM/$ID/$IH"
-ln -s $TRUEDIR/$IY$IM$ID${IH}_rst.nc true.nc
+ln -fs $TRUEDIR/$IY$IM$ID${IH}_rst.nc true.nc
 
 ./$PGM
 
@@ -44,12 +45,8 @@ mv hrf.ascii $ASCIIOBS/hfradar_uv/$IY$IM$ID${IH}00_hfr.dat
 mv hrf.letkf $LETKFOBS/hfradar_uv/$IY$IM$ID${IH}_obs.dat
 mv sst.ascii $ASCIIOBS/ship_sst/$IY$IM$ID${IH}.asc
 mv sst.letkf $LETKFOBS/ship_sst/$IY$IM$ID${IH}_obs.dat
-mv ssh.ascii $ASCIIOBS/ship_ssh/$IY$IM$ID${IH}.asc
-mv ssh.letkf $LETKFOBS/ship_ssh/$IY$IM$ID${IH}_obs.dat
 mv prof.ascii $ASCIIOBS/profiles/fort.$IY$IM$ID${IH}
 mv prof.letkf $LETKFOBS/profiles/$IY$IM$ID${IH}_obs.dat
-mv profuv.ascii $ASCIIOBS/prof_uv/fort.$IY$IM$ID${IH}
-mv profuv.letkf $LETKFOBS/prof_uv/$IY$IM$ID${IH}_obs.dat
 rm true.nc
 ### 6hr increment
 TY=`timeinc6hr $IY $IM $ID $IH | cut -c1-4`
