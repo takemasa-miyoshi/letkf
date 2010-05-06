@@ -22,20 +22,20 @@ MODULE common_obs_roms
   INTEGER,PARAMETER :: nslots=1 ! number of time slots for 4D-LETKF
   INTEGER,PARAMETER :: nbslot=1 ! basetime slot
 !  REAL(r_size),PARAMETER :: sigma_obs=400.0d3
-  REAL(r_size),PARAMETER :: sigma_obs=3.0d0 ! grids
-  REAL(r_size),PARAMETER :: sigma_obsv=1.0d0 ! grids
+  REAL(r_size),PARAMETER :: sigma_obs=5.0d0 ! grids
+  REAL(r_size),PARAMETER :: sigma_obsv=50.0d0 ! meters
   REAL(r_size),PARAMETER :: sigma_obst=3.0d0 ! slots
   REAL(r_size),SAVE :: dist_zero
   REAL(r_size),SAVE :: dist_zerov
   REAL(r_size),ALLOCATABLE,SAVE :: obselm(:)
   REAL(r_size),ALLOCATABLE,SAVE :: obslon(:)
   REAL(r_size),ALLOCATABLE,SAVE :: obslat(:)
-!  REAL(r_size),ALLOCATABLE,SAVE :: obslev(:)
+  REAL(r_size),ALLOCATABLE,SAVE :: obslev(:)
   REAL(r_size),ALLOCATABLE,SAVE :: obsdat(:)
   REAL(r_size),ALLOCATABLE,SAVE :: obserr(:)
   REAL(r_size),ALLOCATABLE,SAVE :: obsi(:)
   REAL(r_size),ALLOCATABLE,SAVE :: obsj(:)
-  REAL(r_size),ALLOCATABLE,SAVE :: obsk(:)
+!  REAL(r_size),ALLOCATABLE,SAVE :: obsk(:)
   REAL(r_size),ALLOCATABLE,SAVE :: obsdep(:)
   REAL(r_size),ALLOCATABLE,SAVE :: obshdxf(:,:)
   INTEGER,SAVE :: nobsgrd(nlon,nlat)
@@ -56,12 +56,12 @@ SUBROUTINE set_common_obs_roms
   REAL(r_size),ALLOCATABLE :: tmpelm(:)
   REAL(r_size),ALLOCATABLE :: tmplon(:)
   REAL(r_size),ALLOCATABLE :: tmplat(:)
-!  REAL(r_size),ALLOCATABLE :: tmplev(:)
+  REAL(r_size),ALLOCATABLE :: tmplev(:)
   REAL(r_size),ALLOCATABLE :: tmpdat(:)
   REAL(r_size),ALLOCATABLE :: tmperr(:)
   REAL(r_size),ALLOCATABLE :: tmpi(:)
   REAL(r_size),ALLOCATABLE :: tmpj(:)
-  REAL(r_size),ALLOCATABLE :: tmpk(:)
+!  REAL(r_size),ALLOCATABLE :: tmpk(:)
   REAL(r_size),ALLOCATABLE :: tmpdep(:)
   REAL(r_size),ALLOCATABLE :: tmphdxf(:,:)
   INTEGER,ALLOCATABLE :: tmpqc0(:,:)
@@ -69,12 +69,12 @@ SUBROUTINE set_common_obs_roms
   REAL(r_size),ALLOCATABLE :: tmp2elm(:)
   REAL(r_size),ALLOCATABLE :: tmp2lon(:)
   REAL(r_size),ALLOCATABLE :: tmp2lat(:)
-!  REAL(r_size),ALLOCATABLE :: tmp2lev(:)
+  REAL(r_size),ALLOCATABLE :: tmp2lev(:)
   REAL(r_size),ALLOCATABLE :: tmp2dat(:)
   REAL(r_size),ALLOCATABLE :: tmp2err(:)
   REAL(r_size),ALLOCATABLE :: tmp2i(:)
   REAL(r_size),ALLOCATABLE :: tmp2j(:)
-  REAL(r_size),ALLOCATABLE :: tmp2k(:)
+!  REAL(r_size),ALLOCATABLE :: tmp2k(:)
   REAL(r_size),ALLOCATABLE :: tmp2dep(:)
   REAL(r_size),ALLOCATABLE :: tmp2hdxf(:,:)
   INTEGER :: nobslots(nslots)
@@ -101,12 +101,12 @@ SUBROUTINE set_common_obs_roms
   ALLOCATE( tmpelm(nobs) )
   ALLOCATE( tmplon(nobs) )
   ALLOCATE( tmplat(nobs) )
-!  ALLOCATE( tmplev(nobs) )
+  ALLOCATE( tmplev(nobs) )
   ALLOCATE( tmpdat(nobs) )
   ALLOCATE( tmperr(nobs) )
   ALLOCATE( tmpi(nobs) )
   ALLOCATE( tmpj(nobs) )
-  ALLOCATE( tmpk(nobs) )
+!  ALLOCATE( tmpk(nobs) )
   ALLOCATE( tmpdep(nobs) )
   ALLOCATE( tmphdxf(nobs,nbv) )
   ALLOCATE( tmpqc0(nobs,nbv) )
@@ -122,7 +122,7 @@ SUBROUTINE set_common_obs_roms
     WRITE(obsfile(4:5),'(I2.2)') islot
     CALL read_obs_mpi(obsfile,nobslots(islot),&
       & tmpelm(nn+1:nn+nobslots(islot)),tmpi(nn+1:nn+nobslots(islot)),&
-      & tmpj(nn+1:nn+nobslots(islot)),tmpk(nn+1:nn+nobslots(islot)),&
+      & tmpj(nn+1:nn+nobslots(islot)),tmplev(nn+1:nn+nobslots(islot)),&
       & tmpdat(nn+1:nn+nobslots(islot)),tmperr(nn+1:nn+nobslots(islot)) )
     l=0
     DO
@@ -139,7 +139,7 @@ SUBROUTINE set_common_obs_roms
         ! observational operator
         !
         CALL Trans_XtoY(tmpelm(nn+n),&
-          & tmpi(nn+n),tmpj(nn+n),tmpk(nn+n),v3d,v2d,tmphdxf(nn+n,im))
+          & tmpi(nn+n),tmpj(nn+n),tmplev(nn+n),v3d,v2d,tmphdxf(nn+n,im))
         tmpqc0(nn+n,im) = 1
       END DO
 !$OMP END PARALLEL DO
@@ -215,12 +215,12 @@ SUBROUTINE set_common_obs_roms
     tmpelm(nn) = tmpelm(n)
     tmplon(nn) = tmplon(n)
     tmplat(nn) = tmplat(n)
-!    tmplev(nn) = tmplev(n)
+    tmplev(nn) = tmplev(n)
     tmpdat(nn) = tmpdat(n)
     tmperr(nn) = tmperr(n)
     tmpi(nn) = tmpi(n)
     tmpj(nn) = tmpj(n)
-    tmpk(nn) = tmpk(n)
+!    tmpk(nn) = tmpk(n)
     tmpdep(nn) = tmpdep(n)
     tmphdxf(nn,:) = tmphdxf(n,:)
     tmpqc(nn) = tmpqc(n)
@@ -233,23 +233,23 @@ SUBROUTINE set_common_obs_roms
   ALLOCATE( tmp2elm(nobs) )
   ALLOCATE( tmp2lon(nobs) )
   ALLOCATE( tmp2lat(nobs) )
-!  ALLOCATE( tmp2lev(nobs) )
+  ALLOCATE( tmp2lev(nobs) )
   ALLOCATE( tmp2dat(nobs) )
   ALLOCATE( tmp2err(nobs) )
   ALLOCATE( tmp2i(nobs) )
   ALLOCATE( tmp2j(nobs) )
-  ALLOCATE( tmp2k(nobs) )
+!  ALLOCATE( tmp2k(nobs) )
   ALLOCATE( tmp2dep(nobs) )
   ALLOCATE( tmp2hdxf(nobs,nbv) )
   ALLOCATE( obselm(nobs) )
   ALLOCATE( obslon(nobs) )
   ALLOCATE( obslat(nobs) )
-!  ALLOCATE( obslev(nobs) )
+  ALLOCATE( obslev(nobs) )
   ALLOCATE( obsdat(nobs) )
   ALLOCATE( obserr(nobs) )
   ALLOCATE( obsi(nobs) )
   ALLOCATE( obsj(nobs) )
-  ALLOCATE( obsk(nobs) )
+!  ALLOCATE( obsk(nobs) )
   ALLOCATE( obsdep(nobs) )
   ALLOCATE( obshdxf(nobs,nbv) )
   nobsgrd = 0
@@ -277,12 +277,12 @@ SUBROUTINE set_common_obs_roms
       tmp2elm(njs(j)+nn) = tmpelm(n)
       tmp2lon(njs(j)+nn) = tmplon(n)
       tmp2lat(njs(j)+nn) = tmplat(n)
-!      tmp2lev(njs(j)+nn) = tmplev(n)
+      tmp2lev(njs(j)+nn) = tmplev(n)
       tmp2dat(njs(j)+nn) = tmpdat(n)
       tmp2err(njs(j)+nn) = tmperr(n)
       tmp2i(njs(j)+nn) = tmpi(n)
       tmp2j(njs(j)+nn) = tmpj(n)
-      tmp2k(njs(j)+nn) = tmpk(n)
+!      tmp2k(njs(j)+nn) = tmpk(n)
       tmp2dep(njs(j)+nn) = tmpdep(n)
       tmp2hdxf(njs(j)+nn,:) = tmphdxf(n,:)
     END DO
@@ -302,12 +302,12 @@ SUBROUTINE set_common_obs_roms
         obselm(njs(j)+nn) = tmp2elm(n)
         obslon(njs(j)+nn) = tmp2lon(n)
         obslat(njs(j)+nn) = tmp2lat(n)
-!        obslev(njs(j)+nn) = tmp2lev(n)
+        obslev(njs(j)+nn) = tmp2lev(n)
         obsdat(njs(j)+nn) = tmp2dat(n)
         obserr(njs(j)+nn) = tmp2err(n)
         obsi(njs(j)+nn) = tmp2i(n)
         obsj(njs(j)+nn) = tmp2j(n)
-        obsk(njs(j)+nn) = tmp2k(n)
+!        obsk(njs(j)+nn) = tmp2k(n)
         obsdep(njs(j)+nn) = tmp2dep(n)
         obshdxf(njs(j)+nn,:) = tmp2hdxf(n,:)
       END DO
@@ -326,23 +326,23 @@ SUBROUTINE set_common_obs_roms
   DEALLOCATE( tmp2elm )
   DEALLOCATE( tmp2lon )
   DEALLOCATE( tmp2lat )
-!  DEALLOCATE( tmp2lev )
+  DEALLOCATE( tmp2lev )
   DEALLOCATE( tmp2dat )
   DEALLOCATE( tmp2err )
   DEALLOCATE( tmp2i )
   DEALLOCATE( tmp2j )
-  DEALLOCATE( tmp2k )
+!  DEALLOCATE( tmp2k )
   DEALLOCATE( tmp2dep )
   DEALLOCATE( tmp2hdxf )
   DEALLOCATE( tmpelm )
   DEALLOCATE( tmplon )
   DEALLOCATE( tmplat )
-!  DEALLOCATE( tmplev )
+  DEALLOCATE( tmplev )
   DEALLOCATE( tmpdat )
   DEALLOCATE( tmperr )
   DEALLOCATE( tmpi )
   DEALLOCATE( tmpj )
-  DEALLOCATE( tmpk )
+!  DEALLOCATE( tmpk )
   DEALLOCATE( tmpdep )
   DEALLOCATE( tmphdxf )
   DEALLOCATE( tmpqc )
@@ -352,23 +352,31 @@ END SUBROUTINE set_common_obs_roms
 !-----------------------------------------------------------------------
 ! Transformation from model variables to an observation
 !-----------------------------------------------------------------------
-SUBROUTINE Trans_XtoY(elm,ri,rj,rk,v3d,v2d,yobs)
+SUBROUTINE Trans_XtoY(elm,ri,rj,rlev,v3d,v2d,yobs)
   IMPLICIT NONE
   REAL(r_size),INTENT(IN) :: elm
-  REAL(r_size),INTENT(IN) :: ri,rj,rk
+  REAL(r_size),INTENT(IN) :: ri,rj,rlev
   REAL(r_size),INTENT(IN) :: v3d(nlon,nlat,nlev,nv3d)
   REAL(r_size),INTENT(IN) :: v2d(nlon,nlat,nv2d)
   REAL(r_size),INTENT(OUT) :: yobs
+  REAL(r_size) :: wk1(1),wk2(1),depth(nlev)
+  INTEGER :: k
 
   SELECT CASE (NINT(elm))
   CASE(id_u_obs) ! U
-    yobs = v3d(NINT(ri),NINT(rj),NINT(rk),iv3d_u)
+    yobs = v3d(NINT(ri),NINT(rj),nlev,iv3d_u) ! only surface
   CASE(id_v_obs) ! V
-    yobs = v3d(NINT(ri),NINT(rj),NINT(rk),iv3d_v)
+    yobs = v3d(NINT(ri),NINT(rj),nlev,iv3d_v) ! only surface
   CASE(id_t_obs) ! T
-    CALL itpl_3d(v3d(:,:,:,iv3d_t),ri,rj,rk,yobs)
+    wk1(1) = rlev
+    CALL calc_depth(v2d(NINT(ri),NINT(rj),iv2d_z),phi0(NINT(ri),NINT(rj)),depth)
+    CALL com_interp_spline(nlev,depth,v3d(NINT(ri),NINT(rj),:,iv3d_t),1,wk1,wk2)
+    yobs = wk2(1)
   CASE(id_s_obs) ! S
-    CALL itpl_3d(v3d(:,:,:,iv3d_s),ri,rj,rk,yobs)
+    wk1(1) = rlev
+    CALL calc_depth(v2d(NINT(ri),NINT(rj),iv2d_z),phi0(NINT(ri),NINT(rj)),depth)
+    CALL com_interp_spline(nlev,depth,v3d(NINT(ri),NINT(rj),:,iv3d_s),1,wk1,wk2)
+    yobs = wk2(1)
   CASE(id_z_obs) ! Z
     yobs = v2d(NINT(ri),NINT(rj),iv2d_z)
   END SELECT
@@ -580,7 +588,7 @@ SUBROUTINE monit_mean(file)
   CALL read_grd(filename,v3d,v2d)
 
   DO n=1,nobs
-    CALL Trans_XtoY(obselm(n),obsi(n),obsj(n),obsk(n),v3d,v2d,hdxf)
+    CALL Trans_XtoY(obselm(n),obsi(n),obsj(n),obslev(n),v3d,v2d,hdxf)
     dep = obsdat(n) - hdxf
     SELECT CASE(NINT(obselm(n)))
     CASE(id_u_obs)
@@ -715,7 +723,7 @@ SUBROUTINE read_obs_mpi(cfile,nn,elem,rlon,rlat,rlev,odat,oerr)
   REAL(r_size),INTENT(OUT) :: elem(nn) ! element number
   REAL(r_size),INTENT(OUT) :: rlon(nn) ! for the moment, ri
   REAL(r_size),INTENT(OUT) :: rlat(nn) ! for the moment, rj
-  REAL(r_size),INTENT(OUT) :: rlev(nn) ! for the moment, rk
+  REAL(r_size),INTENT(OUT) :: rlev(nn) ! depth [meters]
   REAL(r_size),INTENT(OUT) :: odat(nn)
   REAL(r_size),INTENT(OUT) :: oerr(nn)
   REAL(r_sngl) :: wk(6)

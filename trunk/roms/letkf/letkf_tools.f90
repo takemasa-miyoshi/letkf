@@ -50,6 +50,7 @@ SUBROUTINE das_letkf(gues3d,gues2d,anal3d,anal2d)
   REAL(r_size),ALLOCATABLE :: work2d(:,:)
   REAL(r_sngl),ALLOCATABLE :: work3dg(:,:,:,:)
   REAL(r_sngl),ALLOCATABLE :: work2dg(:,:,:)
+  REAL(r_size),ALLOCATABLE :: depth(:,:)
   REAL(r_size) :: parm
   REAL(r_size) :: trans(nbv,nbv)
   INTEGER :: ij,ilev,n,m,i,j,k,nobsl,ierr
@@ -90,6 +91,13 @@ SUBROUTINE das_letkf(gues3d,gues2d,anal3d,anal2d)
     END DO
   END DO
   !
+  ! depth
+  !
+  ALLOCATE(depth(nij1,nlev))
+  DO i=1,nij1
+    CALL calc_depth(mean2d(i,iv2d_z),phi1(i),depth(i,:))
+  END DO
+  !
   ! multiplicative inflation
   !
   IF(cov_infl_mul > 0.0d0) THEN ! fixed multiplicative inflation parameter
@@ -128,7 +136,7 @@ SUBROUTINE das_letkf(gues3d,gues2d,anal3d,anal2d)
   DO ilev=1,nlev
     WRITE(6,'(A,I3)') 'ilev = ',ilev
     DO ij=1,nij1
-      CALL obs_local(ij,ilev,hdxf,rdiag,rloc,dep,nobsl)
+      CALL obs_local(ij,ilev,depth(ij,ilev),hdxf,rdiag,rloc,dep,nobsl)
       parm = work3d(ij,ilev,iv3d_t)
       CALL letkf_core(nobstotal,nobsl,hdxf,rdiag,rloc,dep,parm,trans)
       DO n=1,nv3d
@@ -242,9 +250,10 @@ END SUBROUTINE das_letkf
 ! Project global observations to local
 !     (hdxf_g,dep_g,rdiag_g) -> (hdxf,dep,rdiag)
 !-----------------------------------------------------------------------
-SUBROUTINE obs_local(ij,ilev,hdxf,rdiag,rloc,dep,nobsl)
+SUBROUTINE obs_local(ij,ilev,depth,hdxf,rdiag,rloc,dep,nobsl)
   IMPLICIT NONE
   INTEGER,INTENT(IN) :: ij,ilev
+  REAL(r_size),INTENT(IN) :: depth
   REAL(r_size),INTENT(OUT) :: hdxf(nobstotal,nbv)
   REAL(r_size),INTENT(OUT) :: rdiag(nobstotal)
   REAL(r_size),INTENT(OUT) :: rloc(nobstotal)
@@ -282,9 +291,9 @@ SUBROUTINE obs_local(ij,ilev,hdxf,rdiag,rloc,dep,nobsl)
   IF(nn > 0) THEN
     DO n=1,nn
       IF(NINT(obselm(nobs_use(n))) == id_z_obs .AND. ilev < nlev) THEN
-        dlev = ABS(nlev - ilev)
+        dlev = depth
       ELSE IF(NINT(obselm(nobs_use(n))) /= id_z_obs) THEN
-        dlev = ABS(NINT(obsk(nobs_use(n))) - ilev)
+        dlev = ABS(obslev(nobs_use(n)) - depth)
       ELSE
         dlev = 0.0d0
       END IF
