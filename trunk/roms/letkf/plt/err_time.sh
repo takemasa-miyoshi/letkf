@@ -1,11 +1,12 @@
 #!/bin/sh
-#  plot bred vectors
+#  plot time series of RMSE and spread
 set -e
-OBS=5x20_new
-EXP=LETKF20H50V100
+OBS=5x20
+EXP=LETKF20H80V20
+TDV=TDVAR
 VARLIST="u v temp salt"
 ZLIST="40 30 20 10"
-OUTPUT=figs/$OBS/$EXP
+OUTPUT=figs/$OBS/${EXP}-$TDV
 mkdir -p $OUTPUT
 CDIR=`pwd`
 cd ../..
@@ -45,10 +46,9 @@ wks=gsn_open_wks("eps","out")
 gsn_define_colormap(wks,"rainbow")
 ;gsn_define_colormap(wks,"gsltod")
 files1=systemfunc("ls $NATURE/200401*_rst.nc")
-files2=systemfunc("ls $ROMS/DATA/$OBS/$EXP/gues/mean/200401*_rst.nc")
-files3=systemfunc("ls $ROMS/DATA/$OBS/$EXP/anal/mean/200401*_rst.nc")
-files4=systemfunc("ls $ROMS/DATA/$OBS/$EXP/gues/sprd/200401*_rst.nc")
-files5=systemfunc("ls $ROMS/DATA/$OBS/$EXP/anal/sprd/200401*_rst.nc")
+files2=systemfunc("ls $ROMS/DATA/$OBS/$EXP/anal/mean/200401*_rst.nc")
+files4=systemfunc("ls $ROMS/DATA/$OBS/$EXP/anal/sprd/200401*_rst.nc")
+files3=systemfunc("ls $ROMS/DATA/$OBS/$TDV/anal/200401*_da.nc")
 xlab=fspan(-770,21,114)
 ylab=fspan(0,0.25*$END1,$END)
 
@@ -70,8 +70,9 @@ delete(data)
 ;
 data=addfiles(files3,"r")
 z=addfiles_GetVar(data,files3,"$VAR")
-z3=z(0:$END1,$Z1,$Y0:$Y1,$X0:$X1)
+z3=dble2flt(z(0:$END1,$Z1,$Y0:$Y1,$X0:$X1))
 z3&time=ylab
+;printVarSummary(z3)
 delete(z)
 delete(data)
 ;
@@ -79,39 +80,36 @@ data=addfiles(files4,"r")
 z=addfiles_GetVar(data,files4,"$VAR")
 z4=z(0:$END1,$Z1,$Y0:$Y1,$X0:$X1)
 z4&time=ylab
+;printVarSummary(z4)
 delete(z)
 delete(data)
 ;
-data=addfiles(files5,"r")
-z=addfiles_GetVar(data,files5,"$VAR")
-z5=z(0:$END1,$Z1,$Y0:$Y1,$X0:$X1)
-z5&time=ylab
-delete(z)
-delete(data)
-;
-rms=new((/4,$END/),typeof(z1))
+rms=new((/3,$END/),typeof(z1))
 do i=0,$END1
 rms(0,i)=sqrt(avg((z1(i,:,:)-z2(i,:,:))^2))
 rms(1,i)=sqrt(avg((z1(i,:,:)-z3(i,:,:))^2))
 rms(2,i)=sqrt(avg((z4(i,:,:))^2))
-rms(3,i)=sqrt(avg((z5(i,:,:))^2))
 end do
 res=True
+res@tiMainString="$VAR at Z=$Z"
 res@tiXAxisString="TIME [day]"
-res@tiYAxisString="$VAR RMSE [$UNIT]"
-res@xyLineColors=(/"blue","red","blue","red"/)
-res@xyDashPatterns=(/0,0,1,1/)
+res@tiYAxisString="RMSE [$UNIT]"
+res@xyLineColors=(/"blue","red","blue"/)
+res@xyDashPatterns=(/0,0,1/)
+res@trYMinF=0.0
 res@pmLegendDisplayMode="Always"
 res@pmLegendSide="Top"
-res@pmLegendParallelPosF=0.8
-res@pmLegendOrthogonalPosF=-0.35
-res@pmLegendWidthF=0.2
-res@pmLegendHeight=0.1
-res@lgLegendFontHeightF=0.7
+res@pmLegendParallelPosF=0.7
+;res@pmLegendOrthogonalPosF=-0.6
+;res@pmLegendOrthogonalPosF=-0.7
+res@pmLegendOrthogonalPosF=-1.1
+res@pmLegendWidthF=0.3
+;res@pmLegendHeight=1.
+;res@lgLegendFontHeightF=0.2
 res@lgPerimOn=False
 res@tmXBMode="Manual"
 res@tmXBTickSpacingF=10
-res@xyExplicitLegendLabels=(/"RMSE_G","RMSE_A","SPRD_G","SPRD_A"/)
+res@xyExplicitLegendLabels=(/"LETKF","3DVAR","LETKF_SPRD"/)
 plot=gsn_csm_xy(wks,ylab,rms,res)
 end
 EOF
