@@ -62,6 +62,13 @@ PROGRAM letkf
   ktoneday = INT(oneday/dt)
   ktcyc = ktoneday/4
   xmaxloc = xlocal * 2.0d0 * SQRT(10.0d0/3.0d0)
+  PRINT '(A)'     ,'==========LETKF settings=========='
+  PRINT '(A,I8)'  ,' nbv       : ',nbv
+  PRINT '(A,I8)'  ,' nwindow   : ',nwindow
+  PRINT '(A,F8.1)',' xlocal    : ',xlocal
+  PRINT '(A,F8.1)',' tlocal    : ',tlocal
+  PRINT '(A,F8.2)',' msw_infl  : ',msw_infl
+  PRINT '(A)'     ,'=================================='
 !-----------------------------------------------------------------------
 ! nature
 !-----------------------------------------------------------------------
@@ -83,6 +90,7 @@ PROGRAM letkf
 !-----------------------------------------------------------------------
 ! main
 !-----------------------------------------------------------------------
+  irmse = 0
   rmse_t = 0.0d0
   rmse_x = 0.0d0
   sprd_t = 0.0d0
@@ -287,8 +295,8 @@ PROGRAM letkf
   END DO
   CLOSE(10)
 
-  rmse_x = SQRT(rmse_x / REAL(irmse))
-  sprd_x = SQRT(sprd_x / REAL(irmse))
+  rmse_x = SQRT(rmse_x / REAL(irmse,r_size))
+  sprd_x = SQRT(sprd_x / REAL(irmse,r_size))
   OPEN(10,FILE='rmse_x.dat',FORM='formatted')
   DO i=1,nx
     WRITE(10,'(I4,2F12.4)') i,rmse_x(i),sprd_x(i)
