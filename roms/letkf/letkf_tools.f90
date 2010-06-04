@@ -291,7 +291,7 @@ SUBROUTINE obs_local(ij,ilev,depth,hdxf,rdiag,rloc,dep,nobsl)
   IF(nn > 0) THEN
     DO n=1,nn
       IF(NINT(obselm(nobs_use(n))) == id_z_obs .AND. ilev < nlev) THEN
-        dlev = depth
+        dlev = ABS(depth)
       ELSE IF(NINT(obselm(nobs_use(n))) /= id_z_obs) THEN
         dlev = ABS(obslev(nobs_use(n)) - depth)
       ELSE
