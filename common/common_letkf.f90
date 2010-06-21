@@ -59,8 +59,8 @@ SUBROUTINE letkf_core(nobs,nobsl,hdxb,rdiag,rloc,dep,parm_infl,trans)
   REAL(r_size),ALLOCATABLE :: work2(:,:)
   REAL(r_size) :: work3(nbv)
   REAL(r_size) :: rho
-  REAL(r_size) :: parm(3)
-  REAL(r_size),PARAMETER :: parm_infl_err = 0.002d0 !error stdev of parm_infl
+  REAL(r_size) :: parm(3),sigma_o,gain
+  REAL(r_size),PARAMETER :: sigma_b = 0.007d0 !error stdev of parm_infl
   INTEGER :: i,j,k
   IF(nobsl == 0) THEN
     trans = 0.0d0
@@ -171,10 +171,12 @@ SUBROUTINE letkf_core(nobs,nobsl,hdxb,rdiag,rloc,dep,parm_infl,trans)
       parm(2) = parm(2) + hdxb_rinv(i,j) * hdxb(i,j) * rloc(i)
     END DO
   END DO
-  parm(3) = parm(1)*REAL(nbv-1,r_size)/parm(2)
-!  parm(3) = (parm(3) - parm_infl)*MAXVAL(rloc(1:nobsl)) + parm_infl
-!  parm_infl = (parm_infl/REAL(nobsl,r_size) + parm(3)*parm_infl_err**2) / (parm_infl_err**2 + 1.0d0/REAL(nobsl,r_size))
-  parm_infl = (parm_infl/REAL(nobsl,r_size)/MAXVAL(rloc(1:nobsl)) + parm(3)*parm_infl_err**2) / (parm_infl_err**2 + 1.0d0/REAL(nobsl,r_size)/MAXVAL(rloc(1:nobsl)))
+  parm(3) = parm(1)*REAL(nbv-1,r_size)/parm(2) - parm_infl
+!  sigma_o = 1.0d0/REAL(nobsl,r_size)/MAXVAL(rloc(1:nobsl))
+  sigma_o = 1.0d0/SUM(rloc(1:nobsl))
+  gain = sigma_b**2 / (sigma_o + sigma_b**2)
+  parm_infl = parm_infl + gain * parm(3)
+!  parm_infl(2) = MIN(SQRT(1.0d0-gain)*sigma_b, parm_infl(2))
 
   DEALLOCATE(hdxb_rinv,work2)
   RETURN
