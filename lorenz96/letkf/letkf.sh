@@ -1,8 +1,8 @@
 #!/bin/sh
 set -e
 ORO=
-OBSNAME=ocean20
-EXPNAME=L30IAD
+OBS=reg3
+EXP=M10L30I05
 F90=pgf90
 CDIR=`pwd`
 cd ..
@@ -26,18 +26,19 @@ cp $CDIR/letkf.f90 .
 $F90 -o letkf SFMT.f90 common.f90 netlib.f common_mtx.f90 common_letkf.f90 lorenz96$ORO.f90 h_ope.f90 letkf.f90
 rm *.mod
 rm *.o
-ln -s $OUTDIR/$OBSNAME/obs.dat .
+ln -s $OUTDIR/$OBS/obs.dat .
 ln -s $OUTDIR/spinup/init*.dat .
 ln -s $OUTDIR/nature.dat .
 time ./letkf
-mkdir -p $OUTDIR/$OBSNAME/$EXPNAME
-mv guesmean.dat $OUTDIR/$OBSNAME/$EXPNAME
-mv analmean.dat $OUTDIR/$OBSNAME/$EXPNAME
-mv gues.dat $OUTDIR/$OBSNAME/$EXPNAME
-mv anal.dat $OUTDIR/$OBSNAME/$EXPNAME
-mv infl.dat $OUTDIR/$OBSNAME/$EXPNAME
-mv rmse_t.dat $OUTDIR/$OBSNAME/$EXPNAME
-mv rmse_x.dat $OUTDIR/$OBSNAME/$EXPNAME
-cp $CDIR/*.ctl $OUTDIR/$OBSNAME/$EXPNAME
+rm -rf $OUTDIR/$OBS/$EXP
+mkdir -p $OUTDIR/$OBS/$EXP
+for FILE in guesmean analmean gues anal infl rmse_t rmse_x
+do
+if test -f $FILE.dat
+then
+mv $FILE.dat $OUTDIR/$OBS/$EXP
+fi
+done
+cp $CDIR/*.ctl $OUTDIR/$OBS/$EXP
 
 echo "NORMAL END"
