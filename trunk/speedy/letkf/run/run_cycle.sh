@@ -10,7 +10,7 @@ set -e
 NODE=4
 MEMBER=20
 OBS=raob
-EXP=M20L500IADP
+EXP=M20L500IADP2_0204
 NOSAVEENS=1 #0:save all members, 1:save only mean/sprd 
 ### directory settings
 CDIR=`pwd`
@@ -26,8 +26,8 @@ IMM=01
 IDD=01
 IHH=00
 ### final date setting
-EYYYY=1982
-EMM=03
+EYYYY=1983
+EMM=01
 EDD=01
 EHH=00
 #-----------------------------------------------------------------------
@@ -189,11 +189,11 @@ if test $MEM -lt 10
 then
 MEM=0$MEM
 fi
-rm $OUTPUT/gues/$MEM/$IYYYY$IMM$IDD$IHH.grd
-rm $OUTPUT/gues/$MEM/$IYYYY$IMM$IDD${IHH}_p.grd
-rm $OUTPUT/anal/$MEM/$IYYYY$IMM$IDD$IHH.grd
-rm $OUTPUT/anal_f/$MEM/$IYYYY$IMM$IDD$IHH.grd
-rm $OUTPUT/anal_f/$MEM/$IYYYY$IMM$IDD${IHH}_p.grd
+rm -f $OUTPUT/gues/$MEM/$IYYYY$IMM$IDD$IHH.grd
+rm -f $OUTPUT/gues/$MEM/$IYYYY$IMM$IDD${IHH}_p.grd
+rm -f $OUTPUT/anal/$MEM/$IYYYY$IMM$IDD$IHH.grd
+rm -f $OUTPUT/anal_f/$MEM/$IYYYY$IMM$IDD$IHH.grd
+rm -f $OUTPUT/anal_f/$MEM/$IYYYY$IMM$IDD${IHH}_p.grd
 MEM=`expr $MEM + 1`
 done
 fi
