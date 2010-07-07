@@ -9,8 +9,9 @@ set -e
 #-----------------------------------------------------------------------
 NODE=4
 MEMBER=20
-OBS=reg3
-EXP=M20L500I040
+OBS=raob
+EXP=M20L500IADP
+NOSAVEENS=1 #0:save all members, 1:save only mean/sprd 
 ### directory settings
 CDIR=`pwd`
 cd ../..
@@ -26,7 +27,7 @@ IDD=01
 IHH=00
 ### final date setting
 EYYYY=1982
-EMM=05
+EMM=03
 EDD=01
 EHH=00
 #-----------------------------------------------------------------------
@@ -172,6 +173,30 @@ done
 ### wait for the end of parallel processing
 time wait
 done
+#
+# Clean up
+#
+if test $NOSAVEENS -eq 1
+then
+MEM=1
+while test $MEM -le $MEMBER
+do
+if test $MEM -lt 100
+then
+MEM=0$MEM
+fi
+if test $MEM -lt 10
+then
+MEM=0$MEM
+fi
+rm $OUTPUT/gues/$MEM/$IYYYY$IMM$IDD$IHH.grd
+rm $OUTPUT/gues/$MEM/$IYYYY$IMM$IDD${IHH}_p.grd
+rm $OUTPUT/anal/$MEM/$IYYYY$IMM$IDD$IHH.grd
+rm $OUTPUT/anal_f/$MEM/$IYYYY$IMM$IDD$IHH.grd
+rm $OUTPUT/anal_f/$MEM/$IYYYY$IMM$IDD${IHH}_p.grd
+MEM=`expr $MEM + 1`
+done
+fi
 #
 # Date change ### MAIN LOOP END ###
 #
