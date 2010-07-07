@@ -26,14 +26,18 @@ C--
 
       include "com_date.h"
       include "com_tsteps.h"
+      include "par_tmean.h"
+      include "com_tmean_daily.h"
 
       COMPLEX UCOSTMP(MX,NX),VCOSTMP(MX,NX)
       REAL UGR(NGP,KX),VGR(NGP,KX),TGR(NGP,KX),QGR(NGP,KX),
      &  PHIGR(NGP,KX),PSGR(NGP)
       REAL UGR1(NGP,KX),VGR1(NGP,KX),TGR1(NGP,KX),QGR1(NGP,KX),
-     &  PHIGR1(NGP,KX)
+     &  PHIGR1(NGP,KX),
+     &  RRGR1(NGP)
       REAL(4) UGR4(NGP,KX),VGR4(NGP,KX),TGR4(NGP,KX),
-     &  QGR4(NGP,KX),PHIGR4(NGP,KX),PSGR4(NGP)
+     &  QGR4(NGP,KX),PHIGR4(NGP,KX),PSGR4(NGP),
+     &  RRGR4(NGP)
 
 C-- For vertical interpolation !adapted from ppo_tminc.f
       INTEGER K0(ngp)
@@ -210,6 +214,11 @@ C---- Vertical interpolation from sigma level to pressure level (ppo_tminc.f)
              PHIGR1(j,k) = phi1 + W0(j)*(phi2-phi1)
            END DO
 
+           DO j=1,ngp
+             RRGR1(j) = (SAVE2D_L(j,1) + SAVE2D_L(j,2)) ! g/m^2/s
+     &        *3.6*4.0/REAL(NSTEPS)*6.0 ! mm/6hr
+           END DO
+
          END DO
 
          ELSE  ! sigma-level output
@@ -231,6 +240,7 @@ C---- Output
          QGR4=QGR1*1.0d-3 ! kg/kg
          PHIGR4=PHIGR1/GG   ! m
          PSGR4=P0*exp(PSGR)! Pa
+         RRGR4=RRGR1
 
          IF (IMODE.EQ.2) THEN
            WRITE (filenamep(1:4),'(I4.4)') IYEAR
@@ -271,6 +281,8 @@ C---- Output
            END DO
          END IF
          WRITE (99,REC=irec) (PSGR4(j),j=1,NGP)
+         irec=irec+1
+         WRITE (99,REC=irec) (RRGR4(j),j=1,NGP)
          CLOSE (99)
          if(iitest==1) PRINT *,' UGR  :',MINVAL(UGR4),MAXVAL(UGR4)
          if(iitest==1) PRINT *,' VGR  :',MINVAL(VGR4),MAXVAL(VGR4)
@@ -278,6 +290,7 @@ C---- Output
          if(iitest==1) PRINT *,' QGR  :',MINVAL(QGR4),MAXVAL(QGR4)
          if(iitest==1) PRINT *,' PHIGR:',MINVAL(PHIGR4),MAXVAL(PHIGR4)
          if(iitest==1) PRINT *,' PSGR :',MINVAL(PSGR4),MAXVAL(PSGR4)
+         if(iitest==1) PRINT *,' RRGR :',MINVAL(RRGR4),MAXVAL(RRGR4)
 
       ELSE IF (IMODE.EQ.3.OR.IMODE.EQ.5) THEN
 
@@ -343,9 +356,9 @@ C--   3. Write a GrADS control file (3:p,5:sigma)
      &       2,' LINEAR ',IHOUR,'Z',IDATE,CMON3,IYEAR,' 6HR'
          END IF
          IF (IMODE.EQ.3) THEN !p-level
-           WRITE (11,'(A)') 'VARS 6'
+           WRITE (11,'(A)') 'VARS 7'
          ELSE !sigma-level
-           WRITE (11,'(A)') 'VARS 5'
+           WRITE (11,'(A)') 'VARS 6'
          END IF
          WRITE (11,'(A)') 'U 7 99 U-wind [m/s]'
          WRITE (11,'(A)') 'V 7 99 V-wind [m/s]'
@@ -355,6 +368,7 @@ C--   3. Write a GrADS control file (3:p,5:sigma)
            WRITE (11,'(A)') 'Z 7 99 Geopotential Height [m]'
          END IF
          WRITE (11,'(A)') 'PS 0 99 Surface Pressure [Pa]'
+         WRITE (11,'(A)') 'RAIN 0 99 Precipitation [mm/6hr]'
          WRITE (11,'(A)') 'ENDVARS'
          CLOSE (11)
 
