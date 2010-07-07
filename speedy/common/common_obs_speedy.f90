@@ -20,6 +20,7 @@ MODULE common_obs_speedy
   INTEGER,PARAMETER :: id_q_obs=3330
   INTEGER,PARAMETER :: id_rh_obs=3331
   INTEGER,PARAMETER :: id_ps_obs=14593
+  INTEGER,PARAMETER :: id_rain_obs=9999
 
 CONTAINS
 !-----------------------------------------------------------------------
@@ -54,6 +55,8 @@ SUBROUTINE Trans_XtoY(elm,ri,rj,rk,v3d,v2d,p_full,yobs)
     CALL itpl_3d(v3d(:,:,:,iv3d_q),ri,rj,rk,yobs)
   CASE(id_ps_obs) ! PS
     CALL itpl_2d(v2d(:,:,iv2d_ps),ri,rj,yobs)
+  CASE(id_rain_obs) ! RAIN
+    CALL itpl_2d(v2d(:,:,iv2d_rain),ri,rj,yobs)
   CASE(id_rh_obs) ! RH
     DO k=ks,ke
       DO j=js,je

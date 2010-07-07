@@ -32,8 +32,8 @@ C       Perform one leapfrog time step
 C       Do diagnostic, post-processing and I/O tasks 
  
         CALL DIAGNS (2,ISTEP)
-        IF (IHOUT.NE.1) THEN !time-mean are omitted                     !TM
         CALL TMINC_DAILY
+        IF (IHOUT.NE.1) THEN !time-mean are omitted                     !TM
         IF (MOD(ISTEP,NSTPPR).EQ.0) CALL TMINC
 
         IF (MOD(ISTEP,NSTOUT).EQ.0) CALL TMOUT (1)

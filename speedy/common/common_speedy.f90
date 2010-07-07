@@ -19,12 +19,13 @@ MODULE common_speedy
   INTEGER,PARAMETER :: nlat=nlon/2
   INTEGER,PARAMETER :: nlev=7
   INTEGER,PARAMETER :: nv3d=4 ! u,v,t,q
-  INTEGER,PARAMETER :: nv2d=1 ! ps
+  INTEGER,PARAMETER :: nv2d=2 ! ps,rain
   INTEGER,PARAMETER :: iv3d_u=1
   INTEGER,PARAMETER :: iv3d_v=2
   INTEGER,PARAMETER :: iv3d_t=3
   INTEGER,PARAMETER :: iv3d_q=4
   INTEGER,PARAMETER :: iv2d_ps=1
+  INTEGER,PARAMETER :: iv2d_rain=2
   INTEGER,PARAMETER :: nij0=nlon*nlat
   INTEGER,PARAMETER :: nlevall=nlev*nv3d+nv2d
   INTEGER,PARAMETER :: ngpv=nij0*nlevall
@@ -54,7 +55,8 @@ SUBROUTINE set_common_speedy
   element(iv3d_v) = 'V   '
   element(iv3d_t) = 'T   '
   element(iv3d_q) = 'Q   '
-  element(nv3d+iv2d_ps) = 'PS  '
+  element(nv3d+iv2d_ps)   = 'PS  '
+  element(nv3d+iv2d_rain) = 'RAIN'
   !
   ! Lon, Lat, Sigma
   !
