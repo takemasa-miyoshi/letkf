@@ -27,6 +27,7 @@ PROGRAM obsmake
   REAL(r_size) :: a
   INTEGER :: i,j,k,n,nn,ios
   INTEGER :: nobkind,nstation
+  INTEGER :: nobs
   CHARACTER(100) :: cdummy
 
   CHARACTER(8) :: truef='true.grd'
