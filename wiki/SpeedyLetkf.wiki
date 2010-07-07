@@ -94,6 +94,15 @@ $sh run_cycle.sh
 = LETKF parameter settings =
 || *parameter* || *source file* || *variable name* || *unit* ||
 || ensemble size || common/common_letkf.f90 || nbv || members ||
-|| horizontal localization || speedy/common/common_obs_speedy.f90 || sigma_obs || meters ||
-|| vertical localization || speedy/common/common_obs_speedy.f90 || sigma_obsv || ln p ||
-|| multiplicative inflation || speedy/letkf/letkf_tools.f90 || cov_infl_mul || n/a ||
+|| horizontal localization || speedy/letkf/letkf_obs.f90 || sigma_obs || meters ||
+|| vertical localization || speedy/letkf/letkf_obs.f90 || sigma_obsv || ln p ||
+|| temporal localization || speedy/letkf/letkf_obs.f90 || sigma_obst || time slots ||
+|| multiplicative inflation || speedy/letkf/letkf_tools.f90 || cov_infl_mul || positive: fixed inflation (1.00 for no inflation), negative: adaptive inflation ||
+
+= Script settings =
+|| *source file* || *variable name* || *setting* ||
+|| speedy/obs/obsmake.sh || EXP || name of obs network ||
+|| speedy/letkf/run/init.sh || OBS || name of obs network ||
+|| speedy/letkf/run/init.sh || EXP || name of experiment ||
+|| speedy/letkf/run/run_cycle.sh || OBS || name of obs network ||
+|| speedy/letkf/run/run_cycle.sh || EXP || name of experiment ||
