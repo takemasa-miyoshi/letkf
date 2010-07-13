@@ -490,5 +490,174 @@ SUBROUTINE com_interp_spline(ndim,x,y,n,x5,y5)
 
   RETURN
 END SUBROUTINE com_interp_spline
+!-----------------------------------------------------------------------
+! (LON,LAT) --> (i,j) conversion
+!   [ORIGINAL AUTHOR:] Masaru Kunii
+!-----------------------------------------------------------------------
+SUBROUTINE com_pos2ij(msw,nx,ny,flat,flon,num_obs,olat,olon,oi,oj)
+  IMPLICIT NONE
+  ! --- inout variables
+  INTEGER,INTENT(IN) :: msw   !MODE SWITCH: 1: fast, 2: accurate
+  INTEGER,INTENT(IN) :: nx,ny !number of grid points
+  REAL(r_size),INTENT(IN) :: flat(nx,ny),flon(nx,ny) !(lon,lat) at (i,j)
+  INTEGER,INTENT(IN) :: num_obs !repetition number of conversion
+  REAL(r_size),INTENT(IN) :: olat(num_obs),olon(num_obs) !target (lon,lat)
+  REAL(r_size),INTENT(OUT) :: oi(num_obs),oj(num_obs) !target (i,j)
+  ! --- local work variables
+  INTEGER,PARAMETER :: detailout = .TRUE.
+  INTEGER,PARAMETER :: num_grid_ave = 4  ! fix
+  INTEGER :: inum,ix,jy,ip,wk_maxp
+  INTEGER :: iorder_we,iorder_sn
+  INTEGER :: nxp,nyp
+  REAL(r_size),PARAMETER :: miss = -32768 
+  REAL(r_size),PARAMETER :: max_dist = 2.0e+6
+  REAL(r_size) :: rlat_max, rlat_min, rlon_max, rlon_min   
+  REAL(r_size) :: dist(num_grid_ave) 
+  REAL(r_size) :: dist_min_x(num_obs, num_grid_ave)
+  REAL(r_size) :: dist_min_y(num_obs, num_grid_ave) 
+  REAL(r_size) :: wk_dist, sum_dist
+  REAL(r_size) :: ratio(num_grid_ave)
+  IF(detailout) THEN
+    WRITE(6,'(A)') '====================================================='
+    WRITE(6,'(A)') '      Detailed output of SUBROUTINE com_pos2ij       '
+    WRITE(6,'(A)') '====================================================='    
+  END IF
+  ! ================================================================
+  !   Check the Order of flat, flon
+  ! ================================================================   
+  iorder_we = 1
+  iorder_sn = 1
+  IF(flon(1,1) > flon(2,1)) THEN
+    iorder_we = -1
+  END IF
+  IF(flat(1,1) > flat(1,2)) THEN
+    iorder_sn = -1
+  END IF
+  IF(detailout) THEN  
+    WRITE(6,'(3X,A,I5)') 'Obs Order (WE) :',iorder_we 
+    WRITE(6,'(3X,A,I5)') 'Obs Order (SN) :',iorder_sn 
+  END IF
+  ! ================================================================
+  !  FAST MODE
+  ! ================================================================   
+  IF(msw == 1) THEN
+    ! ==============================================================
+    !   Surrounding 4 Grid Points Interpolation
+    ! ==============================================================   
+    Obs_Loop_1 : DO inum=1,num_obs 
+      IF(detailout) WRITE(6,'(A,I5,2F15.5)') '*** START OBS ',inum,olat(inum),olon(inum) 
+      ! ------------------------------------------------------------
+      !    Search Basic Point
+      ! ------------------------------------------------------------ 
+      nxp = miss
+      nyp = miss
+      DO jy=1,ny-1
+        DO ix=1,nx-1
+          rlat_max = MAXVAL(flat(ix:ix+1, jy:jy+1))
+          rlat_min = MINVAL(flat(ix:ix+1, jy:jy+1))
+          rlon_max = MAXVAL(flon(ix:ix+1, jy:jy+1))
+          rlon_min = MINVAL(flon(ix:ix+1, jy:jy+1))
+          IF(       rlat_min <= olat(inum) .AND. rlat_max >= olat(inum) &
+            & .AND. rlon_min <= olon(inum) .AND. rlon_max >= olon(inum)) THEN
+            nxp = ix
+            nyp = jy
+            EXIT
+          END IF
+        END DO
+      END DO
+      IF(detailout) WRITE(6,'(3X,A,2I7)') 'nxp, nyp =',nxp,nyp
+      IF(nxp == miss .OR. nyp == miss) THEN
+        WRITE(6,'(A)') '!!WARNING(com_pos2ij): obs position cannot be detected'
+        oi(inum) = miss
+        oj(inum) = miss
+        CYCLE Obs_Loop_1
+      END IF
+      ! ------------------------------------------------------------
+      !    Interpolation
+      ! ------------------------------------------------------------    
+      CALL com_distll_1(flon(nxp  ,nyp  ),flat(nxp  ,nyp  ),&
+                      & olon(inum),olat(inum),dist(1))
+      CALL com_distll_1(flon(nxp+1,nyp  ),flat(nxp+1,nyp  ),&
+                      & olon(inum),olat(inum),dist(2))
+      CALL com_distll_1(flon(nxp  ,nyp+1),flat(nxp  ,nyp+1),&
+                      & olon(inum),olat(inum),dist(3))      
+      CALL com_distll_1(flon(nxp+1,nyp+1),flat(nxp+1,nyp+1),&
+                      & olon(inum),olat(inum),dist(4))      
+      dist(1:4) = dist(1:4) * 1.D-3  
+      IF(detailout) WRITE(6,'(3X,A,4F15.5)') 'distance :',dist(1:4) 
+      sum_dist = dist(1) * dist(1) * dist(2) * dist(2) * dist(3) * dist(3) &
+             & + dist(2) * dist(2) * dist(3) * dist(3) * dist(4) * dist(4) &
+             & + dist(3) * dist(3) * dist(4) * dist(4) * dist(1) * dist(1) &
+             & + dist(4) * dist(4) * dist(1) * dist(1) * dist(2) * dist(2)
+      ratio(1) = (dist(2)*dist(2)*dist(3)*dist(3)*dist(4)*dist(4))/sum_dist
+      ratio(2) = (dist(3)*dist(3)*dist(4)*dist(4)*dist(1)*dist(1))/sum_dist
+      ratio(3) = (dist(4)*dist(4)*dist(1)*dist(1)*dist(2)*dist(2))/sum_dist
+      ratio(4) = (dist(1)*dist(1)*dist(2)*dist(2)*dist(3)*dist(3))/sum_dist
+      IF(detailout) WRITE(6,'(3X,A,5F15.5)') 'ratio    :',ratio(1:4),SUM(ratio(1:4))
+      oi(inum) = ratio(1) *  nxp    + ratio(2) * (nxp+1) &
+             & + ratio(3) *  nxp    + ratio(4) * (nxp+1)
+      oj(inum) = ratio(1) *  nyp    + ratio(2) *  nyp    &
+             & + ratio(3) * (nyp+1) + ratio(4) * (nyp+1)    
+      IF(detailout) WRITE(6,'(3X,A,2F15.5)') 'position :',oi(inum), oj(inum)
+ 
+    END DO Obs_Loop_1
+  ! ================================================================
+  !  ACCURATE MODE
+  ! ================================================================   
+  ELSE IF(msw == 2) THEN
+    ! ================================================================
+    !   Nearest 4 Grid Points Interpolation
+    ! ================================================================   
+    Obs_Loop_2 : DO inum=1,num_obs
+      IF(detailout) WRITE(6,'(A,I5,2F15.5)') '*** START OBS ',inum,olat(inum),olon(inum) 
+      ! ------------------------------------------------------------
+      !    Search 4-Grid Points
+      ! ------------------------------------------------------------      
+      dist(1:num_grid_ave) = 1.D+10
+      wk_maxp = num_grid_ave    
+      DO jy=1,ny
+        DO ix=1,nx
+          CALL com_distll_1(flon(ix,jy),flat(ix,jy),&
+                          & olon(inum) ,olat(inum) ,wk_dist)
+          IF(wk_dist > max_dist) CYCLE
+          IF(wk_dist < dist(wk_maxp)) THEN
+            dist(wk_maxp) = wk_dist
+            dist_min_x(inum, wk_maxp) = ix
+            dist_min_y(inum, wk_maxp) = jy
+            DO ip = 1, num_grid_ave
+              IF(dist(ip) == maxval(dist(1:num_grid_ave))) THEN
+                wk_maxp = ip
+                EXIT
+              END IF
+            END DO
+          END IF
+        END DO
+      END DO
+      IF(detailout) WRITE(6,'(A,4(A,I4,A,I4,A))')  '  Intp Grids : ', &
+        & '(', INT(dist_min_x(inum, 1)), ',', INT(dist_min_y(inum, 1)), ') ', &
+        & '(', INT(dist_min_x(inum, 2)), ',', INT(dist_min_y(inum, 2)), ') ', &
+        & '(', INT(dist_min_x(inum, 3)), ',', INT(dist_min_y(inum, 3)), ') ', &
+        & '(', INT(dist_min_x(inum, 4)), ',', INT(dist_min_y(inum, 4)), ') '
+      ! ------------------------------------------------------------
+      !    Interpolation
+      ! ------------------------------------------------------------ 
+      dist(1:num_grid_ave) =  dist(1:num_grid_ave) * 1.0D-3
+      sum_dist = dist(1) * dist(1) * dist(2) * dist(2) * dist(3) * dist(3)  &
+             & + dist(2) * dist(2) * dist(3) * dist(3) * dist(4) * dist(4)  &
+             & + dist(3) * dist(3) * dist(4) * dist(4) * dist(1) * dist(1)  &
+             & + dist(4) * dist(4) * dist(1) * dist(1) * dist(2) * dist(2)
+      ratio(1) = (dist(2)*dist(2)*dist(3)*dist(3)*dist(4)*dist(4))/sum_dist
+      ratio(2) = (dist(3)*dist(3)*dist(4)*dist(4)*dist(1)*dist(1))/sum_dist
+      ratio(3) = (dist(4)*dist(4)*dist(1)*dist(1)*dist(2)*dist(2))/sum_dist
+      ratio(4) = (dist(1)*dist(1)*dist(2)*dist(2)*dist(3)*dist(3))/sum_dist
+      IF(detailout) WRITE(6,'(2X,A,5F15.5)') 'ratio      :',ratio(1:4),SUM(ratio(1:4))
+      oi(inum) = SUM(ratio(1:num_grid_ave) * dist_min_x(inum, 1:num_grid_ave))
+      oj(inum) = SUM(ratio(1:num_grid_ave) * dist_min_y(inum, 1:num_grid_ave))
+      IF(detailout) WRITE(6,'(2X,A,2F15.5)') 'position   :',oi(inum),oj(inum)
+    END DO Obs_Loop_2
+  END IF
+
+  RETURN
+END SUBROUTINE com_pos2ij
 
 END MODULE common
