@@ -5,7 +5,6 @@ COMMONDIR=../../common
 ln -fs $COMMONDIR/SFMT.f90 ./
 ln -fs $COMMONDIR/common.f90 ./
 ln -fs $COMMONDIR/common_mpi.f90 ./
-ln -fs $COMMONDIR/common_obs.f90 ./
 ln -fs $COMMONDIR/common_mtx.f90 ./
 ln -fs $COMMONDIR/common_letkf.f90 ./
 ln -fs $COMMONDIR/netlib.f ./

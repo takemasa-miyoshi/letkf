@@ -10,8 +10,8 @@ PROGRAM obsmake
 !=======================================================================
 !$USE OMP_LIB
   USE common
-  USE common_obs
   USE common_roms
+  USE common_obs_roms
 
   IMPLICIT NONE
 
@@ -86,21 +86,21 @@ PROGRAM obsmake
   OPEN(10,FILE='station.tbl')
   READ(10,'(A)') cdummy
   READ(10,'(A)') cdummy
-  nobs = 0
+  nn = 0
   DO
     READ(10,'(3I4)',IOSTAT=ios) id,i,j
     IF(ios /= 0) EXIT
-    IF(id == id_hrf) nobs = nobs + 2
-    IF(id == id_prof) nobs = nobs + kprof*2
-    IF(id == id_sst) nobs = nobs + 1
+    IF(id == id_hrf) nn = nn + 2
+    IF(id == id_prof) nn = nn + kprof*2
+    IF(id == id_sst) nn = nn + 1
   END DO
   CLOSE(10)
-  IF(verbose) PRINT '(A,I)','nobs = ',nobs
+  IF(verbose) PRINT '(A,I)','nn = ',nn
   !
   ! Random number
   !
-  ALLOCATE(error(nobs))
-  CALL com_randn(nobs,error)
+  ALLOCATE(error(nn))
+  CALL com_randn(nn,error)
 !  error = 0.0d0 !! for testing purpose
   !
   ! Output OBS
