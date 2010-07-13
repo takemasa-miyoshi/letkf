@@ -494,17 +494,17 @@ END SUBROUTINE com_interp_spline
 ! (LON,LAT) --> (i,j) conversion
 !   [ORIGINAL AUTHOR:] Masaru Kunii
 !-----------------------------------------------------------------------
-SUBROUTINE com_pos2ij(msw,nx,ny,flat,flon,num_obs,olat,olon,oi,oj)
+SUBROUTINE com_pos2ij(msw,nx,ny,flon,flat,num_obs,olon,olat,oi,oj)
   IMPLICIT NONE
   ! --- inout variables
   INTEGER,INTENT(IN) :: msw   !MODE SWITCH: 1: fast, 2: accurate
   INTEGER,INTENT(IN) :: nx,ny !number of grid points
-  REAL(r_size),INTENT(IN) :: flat(nx,ny),flon(nx,ny) !(lon,lat) at (i,j)
+  REAL(r_size),INTENT(IN) :: flon(nx,ny),flat(nx,ny) !(lon,lat) at (i,j)
   INTEGER,INTENT(IN) :: num_obs !repetition number of conversion
-  REAL(r_size),INTENT(IN) :: olat(num_obs),olon(num_obs) !target (lon,lat)
+  REAL(r_size),INTENT(IN) :: olon(num_obs),olat(num_obs) !target (lon,lat)
   REAL(r_size),INTENT(OUT) :: oi(num_obs),oj(num_obs) !target (i,j)
   ! --- local work variables
-  INTEGER,PARAMETER :: detailout = .TRUE.
+  INTEGER,PARAMETER :: detailout = .FALSE.
   INTEGER,PARAMETER :: num_grid_ave = 4  ! fix
   INTEGER :: inum,ix,jy,ip,wk_maxp
   INTEGER :: iorder_we,iorder_sn
@@ -523,7 +523,7 @@ SUBROUTINE com_pos2ij(msw,nx,ny,flat,flon,num_obs,olat,olon,oi,oj)
     WRITE(6,'(A)') '====================================================='    
   END IF
   ! ================================================================
-  !   Check the Order of flat, flon
+  !   Check the Order of flon, flat
   ! ================================================================   
   iorder_we = 1
   iorder_sn = 1
@@ -545,7 +545,7 @@ SUBROUTINE com_pos2ij(msw,nx,ny,flat,flon,num_obs,olat,olon,oi,oj)
     !   Surrounding 4 Grid Points Interpolation
     ! ==============================================================   
     Obs_Loop_1 : DO inum=1,num_obs 
-      IF(detailout) WRITE(6,'(A,I5,2F15.5)') '*** START OBS ',inum,olat(inum),olon(inum) 
+      IF(detailout) WRITE(6,'(A,I5,2F15.5)') '*** START OBS ',inum,olon(inum),olat(inum) 
       ! ------------------------------------------------------------
       !    Search Basic Point
       ! ------------------------------------------------------------ 
@@ -553,12 +553,12 @@ SUBROUTINE com_pos2ij(msw,nx,ny,flat,flon,num_obs,olat,olon,oi,oj)
       nyp = miss
       DO jy=1,ny-1
         DO ix=1,nx-1
-          rlat_max = MAXVAL(flat(ix:ix+1, jy:jy+1))
-          rlat_min = MINVAL(flat(ix:ix+1, jy:jy+1))
           rlon_max = MAXVAL(flon(ix:ix+1, jy:jy+1))
           rlon_min = MINVAL(flon(ix:ix+1, jy:jy+1))
-          IF(       rlat_min <= olat(inum) .AND. rlat_max >= olat(inum) &
-            & .AND. rlon_min <= olon(inum) .AND. rlon_max >= olon(inum)) THEN
+          rlat_max = MAXVAL(flat(ix:ix+1, jy:jy+1))
+          rlat_min = MINVAL(flat(ix:ix+1, jy:jy+1))
+          IF(rlon_min <= olon(inum) .AND. rlon_max >= olon(inum) .AND. &
+           & rlat_min <= olat(inum) .AND. rlat_max >= olat(inum)) THEN
             nxp = ix
             nyp = jy
             EXIT
@@ -609,7 +609,7 @@ SUBROUTINE com_pos2ij(msw,nx,ny,flat,flon,num_obs,olat,olon,oi,oj)
     !   Nearest 4 Grid Points Interpolation
     ! ================================================================   
     Obs_Loop_2 : DO inum=1,num_obs
-      IF(detailout) WRITE(6,'(A,I5,2F15.5)') '*** START OBS ',inum,olat(inum),olon(inum) 
+      IF(detailout) WRITE(6,'(A,I5,2F15.5)') '*** START OBS ',inum,olon(inum),olat(inum) 
       ! ------------------------------------------------------------
       !    Search 4-Grid Points
       ! ------------------------------------------------------------      
