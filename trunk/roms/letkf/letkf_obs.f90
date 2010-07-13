@@ -121,9 +121,12 @@ SUBROUTINE set_letkf_obs
     IF(nobslots(islot) == 0) CYCLE
     WRITE(obsfile(4:5),'(I2.2)') islot
     CALL read_obs(obsfile,nobslots(islot),&
-      & tmpelm(nn+1:nn+nobslots(islot)),tmpi(nn+1:nn+nobslots(islot)),&
-      & tmpj(nn+1:nn+nobslots(islot)),tmplev(nn+1:nn+nobslots(islot)),&
+      & tmpelm(nn+1:nn+nobslots(islot)),tmplon(nn+1:nn+nobslots(islot)),&
+      & tmplat(nn+1:nn+nobslots(islot)),tmplev(nn+1:nn+nobslots(islot)),&
       & tmpdat(nn+1:nn+nobslots(islot)),tmperr(nn+1:nn+nobslots(islot)) )
+    CALL com_pos2ij(2,nlon,nlat,lon,lat,nobslots(islot),&
+      & tmplon(nn+1:nn+nobslots(islot)),tmplon(nn+1:nn+nobslots(islot)),&
+      & tmpi  (nn+1:nn+nobslots(islot)),tmpj  (nn+1:nn+nobslots(islot)))
     l=0
     DO
       im = myrank+1 + nprocs * l
@@ -133,8 +136,6 @@ SUBROUTINE set_letkf_obs
       CALL read_grd(guesfile,v3d,v2d)
 !$OMP PARALLEL DO SCHEDULE(DYNAMIC) PRIVATE(n)
       DO n=1,nobslots(islot)
-        tmplon(nn+n) = lon(NINT(tmpi(nn+n)),NINT(tmpj(nn+n)))
-        tmplat(nn+n) = lat(NINT(tmpi(nn+n)),NINT(tmpj(nn+n)))
         !
         ! observational operator
         !
