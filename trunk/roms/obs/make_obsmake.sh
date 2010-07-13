@@ -17,8 +17,8 @@ rm -f *.o
 
 $F90 $OMP $F90OPT $INLINE -c SFMT.f90
 $F90 $OMP $F90OPT $INLINE -c common.f90
-$F90 $OMP $F90OPT $INLINE -c common_obs.f90
 $F90 $OMP $F90OPT $INLINE $INCLUDE_NETCDF -c common_roms.f90
+$F90 $OMP $F90OPT $INLINE -c common_obs_roms.f90
 $F90 $OMP $F90OPT -c obsmake.f90
 $F90 $OMP $F90OPT -o ${PGM} *.o $F90LIB $LIB_NETCDF
 

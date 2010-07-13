@@ -11,11 +11,10 @@ MODULE letkf_tools
 !$USE OMP_LIB
   USE common
   USE common_mpi
-  USE common_obs
   USE common_roms
   USE common_mpi_roms
-  USE common_obs_roms
   USE common_letkf
+  USE letkf_obs
 
   IMPLICIT NONE
 
