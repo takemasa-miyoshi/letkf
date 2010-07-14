@@ -125,7 +125,7 @@ SUBROUTINE set_letkf_obs
       & tmplat(nn+1:nn+nobslots(islot)),tmplev(nn+1:nn+nobslots(islot)),&
       & tmpdat(nn+1:nn+nobslots(islot)),tmperr(nn+1:nn+nobslots(islot)) )
     CALL com_pos2ij(2,nlon,nlat,lon,lat,nobslots(islot),&
-      & tmplon(nn+1:nn+nobslots(islot)),tmplon(nn+1:nn+nobslots(islot)),&
+      & tmplon(nn+1:nn+nobslots(islot)),tmplat(nn+1:nn+nobslots(islot)),&
       & tmpi  (nn+1:nn+nobslots(islot)),tmpj  (nn+1:nn+nobslots(islot)))
     l=0
     DO
