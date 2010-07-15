@@ -10,7 +10,7 @@ set -e
 NODE=4
 MEMBER=20
 OBS=raob
-EXP=M20L500IADP2_0204
+EXP=M20L500IADP
 NOSAVEENS=1 #0:save all members, 1:save only mean/sprd 
 ### directory settings
 CDIR=`pwd`
@@ -30,6 +30,10 @@ EYYYY=1983
 EMM=01
 EDD=01
 EHH=00
+### mpd
+echo '>>> mpdboot'
+mpdboot -n 1
+mpdtrace
 #-----------------------------------------------------------------------
 # Usually do not modify below
 #-----------------------------------------------------------------------
@@ -206,5 +210,5 @@ IDD=$TD
 IHH=$TH
 done
 
+mpdallexit
 echo "NORMAL END"
-
