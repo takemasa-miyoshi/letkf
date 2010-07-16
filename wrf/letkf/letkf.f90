@@ -132,8 +132,11 @@ PROGRAM letkf
 !-----------------------------------------------------------------------
 ! Monitor
 !-----------------------------------------------------------------------
-  CALL monit_mean('gues')
-  CALL monit_mean('anal')
+  IF(myrank == 0) THEN
+    CALL monit_mean('gues')
+    CALL monit_mean('anal')
+  END IF
+  CALL MPI_BARRIER(MPI_COMM_WORLD,ierr)
 !
   CALL CPU_TIME(rtimer)
   WRITE(6,'(A,2F10.2)') '### TIMER(MONIT_MEAN):',rtimer,rtimer-rtimer00
