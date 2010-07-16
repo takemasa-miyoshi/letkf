@@ -55,6 +55,7 @@ SUBROUTINE das_letkf(gues3d,gues2d,anal3d,anal2d)
   INTEGER :: ij,ilev,n,m,i,j,k,nobsl,ierr
 
   WRITE(6,'(A)') 'Hello from das_letkf'
+  WRITE(6,'(A,F15.2)') '  cov_infl_mul = ',cov_infl_mul
   nobstotal = nobs !+ ntvs
   WRITE(6,'(A,I8)') 'Target observation numbers : NOBS=',nobs!,', NTVS=',ntvs
   !
