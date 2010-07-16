@@ -59,7 +59,6 @@ PROGRAM letkf
   WRITE(6,'(A,F15.2)') '  sigma_obs    :',sigma_obs
   WRITE(6,'(A,F15.2)') '  sigma_obsv   :',sigma_obsv
   WRITE(6,'(A,F15.2)') '  sigma_obst   :',sigma_obst
-  WRITE(6,'(A,F15.2)') '  cov_infl_mul :',cov_infl_mul
   WRITE(6,'(A)') '============================================='
   CALL set_common_wrf
   CALL set_common_mpi_wrf
