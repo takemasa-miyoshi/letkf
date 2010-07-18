@@ -53,8 +53,6 @@ SUBROUTINE set_letkf_obs
   REAL(r_size),PARAMETER :: gross_error=10.0d0
   REAL(r_size) :: dz,tg,qg
   REAL(r_size) :: dlon1,dlon2,dlon,dlat
-  REAL(r_size),ALLOCATABLE :: wk2d(:,:)
-  INTEGER,ALLOCATABLE :: iwk2d(:,:)
   REAL(r_size),ALLOCATABLE :: tmpelm(:)
   REAL(r_size),ALLOCATABLE :: tmplon(:)
   REAL(r_size),ALLOCATABLE :: tmplat(:)
@@ -212,17 +210,7 @@ SUBROUTINE set_letkf_obs
     nn = nn + nobslots(islot)
   END DO timeslots
 
-  CALL MPI_BARRIER(MPI_COMM_WORLD,ierr)
-  ALLOCATE(wk2d(nobs,nbv))
-  wk2d = tmphdxf
-  CALL MPI_BARRIER(MPI_COMM_WORLD,ierr)
-  CALL MPI_ALLREDUCE(wk2d,tmphdxf,nobs*nbv,MPI_DOUBLE_PRECISION,MPI_SUM,MPI_COMM_WORLD,ierr)
-  DEALLOCATE(wk2d)
-  ALLOCATE(iwk2d(nobs,nbv))
-  iwk2d = tmpqc0
-  CALL MPI_BARRIER(MPI_COMM_WORLD,ierr)
-  CALL MPI_ALLREDUCE(iwk2d,tmpqc0,nobs*nbv,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ierr)
-  DEALLOCATE(iwk2d)
+  CALL allreduce_obs_mpi(nobs,nbv,tmphdxf,tmpqc0)
 
 !$OMP PARALLEL DO SCHEDULE(DYNAMIC) PRIVATE(n,i)
   DO n=1,nobs
