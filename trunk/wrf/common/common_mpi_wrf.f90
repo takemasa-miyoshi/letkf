@@ -527,5 +527,77 @@ SUBROUTINE write_ensmspr_mpi(file,member,v3d,v2d)
 
   RETURN
 END SUBROUTINE write_ensmspr_mpi
+!-----------------------------------------------------------------------
+! MPI_ALLREDUCE of hdxf and qc
+!-----------------------------------------------------------------------
+SUBROUTINE allreduce_obs_mpi(n,nbv,hdxf,iqc)
+  INTEGER,INTENT(IN) :: n
+  INTEGER,INTENT(IN) :: nbv
+  REAL(r_size),INTENT(INOUT) :: hdxf(n,nbv)
+  INTEGER,INTENT(INOUT) :: iqc(n,nbv)
+  REAL(r_size) :: bufs(mpibufsize)
+  REAL(r_size) :: bufr(mpibufsize)
+  REAL(r_size),ALLOCATABLE :: tmp(:,:)
+  INTEGER :: ibufs(mpibufsize)
+  INTEGER :: ibufr(mpibufsize)
+  INTEGER,ALLOCATABLE :: itmp(:,:)
+  INTEGER :: i,j,k
+  INTEGER :: iter,niter
+  INTEGER :: ierr
+
+  niter = CEILING(REAL(n*nbv)/REAL(mpibufsize))
+  ALLOCATE(tmp(mpibufsize,niter))
+  ALLOCATE(itmp(mpibufsize,niter))
+  bufs=0.0d0
+  ibufs=0
+  i=1
+  iter=1
+  DO k=1,nbv
+    DO j=1,n
+      bufs(i) = hdxf(j,k)
+      ibufs(i) = iqc(j,k)
+      i=i+1
+      IF(i > mpibufsize) THEN
+        CALL MPI_BARRIER(MPI_COMM_WORLD,ierr)
+        CALL MPI_ALLREDUCE(bufs,bufr,mpibufsize,MPI_DOUBLE_PRECISION,MPI_SUM,&
+          & MPI_COMM_WORLD,ierr)
+        tmp(:,iter) = bufr
+        CALL MPI_BARRIER(MPI_COMM_WORLD,ierr)
+        CALL MPI_ALLREDUCE(ibufs,ibufr,mpibufsize,MPI_INTEGER,MPI_MAX,&
+          & MPI_COMM_WORLD,ierr)
+        itmp(:,iter) = ibufr
+        i=1
+        iter=iter+1
+      END IF
+    END DO
+  END DO
+  IF(iter == niter) THEN
+    CALL MPI_BARRIER(MPI_COMM_WORLD,ierr)
+    CALL MPI_ALLREDUCE(bufs,bufr,mpibufsize,MPI_DOUBLE_PRECISION,MPI_SUM,&
+      & MPI_COMM_WORLD,ierr)
+    tmp(:,iter) = bufr
+    CALL MPI_BARRIER(MPI_COMM_WORLD,ierr)
+    CALL MPI_ALLREDUCE(ibufs,ibufr,mpibufsize,MPI_INTEGER,MPI_MAX,&
+      & MPI_COMM_WORLD,ierr)
+    itmp(:,iter) = ibufr
+  END IF
+
+  i=1
+  iter=1
+  DO k=1,nbv
+    DO j=1,n
+      hdxf(j,k) = tmp(i,iter)
+      iqc(j,k) = itmp(i,iter)
+      i=i+1
+      IF(i > mpibufsize) THEN
+        i=1
+        iter=iter+1
+      END IF
+    END DO
+  END DO
+  DEALLOCATE(tmp,itmp)
+
+  RETURN
+END SUBROUTINE allreduce_obs_mpi
 
 END MODULE common_mpi_wrf
