@@ -178,21 +178,15 @@ SUBROUTINE set_letkf_obs
             CYCLE
           END IF
         END IF
-        IF(NINT(tmpelm(nn+n)) == id_ps_obs .AND. tmpdat(nn+n) < -100.0d0) THEN
-          CYCLE
-        END IF
+        IF(NINT(tmpelm(nn+n)) == id_ps_obs .AND. tmpdat(nn+n) < -100.0d0) CYCLE
         IF(NINT(tmpelm(nn+n)) == id_ps_obs) THEN
           CALL itpl_2d(phi0,tmpi(nn+n),tmpj(nn+n),dz)
-          dz = dz - tmplev(nn+n)
-          IF(ABS(dz) < threshold_dz) THEN ! pressure adjustment threshold
-            CALL itpl_2d(v3d(:,:,1,iv3d_t),tmpi(nn+n),tmpj(nn+n),tg)
-            CALL itpl_2d(v3d(:,:,1,iv3d_qv),tmpi(nn+n),tmpj(nn+n),qg)
-            CALL prsadj(tmpdat(nn+n),dz,tg,qg)
-          ELSE
+          tmpk(nn+n) = tmplev(nn+n) - dz
+          IF(ABS(dz) > threshold_dz) THEN ! pressure adjustment threshold
 !OMP CRITICAL
             PRINT '(A)','* PS obs vertical adjustment beyond threshold'
-            PRINT '(A,F10.2,A,F6.2,A,F6.2,A)',&
-              & '  dz=',dz,', (lon,lat)=(',tmplon(nn+n),',',tmplat(nn+n),')'
+            PRINT '(A,F10.2,A,F6.2,A,F6.2,A)','  dz=',tmpk(nn+n),&
+             & ', (lon,lat)=(',tmplon(nn+n),',',tmplat(nn+n),')'
 !OMP END CRITICAL
             CYCLE
           END IF
@@ -448,6 +442,10 @@ SUBROUTINE monit_mean(file)
       ELSE
         CYCLE
       END IF
+    END IF
+    IF(NINT(obselm(n)) == id_ps_obs) THEN
+      CALL itpl_2d(phi0,obsi(n),obsj(n),rk)
+      rk = obslev(n) - rk
     END IF
     CALL Trans_XtoY(obselm(n),obsi(n),obsj(n),rk,v3d,v2d,hdxf)
     dep = obsdat(n) - hdxf

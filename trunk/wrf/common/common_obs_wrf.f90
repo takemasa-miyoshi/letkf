@@ -34,6 +34,7 @@ SUBROUTINE Trans_XtoY(elm,ri,rj,rk,v3d,v2d,yobs)
   REAL(r_size),INTENT(IN) :: v2d(nlon,nlat,nv2d)
   REAL(r_size),INTENT(OUT) :: yobs
   REAL(r_size) :: rh(nlon,nlat,nlev)
+  REAL(r_size) :: tg,qg
   INTEGER :: i,j,k
   INTEGER :: is,ie,js,je,ks,ke
   ie = CEILING( ri )
@@ -53,7 +54,10 @@ SUBROUTINE Trans_XtoY(elm,ri,rj,rk,v3d,v2d,yobs)
   CASE(id_q_obs)  ! Q
     CALL itpl_3d(v3d(:,:,:,iv3d_qv),ri,rj,rk,yobs)
   CASE(id_ps_obs) ! PS
+    CALL itpl_2d(v3d(:,:,1,iv3d_t),ri,rj,tg)
+    CALL itpl_2d(v3d(:,:,1,iv3d_qv),ri,rj,qg)
     CALL itpl_2d(v3d(:,:,1,iv3d_p),ri,rj,yobs)
+    CALL prsadj(yobs,rk,tg,qg)
   CASE(id_rain_obs) ! RAIN
     CALL itpl_2d(v2d(:,:,iv2d_rain),ri,rj,yobs)
   CASE(id_rh_obs) ! RH
@@ -116,15 +120,15 @@ SUBROUTINE prsadj(p,dz,t,q)
   IMPLICIT NONE
   REAL(r_size),INTENT(INOUT) :: p
   REAL(r_size),INTENT(IN) :: dz ! height difference (target - original) [m]
-  REAL(r_size),INTENT(IN) :: t  ! temperature [K] at target level
-  REAL(r_size),INTENT(IN) :: q  ! humidity [kg/kg] at target level
+  REAL(r_size),INTENT(IN) :: t  ! temperature [K] at original level
+  REAL(r_size),INTENT(IN) :: q  ! humidity [kg/kg] at original level
   REAL(r_size),PARAMETER :: gamma=5.0d-3 ! lapse rate [K/m]
   REAL(r_size) :: tv
 
-  tv = t * (1.0d0 + 0.608d0 * q)
   IF(dz /= 0) THEN
-!    p = p * ((-gamma*dz+tv)/tv)**(gg/(gamma*rd)) !tv is at original level
-    p = p * (tv/(tv+gamma*dz))**(gg/(gamma*rd)) !tv is at target level
+    tv = t * (1.0d0 + 0.608d0 * q)
+    p = p * ((-gamma*dz+tv)/tv)**(gg/(gamma*rd)) !tv is at original level
+!    p = p * (tv/(tv+gamma*dz))**(gg/(gamma*rd)) !tv is at target level
   END IF
 
   RETURN
