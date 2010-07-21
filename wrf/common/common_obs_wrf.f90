@@ -134,22 +134,16 @@ SUBROUTINE prsadj(p,dz,t,q)
   RETURN
 END SUBROUTINE prsadj
 !-----------------------------------------------------------------------
-! Coordinate conversion
+! Horizontal coordinate conversion
 !-----------------------------------------------------------------------
-SUBROUTINE phys2ijk(p_full,elem,rlon,rlat,rlev,ri,rj,rk)
+SUBROUTINE ll2ij(elem,rlon,rlat,ri,rj)
   IMPLICIT NONE
-  REAL(r_size),INTENT(IN) :: p_full(nlon,nlat,nlev)
   REAL(r_size),INTENT(IN) :: elem
   REAL(r_size),INTENT(IN) :: rlon(1)
   REAL(r_size),INTENT(IN) :: rlat(1)
-  REAL(r_size),INTENT(IN) :: rlev ! pressure levels
   REAL(r_size),INTENT(OUT) :: ri(1)
   REAL(r_size),INTENT(OUT) :: rj(1)
-  REAL(r_size),INTENT(OUT) :: rk
-  REAL(r_size) :: ak
-  REAL(r_size) :: lnps(nlon,nlat)
-  REAL(r_size) :: plev(nlev)
-  INTEGER :: i,j,k,n
+  INTEGER :: i,j
   !
   ! rlon, rlat --> ri, rj
   !
@@ -167,6 +161,24 @@ SUBROUTINE phys2ijk(p_full,elem,rlon,rlat,rlev,ri,rj,rk)
     j=nlat-1
     CALL com_pos2ij(2,i,j,lon(1:i,1:j),lat(1:i,1:j),1,rlon,rlat,ri,rj)
   END SELECT
+
+  RETURN
+END SUBROUTINE ll2ij
+!-----------------------------------------------------------------------
+! Vertical coordinate conversion
+!-----------------------------------------------------------------------
+SUBROUTINE p2k(p_full,elem,ri,rj,rlev,rk)
+  IMPLICIT NONE
+  REAL(r_size),INTENT(IN) :: p_full(nlon,nlat,nlev)
+  REAL(r_size),INTENT(IN) :: elem
+  REAL(r_size),INTENT(IN) :: ri
+  REAL(r_size),INTENT(IN) :: rj
+  REAL(r_size),INTENT(IN) :: rlev ! pressure levels
+  REAL(r_size),INTENT(OUT) :: rk
+  REAL(r_size) :: ak
+  REAL(r_size) :: lnps(nlon,nlat)
+  REAL(r_size) :: plev(nlev)
+  INTEGER :: i,j,k,n
   !
   ! rlev --> rk
   !
@@ -176,15 +188,15 @@ SUBROUTINE phys2ijk(p_full,elem,rlon,rlat,rlev,ri,rj,rk)
     !
     ! horizontal interpolation
     !
-    i = CEILING(ri(1))
-    j = CEILING(rj(1))
+    i = CEILING(ri)
+    j = CEILING(rj)
     IF(p_full(i,j,1) < 0.1) THEN
       rk = -1.0d0
       RETURN
     END IF
     DO k=1,nlev-1
       lnps(i-1:i,j-1:j) = LOG(p_full(i-1:i,j-1:j,k))
-      CALL itpl_2d(lnps,ri(1),rj(1),plev(k))
+      CALL itpl_2d(lnps,ri,rj,plev(k))
     END DO
     !
     ! Log pressure
@@ -201,7 +213,7 @@ SUBROUTINE phys2ijk(p_full,elem,rlon,rlat,rlev,ri,rj,rk)
   END IF
 
   RETURN
-END SUBROUTINE phys2ijk
+END SUBROUTINE p2k
 !-----------------------------------------------------------------------
 ! Interpolation
 !-----------------------------------------------------------------------
