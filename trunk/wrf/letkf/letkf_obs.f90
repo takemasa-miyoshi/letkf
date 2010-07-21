@@ -127,6 +127,9 @@ SUBROUTINE set_letkf_obs
       & tmpelm(nn+1:nn+nobslots(islot)),tmplon(nn+1:nn+nobslots(islot)),&
       & tmplat(nn+1:nn+nobslots(islot)),tmplev(nn+1:nn+nobslots(islot)),&
       & tmpdat(nn+1:nn+nobslots(islot)),tmperr(nn+1:nn+nobslots(islot)) )
+    DO n=1,nobslots(islot)
+      CALL ll2ij(tmpelm(nn+n),tmplon(nn+n),tmplat(nn+n),tmpi(nn+n),tmpj(nn+n))
+    END DO
     l=0
     DO
       im = myrank+1 + nprocs * l
@@ -136,9 +139,8 @@ SUBROUTINE set_letkf_obs
       CALL read_grd(guesfile,v3d,v2d)
 !$OMP PARALLEL DO SCHEDULE(DYNAMIC) PRIVATE(n,dz,tg,qg)
       DO n=1,nobslots(islot)
-        CALL phys2ijk(v3d(:,:,:,iv3d_p),tmpelm(nn+n),&
-          & tmplon(nn+n),tmplat(nn+n),tmplev(nn+n),&
-          & tmpi  (nn+n),tmpj  (nn+n),tmpk  (nn+n))
+        CALL p2k(v3d(:,:,:,iv3d_p),tmpelm(nn+n),tmpi(nn+n),tmpj(nn+n),&
+          & tmplev(nn+n),tmpk(nn+n))
         IF(CEILING(tmpi(nn+n)) < 2 .OR. nlon-1 < CEILING(tmpi(nn+n))) THEN
 !$OMP CRITICAL
           WRITE(6,'(A)') '* X-coordinate out of range'
@@ -406,7 +408,7 @@ SUBROUTINE monit_mean(file)
   REAL(r_size) :: elem
   REAL(r_size) :: bias_u,bias_v,bias_t,bias_ps,bias_q,bias_rh
   REAL(r_size) :: rmse_u,rmse_v,rmse_t,rmse_ps,rmse_q,rmse_rh
-  REAL(r_size) :: hdxf,dep,dummy(1),rk
+  REAL(r_size) :: hdxf,dep,rk
   INTEGER :: n,iu,iv,it,iq,ips,irh
   CHARACTER(11) :: filename='filexxx.grd'
 
@@ -433,8 +435,7 @@ SUBROUTINE monit_mean(file)
   CALL read_grd(filename,v3d,v2d)
 
   DO n=1,nobs
-    CALL phys2ijk(v3d(:,:,:,iv3d_p),obselm(n),obslon(n),obslat(n),obslev(n),obsi(n),obsj(n),dummy(1))
-    rk = dummy(1)
+    CALL p2k(v3d(:,:,:,iv3d_p),obselm(n),obsi(n),obsj(n),obslev(n),rk)
     IF(CEILING(rk) > nlev) CYCLE
     IF(CEILING(rk) < 2 .AND. NINT(obselm(n)) /= id_ps_obs) THEN
       IF(NINT(obselm(n)) == id_u_obs .OR. NINT(obselm(n)) == id_v_obs) THEN
