@@ -103,17 +103,18 @@ SUBROUTINE das_letkf(gues3d,gues2d,anal3d,anal2d)
     ALLOCATE( work2dg(nlon,nlat,nv2d) )
     ALLOCATE( work3d(nij1,nlev,nv3d) )
     ALLOCATE( work2d(nij1,nv2d) )
-    INQUIRE(FILE=inflfile,EXIST=ex)
-    IF(ex) THEN
-      IF(myrank == 0) THEN
+    IF(myrank == 0) THEN
+      INQUIRE(FILE=inflfile,EXIST=ex)
+      IF(ex) THEN
         WRITE(6,'(A,I3.3,2A)') 'MYRANK ',myrank,' is reading.. ',inflfile
         CALL read_grd4(inflfile,work3dg,work2dg)
+      ELSE
+        WRITE(6,'(2A)') '!!WARNING: no such file exist: ',inflfile
+        work3dg = -1.0d0 * cov_infl_mul
+        work2dg = -1.0d0 * cov_infl_mul
       END IF
-      CALL scatter_grd_mpi(0,work3dg,work2dg,work3d,work2d)
-    ELSE
-      WRITE(6,'(2A)') '!!WARNING: no such file exist: ',inflfile
-      work3d = -1.0d0 * cov_infl_mul
     END IF
+    CALL scatter_grd_mpi(0,work3dg,work2dg,work3d,work2d)
   END IF
   !
   ! p_full for background ensemble mean
@@ -139,6 +140,7 @@ SUBROUTINE das_letkf(gues3d,gues2d,anal3d,anal2d)
           END DO
         END DO
       END DO
+      IF(cov_infl_mul < 0.0d0) work3d(ij,ilev,:) = parm
       IF(ilev == 1) THEN !update 2d variable at ilev=1
         DO n=1,nv2d
           DO m=1,nbv
@@ -148,9 +150,7 @@ SUBROUTINE das_letkf(gues3d,gues2d,anal3d,anal2d)
             END DO
           END DO
         END DO
-      END IF
-      IF(cov_infl_mul < 0.0d0) THEN ! update the inflation parameter
-        work3d(ij,ilev,:) = parm
+        IF(cov_infl_mul < 0.0d0) work2d(ij,:) = parm
       END IF
     END DO
   END DO
