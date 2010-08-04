@@ -54,9 +54,9 @@ SUBROUTINE Trans_XtoY(elm,ri,rj,rk,v3d,v2d,yobs)
   CASE(id_q_obs)  ! Q
     CALL itpl_3d(v3d(:,:,:,iv3d_qv),ri,rj,rk,yobs)
   CASE(id_ps_obs) ! PS
-    CALL itpl_2d(v3d(:,:,1,iv3d_t),ri,rj,tg)
-    CALL itpl_2d(v3d(:,:,1,iv3d_qv),ri,rj,qg)
-    CALL itpl_2d(v3d(:,:,1,iv3d_p),ri,rj,yobs)
+    CALL itpl_2d(v2d(:,:,iv2d_t2),ri,rj,tg)
+    CALL itpl_2d(v2d(:,:,iv2d_q2),ri,rj,qg)
+    CALL itpl_2d(v2d(:,:,iv2d_ps),ri,rj,yobs)
     CALL prsadj(yobs,rk,tg,qg)
   CASE(id_rain_obs) ! RAIN
     CALL itpl_2d(v2d(:,:,iv2d_rain),ri,rj,yobs)

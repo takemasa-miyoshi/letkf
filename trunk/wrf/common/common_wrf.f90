@@ -20,17 +20,21 @@ MODULE common_wrf
   INTEGER,PARAMETER :: nlon=137
   INTEGER,PARAMETER :: nlat=109
   INTEGER,PARAMETER :: nlev=40
-  INTEGER,PARAMETER :: nv3d=8 ! u,v,w,t,p,qv,qc,qr
-  INTEGER,PARAMETER :: nv2d=1 ! rain
+  INTEGER,PARAMETER :: nv3d=9 ! u,v,w,t,p,ph,qv,qc,qr
+  INTEGER,PARAMETER :: nv2d=4 ! ps,t2,q2,rain
   INTEGER,PARAMETER :: iv3d_u=1
   INTEGER,PARAMETER :: iv3d_v=2
   INTEGER,PARAMETER :: iv3d_w=3
   INTEGER,PARAMETER :: iv3d_t=4
   INTEGER,PARAMETER :: iv3d_p=5
-  INTEGER,PARAMETER :: iv3d_qv=6
-  INTEGER,PARAMETER :: iv3d_qc=7
-  INTEGER,PARAMETER :: iv3d_qr=8
-  INTEGER,PARAMETER :: iv2d_rain=1
+  INTEGER,PARAMETER :: iv3d_ph=6
+  INTEGER,PARAMETER :: iv3d_qv=7
+  INTEGER,PARAMETER :: iv3d_qc=8
+  INTEGER,PARAMETER :: iv3d_qr=9
+  INTEGER,PARAMETER :: iv2d_ps=1
+  INTEGER,PARAMETER :: iv2d_t2=2
+  INTEGER,PARAMETER :: iv2d_q2=3
+  INTEGER,PARAMETER :: iv2d_rain=4
   INTEGER,PARAMETER :: nij0=nlon*nlat
   INTEGER,PARAMETER :: nlevall=nlev*nv3d+nv2d
   INTEGER,PARAMETER :: ngpv=nij0*nlevall
@@ -62,9 +66,13 @@ SUBROUTINE set_common_wrf
   element(iv3d_w)  = 'W   '
   element(iv3d_t)  = 'T   '
   element(iv3d_p)  = 'P   '
+  element(iv3d_ph) = 'PH   '
   element(iv3d_qv) = 'QV  '
   element(iv3d_qc) = 'QC  '
   element(iv3d_qr) = 'QR  '
+  element(nv3d+iv2d_ps)   = 'PS  '
+  element(nv3d+iv2d_t2)   = 'T2  '
+  element(nv3d+iv2d_q2)   = 'Q2  '
   element(nv3d+iv2d_rain) = 'RAIN'
   !
   ! Lon, Lat, F, phi0
