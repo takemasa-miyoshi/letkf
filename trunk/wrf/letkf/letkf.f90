@@ -21,10 +21,13 @@ PROGRAM letkf
   REAL(r_size),ALLOCATABLE :: gues2d(:,:,:)
   REAL(r_size),ALLOCATABLE :: anal3d(:,:,:,:)
   REAL(r_size),ALLOCATABLE :: anal2d(:,:,:)
+  REAL(r_size),ALLOCATABLE :: omb(:)
+  REAL(r_size),ALLOCATABLE :: oma(:)
   REAL(r_size) :: rtimer00,rtimer
   INTEGER :: ierr
   CHARACTER(8) :: stdoutf='NOUT-000'
   CHARACTER(4) :: guesf='gs00'
+  CHARACTER(7) :: monitobs='obs.dat'
 !-----------------------------------------------------------------------
 ! Initial settings
 !-----------------------------------------------------------------------
@@ -132,8 +135,11 @@ PROGRAM letkf
 ! Monitor
 !-----------------------------------------------------------------------
   IF(myrank == 0) THEN
-    CALL monit_mean('gues')
-    CALL monit_mean('anal')
+    ALLOCATE(omb(nobs),oma(nobs))
+    CALL monit_mean('gues',omb)
+    CALL monit_mean('anal',oma)
+    CALL monit_obs(monitobs,nobs,obselm,obslon,obslat,obslev,obsdat,&
+     & obserr,obstyp,omb,oma,obslot)
   END IF
   CALL MPI_BARRIER(MPI_COMM_WORLD,ierr)
 !

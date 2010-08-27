@@ -32,7 +32,7 @@ PROGRAM dec_prepbufr
   CHARACTER(8) :: cs
   REAL(r_dble) :: prs(3,maxlev,maxevn)
   REAL(r_dble) :: obs(3,maxlev,maxevn)
-  REAL(r_sngl) :: wk(6)
+  REAL(r_sngl) :: wk(7)
   INTEGER :: iunit
   !
   ! Open the input file
@@ -62,6 +62,7 @@ PROGRAM dec_prepbufr
         EXIT
       END IF
     END DO
+    wk(7) = REAL(n)
 !    IF(n /= 15) CYCLE      ! for debugging
     !
     ! station location (lon, lat)
