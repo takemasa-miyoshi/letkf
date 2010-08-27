@@ -406,7 +406,7 @@ SUBROUTINE get_nobs(cfile,nn)
   IMPLICIT NONE
   CHARACTER(*),INTENT(IN) :: cfile
   INTEGER,INTENT(OUT) :: nn
-  REAL(r_sngl) :: wk(6)
+  REAL(r_sngl) :: wk(7)
   INTEGER :: ios
   INTEGER :: iu,iv,it,iq,irh,ips
   INTEGER :: iunit
@@ -457,7 +457,7 @@ SUBROUTINE get_nobs(cfile,nn)
   RETURN
 END SUBROUTINE get_nobs
 
-SUBROUTINE read_obs(cfile,nn,elem,rlon,rlat,rlev,odat,oerr)
+SUBROUTINE read_obs(cfile,nn,elem,rlon,rlat,rlev,odat,oerr,otyp)
   IMPLICIT NONE
   CHARACTER(*),INTENT(IN) :: cfile
   INTEGER,INTENT(IN) :: nn
@@ -467,7 +467,8 @@ SUBROUTINE read_obs(cfile,nn,elem,rlon,rlat,rlev,odat,oerr)
   REAL(r_size),INTENT(OUT) :: rlev(nn)
   REAL(r_size),INTENT(OUT) :: odat(nn)
   REAL(r_size),INTENT(OUT) :: oerr(nn)
-  REAL(r_sngl) :: wk(6)
+  REAL(r_size),INTENT(OUT) :: otyp(nn)
+  REAL(r_sngl) :: wk(7)
   INTEGER :: n,iunit
 
   iunit=91
@@ -497,10 +498,65 @@ SUBROUTINE read_obs(cfile,nn,elem,rlon,rlat,rlev,odat,oerr)
     rlev(n) = REAL(wk(4),r_size)
     odat(n) = REAL(wk(5),r_size)
     oerr(n) = REAL(wk(6),r_size)
+    otyp(n) = REAL(wk(7),r_size)
   END DO
   CLOSE(iunit)
 
   RETURN
 END SUBROUTINE read_obs
+
+SUBROUTINE monit_obs(cfile,nn,elem,rlon,rlat,rlev,odat,oerr,otyp,omb,oma,slot)
+  IMPLICIT NONE
+  CHARACTER(*),INTENT(IN) :: cfile
+  INTEGER,INTENT(IN) :: nn
+  REAL(r_size),INTENT(IN) :: elem(nn) ! element number
+  REAL(r_size),INTENT(IN) :: rlon(nn)
+  REAL(r_size),INTENT(IN) :: rlat(nn)
+  REAL(r_size),INTENT(IN) :: rlev(nn)
+  REAL(r_size),INTENT(IN) :: odat(nn)
+  REAL(r_size),INTENT(IN) :: oerr(nn)
+  REAL(r_size),INTENT(IN) :: otyp(nn)
+  REAL(r_size),INTENT(IN) :: omb(nn)
+  REAL(r_size),INTENT(IN) :: oma(nn)
+  REAL(r_size),INTENT(IN) :: slot(nn)
+  REAL(r_sngl) :: wk(10)
+  INTEGER :: n,iunit
+
+  iunit=91
+  OPEN(iunit,FILE=cfile,FORM='unformatted',ACCESS='sequential')
+  DO n=1,nn
+    wk(1) = REAL(elem(n),r_sngl)
+    wk(2) = REAL(rlon(n),r_sngl)
+    wk(3) = REAL(rlat(n),r_sngl)
+    wk(4) = REAL(rlev(n),r_sngl)
+    wk(5) = REAL(odat(n),r_sngl)
+    wk(6) = REAL(oerr(n),r_sngl)
+    wk(7) = REAL(otyp(n),r_sngl)
+    wk(8) = REAL(omb(n),r_sngl)
+    wk(9) = REAL(oma(n),r_sngl)
+    wk(10) = REAL(slot(n),r_sngl)
+    SELECT CASE(NINT(wk(1)))
+    CASE(id_u_obs)
+      wk(4) = wk(4) / 100.0 ! Pa -> hPa
+    CASE(id_v_obs)
+      wk(4) = wk(4) / 100.0 ! Pa -> hPa
+    CASE(id_t_obs)
+      wk(4) = wk(4) / 100.0 ! Pa -> hPa
+    CASE(id_q_obs)
+      wk(4) = wk(4) / 100.0 ! Pa -> hPa
+    CASE(id_ps_obs)
+      wk(5) = wk(5) / 100.0 ! Pa -> hPa
+      wk(6) = wk(6) / 100.0 ! Pa -> hPa
+    CASE(id_rh_obs)
+      wk(4) = wk(4) / 100.0 ! Pa -> hPa
+      wk(5) = wk(5) / 0.01 ! percent output
+      wk(6) = wk(6) / 0.01 ! percent output
+    END SELECT
+    WRITE(iunit) wk
+  END DO
+  CLOSE(iunit)
+
+  RETURN
+END SUBROUTINE monit_obs
 
 END MODULE common_obs_wrf

@@ -34,6 +34,8 @@ MODULE letkf_obs
   REAL(r_size),ALLOCATABLE,SAVE :: obslev(:)
   REAL(r_size),ALLOCATABLE,SAVE :: obsdat(:)
   REAL(r_size),ALLOCATABLE,SAVE :: obserr(:)
+  REAL(r_size),ALLOCATABLE,SAVE :: obstyp(:)
+  REAL(r_size),ALLOCATABLE,SAVE :: obslot(:)
   REAL(r_size),ALLOCATABLE,SAVE :: obsi(:)
   REAL(r_size),ALLOCATABLE,SAVE :: obsj(:)
 !  REAL(r_size),ALLOCATABLE,SAVE :: obsk(:)
@@ -59,6 +61,8 @@ SUBROUTINE set_letkf_obs
   REAL(r_size),ALLOCATABLE :: tmplev(:)
   REAL(r_size),ALLOCATABLE :: tmpdat(:)
   REAL(r_size),ALLOCATABLE :: tmperr(:)
+  REAL(r_size),ALLOCATABLE :: tmptyp(:)
+  REAL(r_size),ALLOCATABLE :: tmplot(:)
   REAL(r_size),ALLOCATABLE :: tmpi(:)
   REAL(r_size),ALLOCATABLE :: tmpj(:)
   REAL(r_size),ALLOCATABLE :: tmpk(:)
@@ -72,6 +76,8 @@ SUBROUTINE set_letkf_obs
   REAL(r_size),ALLOCATABLE :: tmp2lev(:)
   REAL(r_size),ALLOCATABLE :: tmp2dat(:)
   REAL(r_size),ALLOCATABLE :: tmp2err(:)
+  REAL(r_size),ALLOCATABLE :: tmp2typ(:)
+  REAL(r_size),ALLOCATABLE :: tmp2lot(:)
   REAL(r_size),ALLOCATABLE :: tmp2i(:)
   REAL(r_size),ALLOCATABLE :: tmp2j(:)
 !  REAL(r_size),ALLOCATABLE :: tmp2k(:)
@@ -106,6 +112,8 @@ SUBROUTINE set_letkf_obs
   ALLOCATE( tmplev(nobs) )
   ALLOCATE( tmpdat(nobs) )
   ALLOCATE( tmperr(nobs) )
+  ALLOCATE( tmptyp(nobs) )
+  ALLOCATE( tmplot(nobs) )
   ALLOCATE( tmpi(nobs) )
   ALLOCATE( tmpj(nobs) )
   ALLOCATE( tmpk(nobs) )
@@ -126,7 +134,9 @@ SUBROUTINE set_letkf_obs
     CALL read_obs(obsfile,nobslots(islot),&
       & tmpelm(nn+1:nn+nobslots(islot)),tmplon(nn+1:nn+nobslots(islot)),&
       & tmplat(nn+1:nn+nobslots(islot)),tmplev(nn+1:nn+nobslots(islot)),&
-      & tmpdat(nn+1:nn+nobslots(islot)),tmperr(nn+1:nn+nobslots(islot)) )
+      & tmpdat(nn+1:nn+nobslots(islot)),tmperr(nn+1:nn+nobslots(islot)),&
+      & tmptyp(nn+1:nn+nobslots(islot)) )
+    tmplot(nn+1:nn+nobslots(islot)) = REAL(islot,r_size)
     DO n=1,nobslots(islot)
       CALL ll2ij(tmpelm(nn+n),tmplon(nn+n),tmplat(nn+n),tmpi(nn+n),tmpj(nn+n))
     END DO
@@ -284,6 +294,8 @@ SUBROUTINE set_letkf_obs
   ALLOCATE( tmp2lev(nobs) )
   ALLOCATE( tmp2dat(nobs) )
   ALLOCATE( tmp2err(nobs) )
+  ALLOCATE( tmp2typ(nobs) )
+  ALLOCATE( tmp2lot(nobs) )
   ALLOCATE( tmp2i(nobs) )
   ALLOCATE( tmp2j(nobs) )
 !  ALLOCATE( tmp2k(nobs) )
@@ -295,6 +307,8 @@ SUBROUTINE set_letkf_obs
   ALLOCATE( obslev(nobs) )
   ALLOCATE( obsdat(nobs) )
   ALLOCATE( obserr(nobs) )
+  ALLOCATE( obstyp(nobs) )
+  ALLOCATE( obslot(nobs) )
   ALLOCATE( obsi(nobs) )
   ALLOCATE( obsj(nobs) )
 !  ALLOCATE( obsk(nobs) )
@@ -328,6 +342,8 @@ SUBROUTINE set_letkf_obs
       tmp2lev(njs(j)+nn) = tmplev(n)
       tmp2dat(njs(j)+nn) = tmpdat(n)
       tmp2err(njs(j)+nn) = tmperr(n)
+      tmp2typ(njs(j)+nn) = tmptyp(n)
+      tmp2lot(njs(j)+nn) = tmplot(n)
       tmp2i(njs(j)+nn) = tmpi(n)
       tmp2j(njs(j)+nn) = tmpj(n)
 !      tmp2k(njs(j)+nn) = tmpk(n)
@@ -353,6 +369,8 @@ SUBROUTINE set_letkf_obs
         obslev(njs(j)+nn) = tmp2lev(n)
         obsdat(njs(j)+nn) = tmp2dat(n)
         obserr(njs(j)+nn) = tmp2err(n)
+        obstyp(njs(j)+nn) = tmp2typ(n)
+        obslot(njs(j)+nn) = tmp2lot(n)
         obsi(njs(j)+nn) = tmp2i(n)
         obsj(njs(j)+nn) = tmp2j(n)
 !        obsk(njs(j)+nn) = tmp2k(n)
@@ -377,6 +395,8 @@ SUBROUTINE set_letkf_obs
   DEALLOCATE( tmp2lev )
   DEALLOCATE( tmp2dat )
   DEALLOCATE( tmp2err )
+  DEALLOCATE( tmp2typ )
+  DEALLOCATE( tmp2lot )
   DEALLOCATE( tmp2i )
   DEALLOCATE( tmp2j )
 !  DEALLOCATE( tmp2k )
@@ -388,6 +408,8 @@ SUBROUTINE set_letkf_obs
   DEALLOCATE( tmplev )
   DEALLOCATE( tmpdat )
   DEALLOCATE( tmperr )
+  DEALLOCATE( tmptyp )
+  DEALLOCATE( tmplot )
   DEALLOCATE( tmpi )
   DEALLOCATE( tmpj )
   DEALLOCATE( tmpk )
@@ -400,9 +422,10 @@ END SUBROUTINE set_letkf_obs
 !-----------------------------------------------------------------------
 ! Monitor departure from gues/anal mean
 !-----------------------------------------------------------------------
-SUBROUTINE monit_mean(file)
+SUBROUTINE monit_mean(file,depout)
   IMPLICIT NONE
   CHARACTER(4),INTENT(IN) :: file
+  REAL(r_size),INTENT(OUT) :: depout(nobs)
   REAL(r_size) :: v3d(nlon,nlat,nlev,nv3d)
   REAL(r_size) :: v2d(nlon,nlat,nv2d)
   REAL(r_size) :: elem
@@ -450,6 +473,7 @@ SUBROUTINE monit_mean(file)
     END IF
     CALL Trans_XtoY(obselm(n),obsi(n),obsj(n),rk,v3d,v2d,hdxf)
     dep = obsdat(n) - hdxf
+    depout(n) = dep
     SELECT CASE(NINT(obselm(n)))
     CASE(id_u_obs)
       rmse_u = rmse_u + dep**2
