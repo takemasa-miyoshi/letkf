@@ -32,6 +32,8 @@ EM=09
 ED=03
 EH=12
 EMN=00
+### adaptive inflation
+ADAPTINFL=1 #1:ON, 0:OFF
 ### restart setting
 RESTART=0 #1:ON, 0:OFF 
 ### job setting
@@ -55,6 +57,12 @@ MPIBIN=/usr/local/mpich2/bin
 echo '>>>'
 echo ">>> STARTING WRF-LETKF CYCLE FROM $IY/$IM/$ID/$IH TO $EY/$EM/$ED/$EH"
 echo '>>>'
+NOOBS=0
+if test $OBS = "none"
+then
+ADAPTINFL=0
+NOOBS=1
+fi
 MEMBERP=`expr $MEMBER + 1`
 NODE0=`echo $NODES | awk '{print $1}'`
 NUM_NODE=0
@@ -195,7 +203,7 @@ do
 $RSH $NODE rm -rf $TMPDIR/letkf
 $RSH $NODE mkdir -p $TMPDIR/letkf
 $RSH $NODE cp $LETKF $TMPDIR/letkf
-if test ${OBS} = "none"
+if test $NOOBS -eq 1
 then
 $RSH $NODE touch $TMPDIR/letkf/obs01.dat
 $RSH $NODE touch $TMPDIR/letkf/obs02.dat
@@ -215,7 +223,7 @@ $RCP $OBSDIR/obs$AY$AM$AD$AH/t+3.dat $NODE:$TMPDIR/letkf/obs07.dat
 fi
 done
 # infl_mul (1 node)
-if test $ITER -gt 1 -o $RESTART -ne 0
+if test $ITER -gt 1 -a $ADAPTINFL -eq 1
 then
 echo "  > Copying infl_mul.grd"
 $RSH $NODE0 cp $TMPDIR/anal/$IY$IM$ID$IH$IMN/infl_mul.grd $TMPDIR/letkf
@@ -289,7 +297,14 @@ $RSH $NODE mv $TMPDIR/letkf/NOUT-*    $TMPDIR/anal/$AY$AM$AD$AH$AMN
 if test $NODE = $NODE0
 then
 $RSH $NODE mv $TMPDIR/letkf/gues_??.grd  $TMPDIR/anal/$AY$AM$AD$AH$AMN
+if test $ADAPTINFL -eq 1
+then
 $RSH $NODE mv $TMPDIR/letkf/infl_mul.grd $TMPDIR/anal/$AY$AM$AD$AH$AMN
+fi
+if test $NOOBS -eq 0
+then
+$RSH $NODE mv $TMPDIR/letkf/obs.dat $TMPDIR/anal/$AY$AM$AD$AH$AMN
+fi
 $RSH $NODE1 mkdir -p $TMPDIR/anal/$AY$AM$AD$AH$AMN
 $RSH $NODE $RCP $TMPDIR/anal/$AY$AM$AD$AH$AMN/anal_me.grd $NODE1:$TMPDIR/anal/$AY$AM$AD$AH$AMN
 fi
