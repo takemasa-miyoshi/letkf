@@ -35,7 +35,7 @@ EMN=00
 ### adaptive inflation
 ADAPTINFL=1 #1:ON, 0:OFF
 ### restart setting
-RESTART=0 #1:ON, 0:OFF 
+ITER=1 #first iteration number, usually 1, but > 1 for restart
 ### job setting
 ENS=1
 ANL=1
@@ -76,7 +76,7 @@ source util.sh
 #
 # Work directory
 #
-if test $RESTART -eq 0
+if test $ITER -eq 1
 then
 echo "Setting up work directories.."
 echo " >> removing old work directories.."
@@ -158,7 +158,7 @@ else
 MEM=0$M
 fi
 echo "  > FORECAST MEMBER $MEM in NODE $NODE"
-if test $ITER -eq 1 -a $RESTART -eq 0
+if test $ITER -eq 1
 then
 FLAG=2 # use forecast data as initial file
 ANALDAT=$INITDAT/$MEM/wrfout_d01_${IY}-${IM}-${ID}_${IH}:${IMN}:00
