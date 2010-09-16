@@ -276,6 +276,8 @@ SUBROUTINE set_letkf_obs
     tmplev(nn) = tmplev(n)
     tmpdat(nn) = tmpdat(n)
     tmperr(nn) = tmperr(n)
+    tmptyp(nn) = tmptyp(n)
+    tmplot(nn) = tmplot(n)
     tmpi(nn) = tmpi(n)
     tmpj(nn) = tmpj(n)
 !    tmpk(nn) = tmpk(n)
