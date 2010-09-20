@@ -10,7 +10,7 @@ PROGRAM init_merge
   REAL(4),PARAMETER :: rd = 287.05
   REAL(4),PARAMETER :: cp = 7.0 / 2.0 * rd
   REAL(4),PARAMETER :: p0 = 1.0e+5
-  REAL(4) :: t00
+  REAL(4),PARAMETER :: t0 = 300.0
   REAL(4),ALLOCATABLE :: ps(:,:)
   REAL(4),ALLOCATABLE :: u(:,:,:)
   REAL(4),ALLOCATABLE :: v(:,:,:)
@@ -69,17 +69,6 @@ PROGRAM init_merge
 !  ALLOCATE(rainc(nlon,nlat))
 !  ALLOCATE(rainnc(nlon,nlat))
 
-!
-! READ netcdf file (constants)
-!
-  ALLOCATE(start(3),count(3))
-  start = (/ 1,1,1 /)
-  WRITE(6,'(A)') '*** START : READ NETCDF (CNST) ***'
-  !!! T00
-  CALL check_io(NF_INQ_VARID(ncid,'T00',varid))
-  CALL check_io(NF_GET_VAR_REAL(ncid,varid,t00))
-  WRITE(6,'(A)') '***  END  : READ NETCDF (CNST) ***'
-  DEALLOCATE(start,count)
 !
 ! READ netcdf file (3-D valiables)
 !
@@ -183,7 +172,7 @@ PROGRAM init_merge
  DO k=1,nlev-1
     DO j=1,nlat-1
       DO i=1,nlon-1
-        theta(i,j,k) = t(i,j,k) *(p0 /  prs(i,j,k)) ** (rd / cp) - t00
+        theta(i,j,k) = t(i,j,k) *(p0 /  prs(i,j,k)) ** (rd / cp) - t0
         prs(i,j,k) = prs(i,j,k) - pb(i,j,k)
         ph(i,j,k) = ph(i,j,k) - phb(i,j,k)
       END DO
