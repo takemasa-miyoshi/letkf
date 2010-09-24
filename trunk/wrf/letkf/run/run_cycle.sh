@@ -280,7 +280,7 @@ cat << EOF > letkf.sh
 cd $TMPDIR/letkf
 $MPIBIN/mpdboot -n $NUM_NODE -f ./mpd.hosts
 $MPIBIN/mpdtrace
-time $MPIBIN/mpiexec -machinefile ./machinefile -n $LETKF_PROC ./`basename $LETKF`
+$MPIBIN/mpiexec -machinefile ./machinefile -n $LETKF_PROC ./`basename $LETKF` < /dev/null
 $MPIBIN/mpdallexit
 EOF
 

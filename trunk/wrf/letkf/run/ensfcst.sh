@@ -311,7 +311,7 @@ rm -f  rsl_error.* rsl_out.*
 rm -f met_em*.nc
 ln -s ${wk_common_wps}/met_em*.nc .
 # --- run the pgm ---
-${mpibin}/mpiexec -n ${num_mpi} ./real.exe > /dev/null 2> /dev/null
+${mpibin}/mpiexec -n ${num_mpi} ./real.exe < /dev/null > /dev/null 2> /dev/null
 # --- use analysis ---
 if test -e ${INIT_DATA} -a $FLAG -eq 2
 then
@@ -348,7 +348,7 @@ then
 rm -f rsl_error.* rsl_out.*
 rm -f wrfout_d01*
 # --- run the pgm ---
-${mpibin}/mpiexec -n ${num_mpi} ./wrf.exe > /dev/null 2> /dev/null
+${mpibin}/mpiexec -n ${num_mpi} ./wrf.exe < /dev/null > /dev/null 2> /dev/null
 # --- end transaction ---
 rm -f met_em*.nc
 rm -f log_error log_out
