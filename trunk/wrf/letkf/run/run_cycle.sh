@@ -106,7 +106,6 @@ fi
 # 
 # Cycle run ### MAIN LOOP ###
 #
-ITER=1
 while test $IY$IM$ID$IH -le $EY$EM$ED$EH
 do
 
