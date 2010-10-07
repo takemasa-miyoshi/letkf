@@ -44,6 +44,7 @@ num_frames=1	# set 1 or 1000
 num_mpi=${MPI_PER_MEMBER}
 window_length=6
 ft_lag=3
+flag_init=0
 
 ft=`expr ${window_length} + ${ft_lag}`
 
@@ -175,6 +176,7 @@ if test -f ${INIT_DATA} -a $FLAG -eq 0
 then
 echo "@@@ Overwrite Initial Data after METGRID @@@"
 cp ${INIT_DATA} ./${init_file}
+flag_init=1
 fi		
 # --- end transaction ---
 cp ${init_file} ${wkdir}
@@ -224,6 +226,12 @@ cat << EOF >  namelist.input
  e_we                                = 137,    112,   94,
  e_sn                                = 109,     97,    91,
  e_vert                              = 40,    28,    28,
+ eta_levels                          = 1.0, 0.993, 0.983, 0.97, 0.954, 0.934, 0.909, 0.88, 0.8426666, 0.8053334,
+    0.7680001, 0.7306668, 0.6640929, 0.6024755, 0.545507, 0.4928956,
+    0.4443653, 0.3996544, 0.3585157, 0.320715, 0.2860311, 0.2542548,
+    0.2251886, 0.1986461, 0.1744513, 0.1524383, 0.1324507, 0.1143412,
+    0.0979709, 0.08320919, 0.06993309, 0.05802681, 0.0473813, 0.03789367,
+    0.02946659, 0.02200733, 0.01542627, 0.009634036, 0.004534247, 0.0,
  p_top_requested                     = 1000,
  num_metgrid_levels                  = 27,
  num_metgrid_soil_levels             = 4,
@@ -318,6 +326,7 @@ then
 echo "@@@ Overwrite Initial Data after REAL @@@"
 rm -f wrfinput_d01
 cp ${INIT_DATA} ./wrfinput_d01	
+flag_init=1
 elif test -e ${INIT_DATA} -a $FLAG -eq 3
 then
 echo "@@@ Merge Initial Data after REAL (based on other analysis) @@@"
@@ -326,6 +335,7 @@ ln -s wrfinput_d01 input.nc
 ln -s ${INIT_DATA} anal.grd
 $TMPDIR/ncio/init_merge > log.init_merge${MEM} 2> /dev/null
 rm -f input.nc anal.grd
+flag_init=1
 elif test -e ${INIT_DATA} -a $FLAG -eq 4
 then
 echo "@@@ Merge Initial Data after REAL (based on previous forecast) @@@"
@@ -336,6 +346,13 @@ ln -s wrfinput_d01 input.nc
 ln -s ${INIT_DATA} anal.grd
 $TMPDIR/ncio/init_merge > log.init_merge${MEM} 2> /dev/null
 rm -f input.nc anal.grd	
+flag_init=1
+fi
+# --- check initial fields ---
+if test ${flag_init} -eq 0
+then
+echo "xxx failed to prepare initial field : ${MEM} xxx"
+exit 1
 fi
 fi
 # ------------------------------
