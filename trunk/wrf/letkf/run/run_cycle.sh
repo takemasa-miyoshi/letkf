@@ -167,7 +167,7 @@ ANALDAT=$TMPDIR/anal/${IY}${IM}${ID}${IH}${IMN}/anal${MEM}.grd
 fi
 if test $M -eq $MEMBERP
 then
-if $ITER -gt 1
+if test $ITER -gt 1
 then
 ANALDAT=$TMPDIR/anal/${IY}${IM}${ID}${IH}${IMN}/anal_me.grd
 fi
