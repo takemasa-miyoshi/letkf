@@ -167,7 +167,10 @@ ANALDAT=$TMPDIR/anal/${IY}${IM}${ID}${IH}${IMN}/anal${MEM}.grd
 fi
 if test $M -eq $MEMBERP
 then
+if $ITER -gt 1
+then
 ANALDAT=$TMPDIR/anal/${IY}${IM}${ID}${IH}${IMN}/anal_me.grd
+fi
 ENDMEMBER=1
 fi
 $RSH $NODE sh $TMPDIR/model/ensfcst.sh $TMPDIR $IY$IM$ID$IH $FY$FM$FD$FH $MEM $WRF_PROC $FNLDIR $ANALDAT $FLAG &
