@@ -34,6 +34,7 @@ SUBROUTINE Trans_XtoY(elm,ri,rj,rk,v3d,v2d,yobs)
   REAL(r_size),INTENT(IN) :: v2d(nlon,nlat,nv2d)
   REAL(r_size),INTENT(OUT) :: yobs
   REAL(r_size) :: rh(nlon,nlat,nlev)
+  REAL(r_size) :: sh(nlon,nlat,nlev)  
   REAL(r_size) :: tg,qg
   INTEGER :: i,j,k
   INTEGER :: is,ie,js,je,ks,ke
@@ -52,7 +53,8 @@ SUBROUTINE Trans_XtoY(elm,ri,rj,rk,v3d,v2d,yobs)
   CASE(id_t_obs)  ! T
     CALL itpl_3d(v3d(:,:,:,iv3d_t),ri,rj,rk,yobs)
   CASE(id_q_obs)  ! Q
-    CALL itpl_3d(v3d(:,:,:,iv3d_qv),ri,rj,rk,yobs)
+    sh(is:ie,js:je,ks:ke) = v3d(is:ie,js:je,ks:ke,iv3d_qv) / (1.0d0 + v3d(is:ie,js:je,ks:ke,iv3d_qv))
+    CALL itpl_3d(sh,ri,rj,rk,yobs)
   CASE(id_ps_obs) ! PS
     CALL itpl_2d(v2d(:,:,iv2d_t2),ri,rj,tg)
     CALL itpl_2d(v2d(:,:,iv2d_q2),ri,rj,qg)
