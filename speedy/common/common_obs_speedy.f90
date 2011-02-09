@@ -14,6 +14,7 @@ MODULE common_obs_speedy
   IMPLICIT NONE
   PUBLIC
 
+  INTEGER,PARAMETER :: nid_obs=7
   INTEGER,PARAMETER :: id_u_obs=2819
   INTEGER,PARAMETER :: id_v_obs=2820
   INTEGER,PARAMETER :: id_t_obs=3073
