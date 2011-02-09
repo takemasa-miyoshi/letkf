@@ -26,6 +26,17 @@ MODULE letkf_tools
 ! < 0: 3D inflation values input from a GPV file "infl_mul.grd"
   REAL(r_size),PARAMETER :: sp_infl_add = 0.d0 !additive inflation
 !TVS  LOGICAL,PARAMETER :: msw_vbc = .FALSE.
+  REAL(r_size),PARAMETER :: var_local(nv3d+nv2d,nid_obs) = RESHAPE( &
+!           U      V      T      Q     PS   RAIN
+   & (/ 1.0d0, 1.0d0, 1.0d0, 1.0d0, 1.0d0, 1.0d0,  & ! U
+   &    1.0d0, 1.0d0, 1.0d0, 1.0d0, 1.0d0, 1.0d0,  & ! V
+   &    1.0d0, 1.0d0, 1.0d0, 1.0d0, 1.0d0, 1.0d0,  & ! T
+   &    1.0d0, 1.0d0, 1.0d0, 1.0d0, 1.0d0, 1.0d0,  & ! Q
+   &    1.0d0, 1.0d0, 1.0d0, 1.0d0, 1.0d0, 1.0d0,  & ! RH
+   &    1.0d0, 1.0d0, 1.0d0, 1.0d0, 1.0d0, 1.0d0,  & ! PS
+   &    1.0d0, 1.0d0, 1.0d0, 1.0d0, 1.0d0, 1.0d0 /)& ! RAIN
+   & ,(/nv3d+nv2d,nid_obs/))
+  INTEGER,SAVE :: var_local_n2n(nv3d+nv2d)
 
 CONTAINS
 !-----------------------------------------------------------------------
@@ -50,7 +61,7 @@ SUBROUTINE das_letkf(gues3d,gues2d,anal3d,anal2d)
   REAL(r_sngl),ALLOCATABLE :: work2dg(:,:,:)
   REAL(r_size),ALLOCATABLE :: logpfm(:,:)
   REAL(r_size) :: parm
-  REAL(r_size) :: trans(nbv,nbv)
+  REAL(r_size) :: trans(nbv,nbv,nv3d+nv2d)
   LOGICAL :: ex
   INTEGER :: ij,ilev,n,m,i,j,k,nobsl,ierr
 
@@ -66,6 +77,17 @@ SUBROUTINE das_letkf(gues3d,gues2d,anal3d,anal2d)
     anal2d = gues2d
     RETURN
   END IF
+  !
+  ! Variable localization
+  !
+  var_local_n2n(1) = 1
+  DO n=2,nv3d+nv2d
+    DO i=1,n
+      var_local_n2n(n) = i
+      IF(MAXVAL(ABS(var_local(i,:)-var_local(n,:))) < TINY(var_local)) EXIT
+    END DO
+  END DO
+!print *,var_local_n2n
   !
   ! FCST PERTURBATIONS
   !
@@ -96,6 +118,7 @@ SUBROUTINE das_letkf(gues3d,gues2d,anal3d,anal2d)
     ALLOCATE( work2d(nij1,nv2d) )
     work3d = cov_infl_mul
     work2d = cov_infl_mul
+    work3d(:,nlev,:) = 1.01d0
   END IF
   IF(cov_infl_mul <= 0.0d0) THEN ! 3D parameter values are read-in
     ALLOCATE( work3dg(nlon,nlat,nlev,nv3d) )
@@ -127,30 +150,45 @@ SUBROUTINE das_letkf(gues3d,gues2d,anal3d,anal2d)
   DO ilev=1,nlev
     WRITE(6,'(A,I3)') 'ilev = ',ilev
     DO ij=1,nij1
-      CALL obs_local(ij,ilev,hdxf,rdiag,rloc,dep,nobsl,logpfm)
-      parm = work3d(ij,ilev,1)
-      CALL letkf_core(nobstotal,nobsl,hdxf,rdiag,rloc,dep,parm,trans)
       DO n=1,nv3d
+        IF(var_local_n2n(n) < n) THEN
+          trans(:,:,n) = trans(:,:,var_local_n2n(n))
+          work3d(ij,ilev,n) = work3d(ij,ilev,var_local_n2n(n))
+        ELSE
+          CALL obs_local(ij,ilev,n,hdxf,rdiag,rloc,dep,nobsl,logpfm)
+          parm = work3d(ij,ilev,n)
+          CALL letkf_core(nobstotal,nobsl,hdxf,rdiag,rloc,dep,parm,trans(:,:,n))
+          work3d(ij,ilev,n) = parm
+        END IF
         DO m=1,nbv
           anal3d(ij,ilev,m,n) = mean3d(ij,ilev,n)
           DO k=1,nbv
             anal3d(ij,ilev,m,n) = anal3d(ij,ilev,m,n) &
-              & + gues3d(ij,ilev,k,n) * trans(k,m)
+              & + gues3d(ij,ilev,k,n) * trans(k,m,n)
           END DO
         END DO
       END DO
       IF(ilev == 1) THEN !update 2d variable at ilev=1
         DO n=1,nv2d
+          IF(var_local_n2n(nv3d+n) <= nv3d) THEN
+            trans(:,:,nv3d+n) = trans(:,:,var_local_n2n(nv3d+n))
+            work2d(ij,n) = work2d(ij,var_local_n2n(nv3d+n))
+          ELSE IF(var_local_n2n(nv3d+n) < nv3d+n) THEN
+            trans(:,:,nv3d+n) = trans(:,:,var_local_n2n(nv3d+n))
+            work2d(ij,n) = work2d(ij,var_local_n2n(nv3d+n)-nv3d)
+          ELSE
+            CALL obs_local(ij,ilev,n,hdxf,rdiag,rloc,dep,nobsl,logpfm)
+            parm = work2d(ij,n)
+            CALL letkf_core(nobstotal,nobsl,hdxf,rdiag,rloc,dep,parm,trans(:,:,nv3d+n))
+            work2d(ij,n) = parm
+          END IF
           DO m=1,nbv
             anal2d(ij,m,n)  = mean2d(ij,n)
             DO k=1,nbv
-              anal2d(ij,m,n) = anal2d(ij,m,n) + gues2d(ij,k,n) * trans(k,m)
+              anal2d(ij,m,n) = anal2d(ij,m,n) + gues2d(ij,k,n) * trans(k,m,nv3d+n)
             END DO
           END DO
         END DO
-      END IF
-      IF(cov_infl_mul < 0.0d0) THEN ! update the inflation parameter
-        work3d(ij,ilev,:) = parm
       END IF
     END DO
   END DO
@@ -224,9 +262,9 @@ END SUBROUTINE das_letkf
 ! Project global observations to local
 !     (hdxf_g,dep_g,rdiag_g) -> (hdxf,dep,rdiag)
 !-----------------------------------------------------------------------
-SUBROUTINE obs_local(ij,ilev,hdxf,rdiag,rloc,dep,nobsl,logpfm)
+SUBROUTINE obs_local(ij,ilev,nvar,hdxf,rdiag,rloc,dep,nobsl,logpfm)
   IMPLICIT NONE
-  INTEGER,INTENT(IN) :: ij,ilev
+  INTEGER,INTENT(IN) :: ij,ilev,nvar
   REAL(r_size),INTENT(IN) :: logpfm(nij1,nlev)
   REAL(r_size),INTENT(OUT) :: hdxf(nobstotal,nbv)
   REAL(r_size),INTENT(OUT) :: rdiag(nobstotal)
@@ -239,7 +277,7 @@ SUBROUTINE obs_local(ij,ilev,hdxf,rdiag,rloc,dep,nobsl,logpfm)
   INTEGER,ALLOCATABLE:: nobs_use(:)
 !TVS  INTEGER,ALLOCATABLE:: ntvs_use_prof(:),ntvs_use_inst(:),ntvs_use_slot(:)
   INTEGER :: imin,imax,jmin,jmax,im,ichan
-  INTEGER :: n,nn,tvnn
+  INTEGER :: n,nn,tvnn,iobs
 !
 ! INITIALIZE
 !
@@ -413,6 +451,9 @@ SUBROUTINE obs_local(ij,ilev,hdxf,rdiag,rloc,dep,nobsl,logpfm)
   nobsl = 0
   IF(nn > 0) THEN
     DO n=1,nn
+      !
+      ! vertical localization
+      !
       IF(NINT(obselm(nobs_use(n))) == id_ps_obs .AND. ilev > 1) THEN
         dlev = ABS(LOG(obsdat(nobs_use(n))) - logpfm(ij,ilev))
       ELSE IF(NINT(obselm(nobs_use(n))) /= id_ps_obs) THEN
@@ -421,11 +462,33 @@ SUBROUTINE obs_local(ij,ilev,hdxf,rdiag,rloc,dep,nobsl,logpfm)
         dlev = 0.0d0
       END IF
       IF(dlev > dist_zerov) CYCLE
-
+      !
+      ! horizontal localization
+      !
       tmplon=obslon(nobs_use(n))
       tmplat=obslat(nobs_use(n))
       CALL com_distll_1( tmplon, tmplat,lon1(ij), lat1(ij), dist)
       IF(dist > dist_zero ) CYCLE
+      !
+      ! variable localization
+      !
+      SELECT CASE(NINT(obselm(nobs_use(n))))
+      CASE(id_u_obs)
+        iobs=1
+      CASE(id_v_obs)
+        iobs=2
+      CASE(id_t_obs)
+        iobs=3
+      CASE(id_q_obs)
+        iobs=4
+      CASE(id_rh_obs)
+        iobs=5
+      CASE(id_ps_obs)
+        iobs=6
+      CASE(id_rain_obs)
+        iobs=7
+      END SELECT
+      IF(var_local(nvar,iobs) < TINY(var_local)) CYCLE
 
       nobsl = nobsl + 1
       hdxf(nobsl,:) = obshdxf(nobs_use(n),:)
@@ -435,7 +498,8 @@ SUBROUTINE obs_local(ij,ilev,hdxf,rdiag,rloc,dep,nobsl,logpfm)
       !
       tmperr=obserr(nobs_use(n))
       rdiag(nobsl) = tmperr * tmperr
-      rloc(nobsl) =EXP(-0.5d0 * ((dist/sigma_obs)**2 + (dlev/sigma_obsv)**2))
+      rloc(nobsl) =EXP(-0.5d0 * ((dist/sigma_obs)**2 + (dlev/sigma_obsv)**2)) &
+                  & * var_local(nvar,iobs)
     END DO
   END IF
 !TVS!
