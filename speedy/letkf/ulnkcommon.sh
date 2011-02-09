@@ -8,6 +8,7 @@ rm -f common_mpi.f90
 rm -f common_mtx.f90
 rm -f common_letkf.f90
 rm -f netlib.f
+rm -f netlibblas.f
 
 rm -f common_speedy.f90
 rm -f common_mpi_speedy.f90
