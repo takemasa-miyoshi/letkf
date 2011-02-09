@@ -51,12 +51,12 @@ SUBROUTINE letkf_core(nobs,nobsl,hdxb,rdiag,rloc,dep,parm_infl,trans)
   REAL(r_size),INTENT(IN) :: dep(1:nobs)
   REAL(r_size),INTENT(INOUT) :: parm_infl
   REAL(r_size),INTENT(OUT) :: trans(nbv,nbv)
-  REAL(r_size),ALLOCATABLE :: hdxb_rinv(:,:)
+  REAL(r_size) :: hdxb_rinv(nobsl,nbv)
   REAL(r_size) :: eivec(nbv,nbv)
   REAL(r_size) :: eival(nbv)
   REAL(r_size) :: pa(nbv,nbv)
   REAL(r_size) :: work1(nbv,nbv)
-  REAL(r_size),ALLOCATABLE :: work2(:,:)
+  REAL(r_size) :: work2(nbv,nobsl)
   REAL(r_size) :: work3(nbv)
   REAL(r_size) :: rho
   REAL(r_size) :: parm(4),sigma_o,gain
@@ -69,7 +69,6 @@ SUBROUTINE letkf_core(nobs,nobsl,hdxb,rdiag,rloc,dep,parm_infl,trans)
     END DO
     RETURN
   ELSE
-  ALLOCATE(hdxb_rinv(nobsl,nbv),work2(nbv,nobsl))
 !-----------------------------------------------------------------------
 !  hdxb Rinv
 !-----------------------------------------------------------------------
@@ -81,14 +80,16 @@ SUBROUTINE letkf_core(nobs,nobsl,hdxb,rdiag,rloc,dep,parm_infl,trans)
 !-----------------------------------------------------------------------
 !  hdxb^T Rinv hdxb
 !-----------------------------------------------------------------------
-  DO j=1,nbv
-    DO i=1,nbv
-      work1(i,j) = hdxb_rinv(1,i) * hdxb(1,j)
-      DO k=2,nobsl
-        work1(i,j) = work1(i,j) + hdxb_rinv(k,i) * hdxb(k,j)
-      END DO
-    END DO
-  END DO
+  CALL dgemm('t','n',nbv,nbv,nobsl,1.0d0,hdxb_rinv,nobsl,hdxb(1:nobsl,:),&
+    & nobsl,0.0d0,work1,nbv)
+!  DO j=1,nbv
+!    DO i=1,nbv
+!      work1(i,j) = hdxb_rinv(1,i) * hdxb(1,j)
+!      DO k=2,nobsl
+!        work1(i,j) = work1(i,j) + hdxb_rinv(k,i) * hdxb(k,j)
+!      END DO
+!    END DO
+!  END DO
 !-----------------------------------------------------------------------
 !  hdxb^T Rinv hdxb + (m-1) I / rho (covariance inflation)
 !-----------------------------------------------------------------------
@@ -119,14 +120,16 @@ SUBROUTINE letkf_core(nobs,nobsl,hdxb,rdiag,rloc,dep,parm_infl,trans)
 !-----------------------------------------------------------------------
 !  Pa hdxb_rinv^T
 !-----------------------------------------------------------------------
-  DO j=1,nobsl
-    DO i=1,nbv
-      work2(i,j) = pa(i,1) * hdxb_rinv(j,1)
-      DO k=2,nbv
-        work2(i,j) = work2(i,j) + pa(i,k) * hdxb_rinv(j,k)
-      END DO
-    END DO
-  END DO
+  CALL dgemm('n','t',nbv,nobsl,nbv,1.0d0,pa,nbv,hdxb_rinv,&
+    & nobsl,0.0d0,work2,nbv)
+!  DO j=1,nobsl
+!    DO i=1,nbv
+!      work2(i,j) = pa(i,1) * hdxb_rinv(j,1)
+!      DO k=2,nbv
+!        work2(i,j) = work2(i,j) + pa(i,k) * hdxb_rinv(j,k)
+!      END DO
+!    END DO
+!  END DO
 !-----------------------------------------------------------------------
 !  Pa hdxb_rinv^T dep
 !-----------------------------------------------------------------------
@@ -181,7 +184,6 @@ SUBROUTINE letkf_core(nobs,nobsl,hdxb,rdiag,rloc,dep,parm_infl,trans)
   gain = sigma_b**2 / (sigma_o + sigma_b**2)
   parm_infl = parm_infl + gain * parm(4)
 
-  DEALLOCATE(hdxb_rinv,work2)
   RETURN
   END IF
 END SUBROUTINE letkf_core
