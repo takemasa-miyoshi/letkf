@@ -109,14 +109,16 @@ SUBROUTINE letkf_core(nobs,nobsl,hdxb,rdiag,rloc,dep,parm_infl,trans)
       work1(i,j) = eivec(i,j) / eival(j)
     END DO
   END DO
-  DO j=1,nbv
-    DO i=1,nbv
-      pa(i,j) = work1(i,1) * eivec(j,1)
-      DO k=2,nbv
-        pa(i,j) = pa(i,j) + work1(i,k) * eivec(j,k)
-      END DO
-    END DO
-  END DO
+  CALL dgemm('n','t',nbv,nbv,nbv,1.0d0,work1,nbv,eivec,&
+    & nbv,0.0d0,pa,nbv)
+!  DO j=1,nbv
+!    DO i=1,nbv
+!      pa(i,j) = work1(i,1) * eivec(j,1)
+!      DO k=2,nbv
+!        pa(i,j) = pa(i,j) + work1(i,k) * eivec(j,k)
+!      END DO
+!    END DO
+!  END DO
 !-----------------------------------------------------------------------
 !  Pa hdxb_rinv^T
 !-----------------------------------------------------------------------
@@ -148,14 +150,16 @@ SUBROUTINE letkf_core(nobs,nobsl,hdxb,rdiag,rloc,dep,parm_infl,trans)
       work1(i,j) = eivec(i,j) * rho
     END DO
   END DO
-  DO j=1,nbv
-    DO i=1,nbv
-      trans(i,j) = work1(i,1) * eivec(j,1)
-      DO k=2,nbv
-        trans(i,j) = trans(i,j) + work1(i,k) * eivec(j,k)
-      END DO
-    END DO
-  END DO
+  CALL dgemm('n','t',nbv,nbv,nbv,1.0d0,work1,nbv,eivec,&
+    & nbv,0.0d0,trans,nbv)
+!  DO j=1,nbv
+!    DO i=1,nbv
+!      trans(i,j) = work1(i,1) * eivec(j,1)
+!      DO k=2,nbv
+!        trans(i,j) = trans(i,j) + work1(i,k) * eivec(j,k)
+!      END DO
+!    END DO
+!  END DO
 !-----------------------------------------------------------------------
 !  T + Pa hdxb_rinv^T dep
 !-----------------------------------------------------------------------
