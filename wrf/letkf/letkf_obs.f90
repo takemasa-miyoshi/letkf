@@ -179,6 +179,8 @@ SUBROUTINE set_letkf_obs
           IF(NINT(tmpelm(nn+n)) == id_u_obs .OR.&
            & NINT(tmpelm(nn+n)) == id_v_obs) THEN
             tmpk(nn+n) = 1.00001d0
+          ELSE IF(NINT(tmpelm(nn+n) > 9999) THEN
+            tmpk(nn+n) = 0.0d0
           ELSE
             CALL itpl_2d(phi0,tmpi(nn+n),tmpj(nn+n),dz)
 !$OMP CRITICAL

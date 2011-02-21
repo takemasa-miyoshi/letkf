@@ -19,8 +19,14 @@ MODULE common_obs_wrf
   INTEGER,PARAMETER :: id_t_obs=3073
   INTEGER,PARAMETER :: id_q_obs=3330
   INTEGER,PARAMETER :: id_rh_obs=3331
+!
+! surface observations codes > 9999
+!
   INTEGER,PARAMETER :: id_ps_obs=14593
-  INTEGER,PARAMETER :: id_rain_obs=9999
+  INTEGER,PARAMETER :: id_rain_obs=19999
+  INTEGER,PARAMETER :: id_tclon_obs=99991
+  INTEGER,PARAMETER :: id_tclat_obs=99992
+  INTEGER,PARAMETER :: id_tcmip_obs=99993
 
 CONTAINS
 !-----------------------------------------------------------------------
@@ -36,6 +42,7 @@ SUBROUTINE Trans_XtoY(elm,ri,rj,rk,v3d,v2d,yobs)
   REAL(r_size) :: rh(nlon,nlat,nlev)
   REAL(r_size) :: sh(nlon,nlat,nlev)  
   REAL(r_size) :: tg,qg
+  REAL(r_size) :: dummy(3)
   INTEGER :: i,j,k
   INTEGER :: is,ie,js,je,ks,ke
   ie = CEILING( ri )
@@ -79,10 +86,90 @@ SUBROUTINE Trans_XtoY(elm,ri,rj,rk,v3d,v2d,yobs)
       END DO
     END DO
     CALL itpl_3d(rh,ri,rj,rk,yobs)
+  CASE(id_tclon_obs)
+    CALL tctrk(v2d(:,:,iv2d_ps),v2d(:,:,iv2d_t2),ri,rj,dummy)
+    yobs = dummy(1)
+  CASE(id_tclat_obs)
+    CALL tctrk(v2d(:,:,iv2d_ps),v2d(:,:,iv2d_t2),ri,rj,dummy)
+    yobs = dummy(2)
+  CASE(id_tcmip_obs)
+    CALL tctrk(v2d(:,:,iv2d_ps),v2d(:,:,iv2d_t2),ri,rj,dummy)
+    yobs = dummy(3)
   END SELECT
 
   RETURN
 END SUBROUTINE Trans_XtoY
+!-----------------------------------------------------------------------
+! TC center search
+!  [AUTHORS:] T. Miyoshi and M. Kunii
+!-----------------------------------------------------------------------
+SUBROUTINE tctrk(ps,t2,ri,rj,trk)
+  IMPLICIT NONE
+  INTEGER,PARAMETER :: isearch = 10 !search radius [grid points]
+  REAL(r_size),INTENT(IN) :: ps(nlon,nlat)
+  REAL(r_size),INTENT(IN) :: t2(nlon,nlat)
+  REAL(r_size),INTENT(IN) :: ri,rj
+  REAL(r_size),INTENT(OUT) :: trk(3) !1:lon, 2:lat, 3:minp
+  REAL(r_size) :: wk(100,3)
+  REAL(r_size) :: slp(nlon,nlat)
+  REAL(r_size) :: p1,p2,p3,p4,p5,a,c,d,xx,yy
+  INTEGER :: i,j,i0,i1,j0,j1,n
+
+  i0 = MAX(1,FLOOR(ri)-isearch)
+  i1 = MIN(nlon,CEILING(ri)+isearch)
+  j0 = MAX(1,FLOOR(rj)-isearch)
+  j1 = MIN(nlat,CEILING(rj)+isearch)
+  trk = undef
+
+  DO j=j0,j1
+    DO i=i0,i1
+      slp(i,j) = ps(i,j) * (1.0d0 - 0.0065d0 * phi0(i,j) / &
+        & (t2(i,j) + 0.0065d0 * phi0(i,j))) ** -5.257d0
+    END DO
+  END DO
+
+  n=0
+  DO j=j0+1,j1-1
+    DO i=i0+1,i1-1
+      IF(slp(i,j) > slp(i  ,j-1)) CYCLE
+      IF(slp(i,j) > slp(i  ,j+1)) CYCLE
+      IF(slp(i,j) > slp(i-1,j  )) CYCLE
+      IF(slp(i,j) > slp(i+1,j  )) CYCLE
+      IF(slp(i,j) > slp(i-1,j-1)) CYCLE
+      IF(slp(i,j) > slp(i+1,j-1)) CYCLE
+      IF(slp(i,j) > slp(i-1,j+1)) CYCLE
+      IF(slp(i,j) > slp(i+1,j+1)) CYCLE
+      p1 = slp(i,j)
+      p2 = slp(i-1,j)
+      p3 = slp(i+1,j)
+      p4 = slp(i,j-1)
+      p5 = slp(i,j+1)
+      c = (p3-p2)*0.5d0
+      d = (p5-p4)*0.5d0
+      a = (p2+p3+p4+p5)*0.25d0 - p1
+      IF(a == 0.0d0) CYCLE
+      xx = -0.5d0 * c / a
+      yy = -0.5d0 * d / a
+      n = n+1
+      wk(n,3) = p1 - a*(xx*xx + yy*yy)
+      wk(n,2) = lat(i,j) * (1.0d0 - xx) + lat(i+1,j) * xx
+      wk(n,1) = lon(i,j) * (1.0d0 - yy) + lon(i,j+1) * yy
+    END DO
+  END DO
+
+  j=1
+  IF(n > 1) THEN
+    a = wk(1,3)
+    DO i=2,n
+      IF(wk(i,3) < a) THEN
+        a = wk(i,3)
+        j = i
+      END IF
+    END DO
+  END IF
+  trk = wk(j,:)
+
+END SUBROUTINE tctrk
 !-----------------------------------------------------------------------
 ! Compute relative humidity (RH)
 !-----------------------------------------------------------------------
@@ -184,7 +271,7 @@ SUBROUTINE p2k(p_full,elem,ri,rj,rlev,rk)
   !
   ! rlev --> rk
   !
-  IF(NINT(elem) == id_ps_obs) THEN ! surface pressure observation
+  IF(NINT(elem) > 9999) THEN ! surface observation
     rk = 0.0d0
   ELSE
     !
@@ -410,7 +497,7 @@ SUBROUTINE get_nobs(cfile,nn)
   INTEGER,INTENT(OUT) :: nn
   REAL(r_sngl) :: wk(7)
   INTEGER :: ios
-  INTEGER :: iu,iv,it,iq,irh,ips
+  INTEGER :: iu,iv,it,iq,irh,ips,itc
   INTEGER :: iunit
   LOGICAL :: ex
 
@@ -421,6 +508,7 @@ SUBROUTINE get_nobs(cfile,nn)
   iq = 0
   irh = 0
   ips = 0
+  itc = 0
   iunit=91
   INQUIRE(FILE=cfile,EXIST=ex)
   IF(ex) THEN
@@ -441,6 +529,8 @@ SUBROUTINE get_nobs(cfile,nn)
         irh = irh + 1
       CASE(id_ps_obs)
         ips = ips + 1
+      CASE(id_tclon_obs)
+        itc = itc + 1
       END SELECT
       nn = nn + 1
     END DO
@@ -451,6 +541,7 @@ SUBROUTINE get_nobs(cfile,nn)
     WRITE(6,'(A12,I10)') '          Q:',iq
     WRITE(6,'(A12,I10)') '         RH:',irh
     WRITE(6,'(A12,I10)') '         Ps:',ips
+    WRITE(6,'(A12,I10)') '   TC TRACK:',itc
     CLOSE(iunit)
   ELSE
     WRITE(6,'(2A)') cfile,' does not exist -- skipped'
@@ -493,6 +584,9 @@ SUBROUTINE read_obs(cfile,nn,elem,rlon,rlat,rlev,odat,oerr,otyp)
       wk(4) = wk(4) * 100.0 ! hPa -> Pa
       wk(5) = wk(5) * 0.01 ! percent input
       wk(6) = wk(6) * 0.01 ! percent input
+    CASE(id_tcmip_obs)
+      wk(5) = wk(5) * 100.0 ! hPa -> Pa
+      wk(6) = wk(6) * 100.0 ! hPa -> Pa
     END SELECT
     elem(n) = REAL(wk(1),r_size)
     rlon(n) = REAL(wk(2),r_size)
@@ -549,10 +643,19 @@ SUBROUTINE monit_obs(cfile,nn,elem,rlon,rlat,rlev,odat,oerr,otyp,omb,oma,slot)
     CASE(id_ps_obs)
       wk(5) = wk(5) / 100.0 ! Pa -> hPa
       wk(6) = wk(6) / 100.0 ! Pa -> hPa
+      wk(8) = wk(8) / 100.0 ! Pa -> hPa
+      wk(9) = wk(9) / 100.0 ! Pa -> hPa
     CASE(id_rh_obs)
       wk(4) = wk(4) / 100.0 ! Pa -> hPa
       wk(5) = wk(5) / 0.01 ! percent output
       wk(6) = wk(6) / 0.01 ! percent output
+      wk(8) = wk(8) / 0.01 ! percent output
+      wk(9) = wk(9) / 0.01 ! percent output
+    CASE(id_tcmip_obs)
+      wk(5) = wk(5) / 100.0 ! Pa -> hPa
+      wk(6) = wk(6) / 100.0 ! Pa -> hPa
+      wk(8) = wk(8) / 100.0 ! Pa -> hPa
+      wk(9) = wk(9) / 100.0 ! Pa -> hPa
     END SELECT
     WRITE(iunit) wk
   END DO
