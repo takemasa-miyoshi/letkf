@@ -264,7 +264,9 @@ SUBROUTINE obs_local(ij,ilev,hdxf,rdiag,rloc,dep,nobsl,logpfm)
   nobsl = 0
   IF(nn > 0) THEN
     DO n=1,nn
-      IF(NINT(obselm(nobs_use(n))) == id_ps_obs .AND. ilev > 1) THEN
+      IF(NINT(obselm(nobs_use(n))) >= id_tclon_obs) THEN !TC track obs
+        dlev = 0.0d0
+      ELSE IF(NINT(obselm(nobs_use(n))) == id_ps_obs .AND. ilev > 1) THEN
         dlev = ABS(LOG(obsdat(nobs_use(n))) - logpfm(ij,ilev))
       ELSE IF(NINT(obselm(nobs_use(n))) /= id_ps_obs) THEN
         dlev = ABS(LOG(obslev(nobs_use(n))) - logpfm(ij,ilev))
