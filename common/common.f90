@@ -674,15 +674,21 @@ SUBROUTINE com_utc2tai(iy,im,id,ih,imin,sec,tai93)
   INTEGER,PARAMETER :: mdays(12) = (/31,28,31,30,31,30,31,31,30,31,30,31/)
   INTEGER :: days,i
 
-  tai93 = (iy - 1993) * year + FLOOR(REAL(iy - 1993)/4.0)*day
+  tai93 = REAL(iy-1993,r_size)*year + FLOOR(REAL(iy-1993)/4.0,r_size)*day
   days = id -1
   DO i=1,12
     IF(im > i) days = days + mdays(i)
   END DO
   IF(MOD(iy,4) == 0 .AND. im > 2) days = days + 1 !leap year
-  tai93 = tai93 + days * day + ih * hour + imin * mins + sec
-  IF(iy >= 2006) tai93 = tai93 + 1 !leap second
-  tai93 = tai93 + 5.0d0
+  tai93 = tai93 + REAL(days,r_size)*day + REAL(ih,r_size)*hour &
+              & + REAL(imin,r_size)*mins + sec
+  IF(iy > 1993 .OR. (iy==1993 .AND. im > 6)) tai93 = tai93 + 1.0d0 !leap second
+  IF(iy > 1994 .OR. (iy==1994 .AND. im > 6)) tai93 = tai93 + 1.0d0 !leap second
+  IF(iy > 1995) tai93 = tai93 + 1.0d0 !leap second
+  IF(iy > 1997 .OR. (iy==1997 .AND. im > 6)) tai93 = tai93 + 1.0d0 !leap second
+  IF(iy > 1998) tai93 = tai93 + 1.0d0 !leap second
+  IF(iy > 2005) tai93 = tai93 + 1.0d0 !leap second
+  IF(iy > 2008) tai93 = tai93 + 1.0d0 !leap second
 
   RETURN
 END SUBROUTINE com_utc2tai
@@ -691,6 +697,10 @@ END SUBROUTINE com_utc2tai
 !-----------------------------------------------------------------------
 SUBROUTINE com_tai2utc(tai93,iy,im,id,ih,imin,sec)
   IMPLICIT NONE
+  INTEGER,PARAMETER :: n=7 ! number of leap seconds after Jan. 1, 1993
+  INTEGER,PARAMETER :: leapsec(n) = (/  15638399,  47174400,  94608001,&
+                                  &    141868802, 189302403, 410227204,&
+                                  &    504921605/)
   REAL(r_size),INTENT(IN) :: tai93
   INTEGER,INTENT(OUT) :: iy,im,id,ih,imin
   REAL(r_size),INTENT(OUT) :: sec
@@ -702,16 +712,20 @@ SUBROUTINE com_tai2utc(tai93,iy,im,id,ih,imin,sec)
   REAL(r_size) :: wk,tai
   INTEGER :: days,i,leap
 
-  tai = tai93 - 5.0d0
+  tai = tai93
+  sec = 0.0d0
+  DO i=1,n
+    IF(FLOOR(tai93) == leapsec(i)+1) sec = 60.0d0 + tai93-FLOOR(tai93,r_size)
+    IF(FLOOR(tai93) > leapsec(i)) tai = tai -1.0d0
+  END DO
   iy = 1993 + FLOOR(tai /year)
-  wk = tai - (iy - 1993) * year - FLOOR(REAL(iy - 1993)/4.0)*day
-  IF(wk < 0) THEN
+  wk = tai - REAL(iy-1993,r_size)*year - FLOOR(REAL(iy-1993)/4.0,r_size)*day
+  IF(wk < 0.0d0) THEN
     iy = iy -1
-    wk = tai - (iy - 1993) * year - FLOOR(REAL(iy - 1993)/4.0)*day
+    wk = tai - REAL(iy-1993,r_size)*year - FLOOR(REAL(iy-1993)/4.0,r_size)*day
   END IF
-  IF(iy >= 2006) wk = wk - 1.0d0 !leap second
   days = FLOOR(wk/day)
-  wk = wk - days*day
+  wk = wk - REAL(days,r_size)*day
   im = 1
   DO i=1,12
     leap = 0
@@ -724,9 +738,9 @@ SUBROUTINE com_tai2utc(tai93,iy,im,id,ih,imin,sec)
   id = days +1
 
   ih = FLOOR(wk/hour)
-  wk = wk - ih*hour
+  wk = wk - REAL(ih,r_size)*hour
   imin = FLOOR(wk/mins)
-  sec = wk - imin*mins
+  IF(sec < 60.0d0) sec = wk - REAL(imin,r_size)*mins
 
   RETURN
 END SUBROUTINE com_tai2utc
