@@ -9,14 +9,13 @@
 #
 # [PREPARING AIRS DATA URL:]
 # 1. Go to http://disc.sci.gsfc.nasa.gov/AIRS/data-holdings/by-data-product
-# 2. Go down to AIRS Level-2 Products
-# 3. Choose either AIRX2RET, AIRS2RET, or AIRH2RET, depending on your choice
-# 4. Click a link near the bottom of the page, saying "GES DISC Data Access"
-# 5. Search time span and location
-# 6. "Add Selected Files To Cart"
-# 7. "Continue to Shopping Cart" and "Checkout". Note: this is free.
-# 8. Click "URL List (Data)"
-# 9. Save the file list to "airslist.txt", and remove the final line (README)
+# 2. Go down to AIRS Level-2 Products, and find a row of "AIRX2RET"
+# 3. Click a link of "Search" on the rightmost column "GES DISC Data Access"
+# 4. Input Time Span and Location (optional) and click "Search GES-DISK"
+# 5. "Add Selected Files To Cart"
+# 6. "Continue to Shopping Cart" and "Checkout". Note: this is free.
+# 7. Click "URL List (Data)"
+# 8. Save the file list to "airslist.txt", and remove the final line (README)
 #
 # [AUTHOR:] T. Miyoshi  March 3, 2011, College Park, MD, USA
 #=======================================================================
@@ -92,7 +91,9 @@ DFILES=`ls *.dat`
 for DFILE in $DFILES
 do
 cat $DFILE >> $SAVEDIR/$DFILE
+rm $DFILE
 done
 N=`expr $N + 1`
 done
 
+echo "NORMAL END"
