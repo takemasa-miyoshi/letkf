@@ -84,7 +84,6 @@ PROGRAM dec_airsret
   sec = sec4
   statn = swrdattr(swid,'start_Time',stime)
   statn = swrdfld(swid,'Longitude',(/0,0/),(/1,1/),(/nx,ny/),rlon)
-  rlon = rlon + 180.0d0
   statn = swrdfld(swid,'Latitude',(/0,0/),(/1,1/),(/nx,ny/),rlat)
   statn = swrdfld(swid,'Time',(/0,0/),(/1,1/),(/nx,ny/),time)
   statn = swrdfld(swid,'pressStd',0,1,nzt,levt)
@@ -119,6 +118,7 @@ PROGRAM dec_airsret
   OPEN(nunit+ih,FILE=outfile,FORM='unformatted',ACCESS='sequential')
   DO j=1,ny
     DO i=1,nx
+      IF(rlon(i,j) < 0) rlon(i,j) = rlon(i,j) + 360.0d0
       wk(2) = rlon(i,j)
       wk(3) = rlat(i,j)
       IF(rlon(i,j) < lon1) CYCLE
