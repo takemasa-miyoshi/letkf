@@ -730,7 +730,7 @@ SUBROUTINE com_tai2utc(tai93,iy,im,id,ih,imin,sec)
   DO i=1,12
     leap = 0
     IF(im == 2 .AND. MOD(iy,4)==0) leap=1
-    IF(im == i .AND. days > mdays(i)+leap) THEN
+    IF(im == i .AND. days >= mdays(i)+leap) THEN
       im = im + 1
       days = days - mdays(i)-leap
     END IF
