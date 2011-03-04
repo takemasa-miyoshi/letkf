@@ -659,5 +659,76 @@ SUBROUTINE com_pos2ij(msw,nx,ny,flon,flat,num_obs,olon,olat,oi,oj)
 
   RETURN
 END SUBROUTINE com_pos2ij
+!-----------------------------------------------------------------------
+! UTC to TAI93
+!-----------------------------------------------------------------------
+SUBROUTINE com_utc2tai(iy,im,id,ih,imin,sec,tai93)
+  IMPLICIT NONE
+  INTEGER,INTENT(IN) :: iy,im,id,ih,imin
+  REAL(r_size),INTENT(IN) :: sec
+  REAL(r_size),INTENT(OUT) :: tai93
+  REAL(r_size),PARAMETER :: mins = 60.0d0
+  REAL(r_size),PARAMETER :: hour = 60.0d0*mins
+  REAL(r_size),PARAMETER :: day = 24.0d0*hour
+  REAL(r_size),PARAMETER :: year = 365.0d0*day
+  INTEGER,PARAMETER :: mdays(12) = (/31,28,31,30,31,30,31,31,30,31,30,31/)
+  INTEGER :: days,i
+
+  tai93 = (iy - 1993) * year + FLOOR(REAL(iy - 1993)/4.0)*day
+  days = id -1
+  DO i=1,12
+    IF(im > i) days = days + mdays(i)
+  END DO
+  IF(MOD(iy,4) == 0 .AND. im > 2) days = days + 1 !leap year
+  tai93 = tai93 + days * day + ih * hour + imin * mins + sec
+  IF(iy >= 2006) tai93 = tai93 + 1 !leap second
+  tai93 = tai93 + 5.0d0
+
+  RETURN
+END SUBROUTINE com_utc2tai
+!-----------------------------------------------------------------------
+! TAI93 to UTC
+!-----------------------------------------------------------------------
+SUBROUTINE com_tai2utc(tai93,iy,im,id,ih,imin,sec)
+  IMPLICIT NONE
+  REAL(r_size),INTENT(IN) :: tai93
+  INTEGER,INTENT(OUT) :: iy,im,id,ih,imin
+  REAL(r_size),INTENT(OUT) :: sec
+  REAL(r_size),PARAMETER :: mins = 60.0d0
+  REAL(r_size),PARAMETER :: hour = 60.0d0*mins
+  REAL(r_size),PARAMETER :: day = 24.0d0*hour
+  REAL(r_size),PARAMETER :: year = 365.0d0*day
+  INTEGER,PARAMETER :: mdays(12) = (/31,28,31,30,31,30,31,31,30,31,30,31/)
+  REAL(r_size) :: wk,tai
+  INTEGER :: days,i,leap
+
+  tai = tai93 - 5.0d0
+  iy = 1993 + FLOOR(tai /year)
+  wk = tai - (iy - 1993) * year - FLOOR(REAL(iy - 1993)/4.0)*day
+  IF(wk < 0) THEN
+    iy = iy -1
+    wk = tai - (iy - 1993) * year - FLOOR(REAL(iy - 1993)/4.0)*day
+  END IF
+  IF(iy >= 2006) wk = wk - 1.0d0 !leap second
+  days = FLOOR(wk/day)
+  wk = wk - days*day
+  im = 1
+  DO i=1,12
+    leap = 0
+    IF(im == 2 .AND. MOD(iy,4)==0) leap=1
+    IF(im == i .AND. days > mdays(i)+leap) THEN
+      im = im + 1
+      days = days - mdays(i)-leap
+    END IF
+  END DO
+  id = days +1
+
+  ih = FLOOR(wk/hour)
+  wk = wk - ih*hour
+  imin = FLOOR(wk/mins)
+  sec = wk - imin*mins
+
+  RETURN
+END SUBROUTINE com_tai2utc
 
 END MODULE common
