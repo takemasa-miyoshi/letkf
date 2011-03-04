@@ -5,6 +5,11 @@ PROGRAM dec_airsret
   IMPLICIT NONE
 
   LOGICAL,PARAMETER :: verbose = .FALSE.
+  INTEGER,PARAMETER :: airstype = 100 ! observation type record for AIRS
+  REAL(r_size),PARAMETER :: lon1 =    0.d0 ! minimum longitude
+  REAL(r_size),PARAMETER :: lon2 =  360.d0 ! maximum longitude
+  REAL(r_size),PARAMETER :: lat1 =  -60.d0 ! minimum latitude
+  REAL(r_size),PARAMETER :: lat2 =   60.d0 ! maximum latitude
   INTEGER,PARAMETER :: nunit=70
   INTEGER,PARAMETER :: nx=30
   INTEGER,PARAMETER :: ny=45
@@ -105,7 +110,7 @@ PROGRAM dec_airsret
 !=======================================================================
 ! QC -> OUTPUT LETKF OBS FORMAT
 !=======================================================================
-  wk(7) = 99999.0 ! TYPE CODE for AIRS retrieval
+  wk(7) = REAL(airstype) ! TYPE CODE for AIRS retrieval
   CALL com_tai2utc(stime,iy,im,id,ih,imin,sec)
   WRITE(outfile(1:10),'(I4.4,3I2.2)') iy,im,id,ih
   OPEN(nunit+ih,FILE=outfile,FORM='unformatted',ACCESS='sequential')
@@ -116,6 +121,10 @@ PROGRAM dec_airsret
     DO i=1,nx
       wk(2) = rlon(i,j)
       wk(3) = rlat(i,j)
+      IF(rlon(i,j) < lon1) CYCLE
+      IF(rlon(i,j) > lon2) CYCLE
+      IF(rlat(i,j) < lat1) CYCLE
+      IF(rlat(i,j) > lat2) CYCLE
       CALL com_tai2utc(time(i,j),iy,im,id,ih,imin,sec)
       IF(imin > 30) CALL com_tai2utc(time(i,j)+1800.d0,iy,im,id,ih,imin,sec)
       !
