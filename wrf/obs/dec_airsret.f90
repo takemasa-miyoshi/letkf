@@ -25,7 +25,7 @@ PROGRAM dec_airsret
   CHARACTER(100) :: filename
   REAL(r_dble) :: rlon(nx,ny)
   REAL(r_dble) :: rlat(nx,ny)
-  REAL(r_dble) :: time(nx,ny),stime
+  REAL(r_dble) :: time(nx,ny),time1,time2
   REAL(r_sngl) :: levt(nzt)
   REAL(r_sngl) :: levq0(nzq+1)
   REAL(r_sngl) :: levq(nzq)
@@ -40,6 +40,8 @@ PROGRAM dec_airsret
   INTEGER :: i,j,k
   REAL(r_sngl) :: wk(7)
   INTEGER :: iy,im,id,ih,imin
+  INTEGER :: iy1,im1,id1,ih1,imin1
+  INTEGER :: iy2,im2,id2,ih2,imin2
   REAL(r_sngl) :: sec4
   REAL(r_size) :: sec
   LOGICAL :: ex
@@ -69,20 +71,21 @@ PROGRAM dec_airsret
   END IF
   swid = swattach(fid, swathname)
   IF(swid == -1) THEN
-    PRINT *,'FILE ERROR: faild to attache to swath ',swathname
+    PRINT *,'FILE ERROR: failed to attach to swath ',swathname
     STOP
   END IF
   !
   ! read
   !
-  statn = swrdattr(swid,'start_year',iy)
-  statn = swrdattr(swid,'start_month',im)
-  statn = swrdattr(swid,'start_day',id)
-  statn = swrdattr(swid,'start_hour',ih)
-  statn = swrdattr(swid,'start_minute',imin)
-  statn = swrdattr(swid,'start_sec',sec4)
-  sec = sec4
-  statn = swrdattr(swid,'start_Time',stime)
+!  statn = swrdattr(swid,'start_year',iy)
+!  statn = swrdattr(swid,'start_month',im)
+!  statn = swrdattr(swid,'start_day',id)
+!  statn = swrdattr(swid,'start_hour',ih)
+!  statn = swrdattr(swid,'start_minute',imin)
+!  statn = swrdattr(swid,'start_sec',sec4)
+!  sec = sec4
+  statn = swrdattr(swid,'start_Time',time1)
+  statn = swrdattr(swid,'end_Time',time2)
   statn = swrdfld(swid,'Longitude',(/0,0/),(/1,1/),(/nx,ny/),rlon)
   statn = swrdfld(swid,'Latitude',(/0,0/),(/1,1/),(/nx,ny/),rlat)
   statn = swrdfld(swid,'Time',(/0,0/),(/1,1/),(/nx,ny/),time)
@@ -110,23 +113,27 @@ PROGRAM dec_airsret
 ! QC -> OUTPUT LETKF OBS FORMAT
 !=======================================================================
   wk(7) = REAL(airstype) ! TYPE CODE for AIRS retrieval
-  CALL com_tai2utc(stime,iy,im,id,ih,imin,sec)
-  WRITE(outfile(1:10),'(I4.4,3I2.2)') iy,im,id,ih
-  OPEN(nunit+ih,FILE=outfile,FORM='unformatted',ACCESS='sequential')
-  CALL com_tai2utc(stime+3600.0d0,iy,im,id,ih,imin,sec)
-  WRITE(outfile(1:10),'(I4.4,3I2.2)') iy,im,id,ih
-  OPEN(nunit+ih,FILE=outfile,FORM='unformatted',ACCESS='sequential')
+  CALL com_tai2utc(time1,iy1,im1,id1,ih1,imin1,sec)
+  IF(imin1 > 30) CALL com_tai2utc(time1+1800.d0,iy1,im1,id1,ih1,imin1,sec)
+  WRITE(outfile(1:10),'(I4.4,3I2.2)') iy1,im1,id1,ih1
+  OPEN(nunit+ih1,FILE=outfile,FORM='unformatted',ACCESS='sequential')
+  CALL com_tai2utc(time2,iy2,im2,id2,ih2,imin2,sec)
+  IF(imin2 > 30) CALL com_tai2utc(time2+1800.d0,iy2,im2,id2,ih2,imin2,sec)
+  IF(ih2 /= ih1) THEN
+    WRITE(outfile(1:10),'(I4.4,3I2.2)') iy2,im2,id2,ih2
+    OPEN(nunit+ih2,FILE=outfile,FORM='unformatted',ACCESS='sequential')
+  END IF
   DO j=1,ny
     DO i=1,nx
       IF(rlon(i,j) < 0) rlon(i,j) = rlon(i,j) + 360.0d0
-      wk(2) = rlon(i,j)
-      wk(3) = rlat(i,j)
       IF(rlon(i,j) < lon1) CYCLE
       IF(rlon(i,j) > lon2) CYCLE
       IF(rlat(i,j) < lat1) CYCLE
       IF(rlat(i,j) > lat2) CYCLE
       CALL com_tai2utc(time(i,j),iy,im,id,ih,imin,sec)
       IF(imin > 30) CALL com_tai2utc(time(i,j)+1800.d0,iy,im,id,ih,imin,sec)
+      wk(2) = rlon(i,j)
+      wk(3) = rlat(i,j)
       !
       ! T
       !
@@ -156,10 +163,8 @@ PROGRAM dec_airsret
       END DO
     END DO
   END DO
-  CALL com_tai2utc(stime,iy,im,id,ih,imin,sec)
-  CLOSE(nunit+ih)
-  CALL com_tai2utc(stime+1800.0d0,iy,im,id,ih,imin,sec)
-  CLOSE(nunit+ih)
+  CLOSE(nunit+ih1)
+  IF(ih2 /= ih1) CLOSE(nunit+ih2)
 
   STOP
 END PROGRAM dec_airsret
