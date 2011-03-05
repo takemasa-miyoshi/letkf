@@ -113,7 +113,7 @@ PROGRAM dec_airsret
   CALL com_tai2utc(stime,iy,im,id,ih,imin,sec)
   WRITE(outfile(1:10),'(I4.4,3I2.2)') iy,im,id,ih
   OPEN(nunit+ih,FILE=outfile,FORM='unformatted',ACCESS='sequential')
-  CALL com_tai2utc(stime+1800.0d0,iy,im,id,ih,imin,sec)
+  CALL com_tai2utc(stime+3600.0d0,iy,im,id,ih,imin,sec)
   WRITE(outfile(1:10),'(I4.4,3I2.2)') iy,im,id,ih
   OPEN(nunit+ih,FILE=outfile,FORM='unformatted',ACCESS='sequential')
   DO j=1,ny
