@@ -504,7 +504,7 @@ SUBROUTINE com_pos2ij(msw,nx,ny,flon,flat,num_obs,olon,olat,oi,oj)
   REAL(r_size),INTENT(IN) :: olon(num_obs),olat(num_obs) !target (lon,lat)
   REAL(r_size),INTENT(OUT) :: oi(num_obs),oj(num_obs) !target (i,j)
   ! --- local work variables
-  INTEGER,PARAMETER :: detailout = .FALSE.
+  LOGICAL,PARAMETER :: detailout = .FALSE.
   INTEGER,PARAMETER :: num_grid_ave = 4  ! fix
   INTEGER :: inum,ix,jy,ip,wk_maxp
   INTEGER :: iorder_we,iorder_sn
