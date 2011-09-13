@@ -153,8 +153,8 @@ SUBROUTINE tctrk(ps,t2,ri,rj,trk)
       yy = -0.5d0 * d / a
       n = n+1
       wk(n,3) = p1 - a*(xx*xx + yy*yy)
-      wk(n,2) = lat(i,j) * (1.0d0 - xx) + lat(i+1,j) * xx
-      wk(n,1) = lon(i,j) * (1.0d0 - yy) + lon(i,j+1) * yy
+      wk(n,2) = lat(i,j) * (1.0d0 - yy) + lat(i,j+1) * yy
+      wk(n,1) = lon(i,j) * (1.0d0 - xx) + lon(i+1,j) * xx
     END DO
   END DO
 
