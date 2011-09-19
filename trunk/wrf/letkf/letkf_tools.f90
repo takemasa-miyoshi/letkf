@@ -167,7 +167,6 @@ SUBROUTINE das_letkf(gues3d,gues2d,anal3d,anal2d)
           END DO
         END DO
       END DO
-      IF(cov_infl_mul < 0.0d0) work3d(ij,ilev,:) = parm
       IF(ilev == 1) THEN !update 2d variable at ilev=1
         DO n=1,nv2d
           IF(var_local_n2n(nv3d+n) <= nv3d) THEN
@@ -189,7 +188,6 @@ SUBROUTINE das_letkf(gues3d,gues2d,anal3d,anal2d)
             END DO
           END DO
         END DO
-        IF(cov_infl_mul < 0.0d0) work2d(ij,:) = parm
       END IF
     END DO
   END DO
