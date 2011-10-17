@@ -100,6 +100,11 @@ SUBROUTINE set_letkf_obs
   END DO
   nobs = SUM(nobslots)
   WRITE(6,'(I10,A)') nobs,' TOTAL OBSERVATIONS INPUT'
+
+  IF(nobs == 0) THEN
+    WRITE(6,'(A)') 'No observation assimilated'
+    RETURN
+  END IF
 !
 ! INITIALIZE GLOBAL VARIABLES
 !
