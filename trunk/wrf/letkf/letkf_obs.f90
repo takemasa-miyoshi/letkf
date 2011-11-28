@@ -196,7 +196,7 @@ SUBROUTINE set_letkf_obs
         IF(NINT(tmpelm(nn+n)) == id_ps_obs) THEN
           CALL itpl_2d(phi0,tmpi(nn+n),tmpj(nn+n),dz)
           tmpk(nn+n) = tmplev(nn+n) - dz
-          IF(ABS(dz) > threshold_dz) THEN ! pressure adjustment threshold
+          IF(ABS(tmpk(nn+n)) > threshold_dz) THEN ! pressure adjustment threshold
 !OMP CRITICAL
             PRINT '(A)','* PS obs vertical adjustment beyond threshold'
             PRINT '(A,F10.2,A,F6.2,A,F6.2,A)','  dz=',tmpk(nn+n),&
