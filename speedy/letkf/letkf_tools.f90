@@ -135,6 +135,7 @@ SUBROUTINE das_letkf(gues3d,gues2d,anal3d,anal2d)
     ELSE
       WRITE(6,'(2A)') '!!WARNING: no such file exist: ',inflfile
       work3d = -1.0d0 * cov_infl_mul
+      work2d = -1.0d0 * cov_infl_mul
     END IF
   END IF
   !
@@ -177,7 +178,7 @@ SUBROUTINE das_letkf(gues3d,gues2d,anal3d,anal2d)
             trans(:,:,nv3d+n) = trans(:,:,var_local_n2n(nv3d+n))
             work2d(ij,n) = work2d(ij,var_local_n2n(nv3d+n)-nv3d)
           ELSE
-            CALL obs_local(ij,ilev,n,hdxf,rdiag,rloc,dep,nobsl,logpfm)
+            CALL obs_local(ij,ilev,nv3d+n,hdxf,rdiag,rloc,dep,nobsl,logpfm)
             parm = work2d(ij,n)
             CALL letkf_core(nobstotal,nobsl,hdxf,rdiag,rloc,dep,parm,trans(:,:,nv3d+n))
             work2d(ij,n) = parm
