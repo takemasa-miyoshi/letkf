@@ -135,7 +135,7 @@ SUBROUTINE scatter_grd_mpi_safe(nrank,v3dg,v2dg,v3d,v2d)
           i = mpibufsize * (iter-1)
           DO j=1,mpibufsize
             i=i+1
-            IF(i > nij1) EXIT
+            IF(i > nij1max) EXIT
             bufs(j,:) = tmp(i,:)
           END DO
         END IF
@@ -159,7 +159,7 @@ SUBROUTINE scatter_grd_mpi_safe(nrank,v3dg,v2dg,v3d,v2d)
         i = mpibufsize * (iter-1)
         DO j=1,mpibufsize
           i=i+1
-          IF(i > nij1) EXIT
+          IF(i > nij1max) EXIT
           bufs(j,:) = tmp(i,:)
         END DO
       END IF
@@ -279,7 +279,7 @@ SUBROUTINE gather_grd_mpi_safe(nrank,v3d,v2d,v3dg,v2dg)
           i = mpibufsize * (iter-1)
           DO j=1,mpibufsize
             i=i+1
-            IF(i > nij1) EXIT
+            IF(i > nij1max) EXIT
             tmp(i,:) = bufr(j,:)
           END DO
         END IF
@@ -303,7 +303,7 @@ SUBROUTINE gather_grd_mpi_safe(nrank,v3d,v2d,v3dg,v2dg)
         i = mpibufsize * (iter-1)
         DO j=1,mpibufsize
           i=i+1
-          IF(i > nij1) EXIT
+          IF(i > nij1max) EXIT
           tmp(i,:) = bufr(j,:)
         END DO
       END IF
@@ -443,6 +443,10 @@ SUBROUTINE grd_to_buf(grd,buf)
       ilat = (j-ilon+1) / nlon + 1
       buf(i,m) = grd(ilon,ilat)
     END DO
+  END DO
+
+  DO m=1,nprocs
+    IF(nij1node(m) < nij1max) buf(nij1max,m) = undef
   END DO
 
   RETURN
