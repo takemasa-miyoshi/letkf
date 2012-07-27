@@ -297,6 +297,10 @@ SUBROUTINE obs_local(ij,ilev,nvar,hdxf,rdiag,rloc,dep,nobsl,logpfm)
   maxlon = lon1(ij) + dlon_zero(ij)
   minlat = lat1(ij) - dlat_zero
   maxlat = lat1(ij) + dlat_zero
+  IF(maxlon - minlon >= 360.0d0) THEN
+    minlon = 0.0d0
+    maxlon = 360.0d0
+  END IF
 
   DO jmin=1,nlat-2
     IF(minlat < lat(jmin+1)) EXIT
