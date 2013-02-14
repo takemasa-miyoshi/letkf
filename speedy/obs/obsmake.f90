@@ -129,6 +129,7 @@ PROGRAM obsmake
           CASE(id_q_obs)
             wk(5)=REAL(v3d(i,j,k,iv3d_q)+error(nn)*oberr(n),r_sngl)
           END SELECT
+          IF(obelm(n) == id_q_obs .AND. k >= 5) CYCLE !No upper-level Q obs
           WRITE(90) wk
         END DO
       END IF
