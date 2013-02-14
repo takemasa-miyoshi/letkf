@@ -169,6 +169,12 @@ SUBROUTINE das_letkf(gues3d,gues2d,anal3d,anal2d)
           END DO
         END DO
       END DO
+      IF(ilev >= 5) THEN !no analysis for upper-level Q
+        DO m=1,nbv
+          anal3d(ij,ilev,m,iv3d_q) = mean3d(ij,ilev,iv3d_q) &
+                                 & + gues3d(ij,ilev,m,iv3d_q)
+        END DO
+      END IF
       IF(ilev == 1) THEN !update 2d variable at ilev=1
         DO n=1,nv2d
           IF(var_local_n2n(nv3d+n) <= nv3d) THEN
