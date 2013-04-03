@@ -4,6 +4,7 @@ MODULE letkf_obs
 ! [PURPOSE:] Observational procedures
 !
 ! [HISTORY:]
+!   04/03/2013 Takemasa MIYOSHI  separating obs operator
 !   01/23/2009 Takemasa MIYOSHI  created
 !
 !=======================================================================
@@ -21,7 +22,7 @@ MODULE letkf_obs
   INTEGER,SAVE :: nobs
   INTEGER,PARAMETER :: nslots=1 ! number of time slots for 4D-LETKF
   INTEGER,PARAMETER :: nbslot=1 ! basetime slot
-  REAL(r_size),PARAMETER :: sigma_obs=500.0d3
+  REAL(r_size),PARAMETER :: sigma_obs=1000.0d3
 !  REAL(r_size),PARAMETER :: sigma_obsv=0.4d0
   REAL(r_size),PARAMETER :: sigma_obsv=0.1d0
   REAL(r_size),PARAMETER :: sigma_obst=3.0d0
@@ -46,13 +47,7 @@ CONTAINS
 !-----------------------------------------------------------------------
 SUBROUTINE set_letkf_obs
   IMPLICIT NONE
-  REAL(r_size) :: v3d(nlon,nlat,nlev,nv3d)
-  REAL(r_size) :: v2d(nlon,nlat,nv2d)
-  REAL(r_size) :: p_full(nlon,nlat,nlev)
-  REAL(r_size),PARAMETER :: threshold_dz=1000.0d0
   REAL(r_size),PARAMETER :: gross_error=10.0d0
-  REAL(r_size) :: dz,tg,qg
-  REAL(r_size) :: ri,rj
   REAL(r_size) :: dlon1,dlon2,dlon,dlat
   REAL(r_size),ALLOCATABLE :: wk2d(:,:)
   INTEGER,ALLOCATABLE :: iwk2d(:,:)
@@ -80,10 +75,9 @@ SUBROUTINE set_letkf_obs
   INTEGER :: n,i,j,ierr,islot,nn,l,im
   INTEGER :: nj(0:nlat-1)
   INTEGER :: njs(1:nlat-1)
-  CHARACTER(9) :: obsfile='obsTT.dat'
-  CHARACTER(11) :: guesfile='gsTTNNN.grd'
+  CHARACTER(12) :: obsfile='obsTTNNN.dat'
 
-  WRITE(6,'(A)') 'Hello from set_common_obs_speedy'
+  WRITE(6,'(A)') 'Hello from set_letkf_obs'
 
   dist_zero = sigma_obs * SQRT(10.0d0/3.0d0) * 2.0d0
   dist_zerov = sigma_obsv * SQRT(10.0d0/3.0d0) * 2.0d0
@@ -93,11 +87,16 @@ SUBROUTINE set_letkf_obs
     dlon_zero(i) = dlat_zero / COS(pi*lat1(i)/180.0d0)
   END DO
 
-  DO islot=1,nslots
-    WRITE(obsfile(4:5),'(I2.2)') islot
-    WRITE(6,'(A,I3.3,2A)') 'MYRANK ',myrank,' is reading a file ',obsfile
-    CALL get_nobs(obsfile,nobslots(islot))
-  END DO
+  IF(myrank == 0) THEN !Assuming all members have the identical obs records
+    DO islot=1,nslots
+      im = myrank+1
+      WRITE(obsfile(4:8),'(I2.2,I3.3)') islot,im
+      WRITE(6,'(A,I3.3,2A)') 'MYRANK ',myrank,' is reading a file ',obsfile
+      CALL get_nobs(obsfile,8,nobslots(islot))
+    END DO
+  END IF
+  CALL MPI_BARRIER(MPI_COMM_WORLD,ierr)
+  CALL MPI_BCAST(nobslots,nslots,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
   nobs = SUM(nobslots)
   WRITE(6,'(I10,A)') nobs,' TOTAL OBSERVATIONS INPUT'
 
@@ -122,95 +121,22 @@ SUBROUTINE set_letkf_obs
   tmpqc0 = 0
   tmphdxf = 0.0d0
 !
-! LOOP of timeslots
+! reading observation data
 !
   nn=0
   timeslots: DO islot=1,nslots
     IF(nobslots(islot) == 0) CYCLE
-    WRITE(obsfile(4:5),'(I2.2)') islot
-    WRITE(6,'(A,I3.3,2A)') 'MYRANK ',myrank,' is reading a file ',obsfile
-    CALL read_obs(obsfile,nobslots(islot),&
-      & tmpelm(nn+1:nn+nobslots(islot)),tmplon(nn+1:nn+nobslots(islot)),&
-      & tmplat(nn+1:nn+nobslots(islot)),tmplev(nn+1:nn+nobslots(islot)),&
-      & tmpdat(nn+1:nn+nobslots(islot)),tmperr(nn+1:nn+nobslots(islot)) )
     l=0
     DO
       im = myrank+1 + nprocs * l
       IF(im > nbv) EXIT
-      WRITE(guesfile(3:7),'(I2.2,I3.3)') islot,im
-      WRITE(6,'(A,I3.3,2A)') 'MYRANK ',myrank,' is reading a file ',guesfile
-      CALL read_grd(guesfile,v3d,v2d)
-      CALL calc_pfull(nlon,nlat,v2d(:,:,iv2d_ps),p_full)
-!$OMP PARALLEL DO SCHEDULE(DYNAMIC) PRIVATE(n,ri,rj,dz,tg,qg)
-      DO n=1,nobslots(islot)
-        CALL phys2ijk(p_full,tmpelm(nn+n),&
-          & tmplon(nn+n),tmplat(nn+n),tmplev(nn+n),ri,rj,tmpk(nn+n))
-        IF(CEILING(ri) < 2 .OR. nlon+1 < CEILING(ri)) THEN
-!$OMP CRITICAL
-          WRITE(6,'(A)') '* X-coordinate out of range'
-          WRITE(6,'(A,F6.2,A,F6.2)') '*   ri=',ri,', rlon=',tmplon(nn+n)
-!$OMP END CRITICAL
-          CYCLE
-        END IF
-        IF(CEILING(rj) < 2 .OR. nlat < CEILING(rj)) THEN
-!$OMP CRITICAL
-          WRITE(6,'(A)') '* Y-coordinate out of range'
-          WRITE(6,'(A,F6.2,A,F6.2)') '*   rj=',rj,', rlat=',tmplat(nn+n)
-!$OMP END CRITICAL
-          CYCLE
-        END IF
-        IF(CEILING(tmpk(n+nn)) > nlev) THEN
-          CALL itpl_2d(phi0,ri,rj,dz)
-!$OMP CRITICAL
-          WRITE(6,'(A)') '* Z-coordinate out of range'
-          WRITE(6,'(A,F6.2,A,F10.2,A,F6.2,A,F6.2,A,F10.2)') &
-           & '*   rk=',tmpk(nn+n),', rlev=',tmplev(nn+n),&
-           & ', (lon,lat)=(',tmplon(nn+n),',',tmplat(nn+n),'), phi0=',dz
-!$OMP END CRITICAL
-          CYCLE
-        END IF
-        IF(CEILING(tmpk(nn+n)) < 2 .AND. NINT(tmpelm(nn+n)) /= id_ps_obs) THEN
-          IF(NINT(tmpelm(nn+n)) == id_u_obs .OR.&
-           & NINT(tmpelm(nn+n)) == id_v_obs) THEN
-            tmpk(nn+n) = 1.00001d0
-          ELSE
-            CALL itpl_2d(phi0,ri,rj,dz)
-!$OMP CRITICAL
-            WRITE(6,'(A)') '* Z-coordinate out of range'
-            WRITE(6,'(A,F6.2,A,F10.2,A,F6.2,A,F6.2,A,F10.2)') &
-             & '*   rk=',tmpk(nn+n),', rlev=',tmplev(nn+n),&
-             & ', (lon,lat)=(',tmplon(nn+n),',',tmplat(nn+n),'), phi0=',dz
-!$OMP END CRITICAL
-            CYCLE
-          END IF
-        END IF
-        IF(NINT(tmpelm(nn+n)) == id_ps_obs .AND. tmpdat(nn+n) < -100.0d0) THEN
-          CYCLE
-        END IF
-!       IF(NINT(tmpelm(nn+n)) == id_ps_obs) THEN
-!         CALL itpl_2d(phi0,ri,rj,dz)
-!         dz = dz - tmplev(nn+n)
-!         IF(ABS(dz) < threshold_dz) THEN ! pressure adjustment threshold
-!           CALL itpl_2d(t(:,:,1),ri,rj,tg)
-!           CALL itpl_2d(q(:,:,1),ri,rj,qg)
-!           CALL prsadj(tmpdat(nn+n),dz,tg,qg)
-!         ELSE
-!!OMP CRITICAL
-!           PRINT '(A)','PS obs vertical adjustment beyond threshold'
-!           PRINT '(A,F10.2,A,F6.2,A,F6.2,A)',&
-!             & '  dz=',dz,', (lon,lat)=(',tmplon(nn+n),',',tmplat(nn+n),')'
-!!OMP END CRITICAL
-!           CYCLE
-!         END IF
-!       END IF
-        !
-        ! observational operator
-        !
-        CALL Trans_XtoY(tmpelm(nn+n),&
-          & ri,rj,tmpk(nn+n),v3d,v2d,p_full,tmphdxf(nn+n,im))
-        tmpqc0(nn+n,im) = 1
-      END DO
-!$OMP END PARALLEL DO
+      WRITE(obsfile(4:8),'(I2.2,I3.3)') islot,im
+      WRITE(6,'(A,I3.3,2A)') 'MYRANK ',myrank,' is reading a file ',obsfile
+      CALL read_obs2(obsfile,nobslots(islot),&
+       & tmpelm(nn+1:nn+nobslots(islot)),tmplon(nn+1:nn+nobslots(islot)),&
+       & tmplat(nn+1:nn+nobslots(islot)),tmplev(nn+1:nn+nobslots(islot)),&
+       & tmpdat(nn+1:nn+nobslots(islot)),tmperr(nn+1:nn+nobslots(islot)),&
+       & tmphdxf(nn+1:nn+nobslots(islot),im),tmpqc0(nn+1:nn+nobslots(islot),im))
       l = l+1
     END DO
     nn = nn + nobslots(islot)
@@ -539,7 +465,6 @@ SUBROUTINE monit_mean(file)
   WRITE(6,'(A)') '========================================================================'
 
   RETURN
-
 END SUBROUTINE monit_mean
 
 END MODULE letkf_obs

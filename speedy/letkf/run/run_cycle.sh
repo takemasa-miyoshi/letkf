@@ -20,6 +20,7 @@ OUTPUT=$SPEEDY/DATA/$OBS/$EXP # data directory
 OBSDIR=$SPEEDY/DATA/$OBS/obs  # obs data directory
 TMPDIR=$SPEEDY/DATA/tmp/letkf # work directory
 LETKF=letkf020.m01
+OBSOPE=obsope.s01
 ### initial date setting
 IYYYY=1982
 IMM=01
@@ -91,7 +92,10 @@ rm -rf $TMPDIR/letkf
 mkdir -p $TMPDIR/letkf
 cd $TMPDIR/letkf
 ln -s $SPEEDY/letkf/$LETKF $LETKF
+ln -s $SPEEDY/letkf/$OBSOPE $OBSOPE
 ### inputs
+ln -s $SPEEDY/common/orography_t30.dat fort.21
+ln -s $OBSDIR/$IYYYY$IMM$IDD$IHH.dat obsin.dat
 MEM=1
 while test $MEM -le $MEMBER
 do
@@ -104,14 +108,15 @@ then
 MEM=0$MEM
 fi
 ln -s $OUTPUT/gues/$MEM/$IYYYY$IMM$IDD$IHH.grd gs01$MEM.grd
+ln -fs $OUTPUT/gues/$MEM/$IYYYY$IMM$IDD$IHH.grd gues.grd
+./$OBSOPE > obsope.log
+mv obsout.dat obs01$MEM.dat
 MEM=`expr $MEM + 1`
 done
 if test -f $OUTPUT/infl_mul/$IYYYY$IMM$IDD$IHH.grd
 then
 ln -s $OUTPUT/infl_mul/$IYYYY$IMM$IDD$IHH.grd infl_mul.grd
 fi
-ln -s $OBSDIR/$IYYYY$IMM$IDD$IHH.dat obs01.dat
-ln -s $SPEEDY/common/orography_t30.dat fort.21
 ### mpiexec
 mpiexec -n $NODE ./$LETKF < /dev/null
 tail -n 17 NOUT-000
