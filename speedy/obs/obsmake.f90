@@ -140,7 +140,7 @@ PROGRAM obsmake
   ! Count number of obs
   !
   IF(verbose) THEN
-    CALL get_nobs(obsf,nn)
+    CALL get_nobs(obsf,6,nn)
   END IF
 
   DEALLOCATE(v3d,v2d,error)
