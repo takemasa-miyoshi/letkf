@@ -689,6 +689,7 @@ SUBROUTINE com_utc2tai(iy,im,id,ih,imin,sec,tai93)
   IF(iy > 1998) tai93 = tai93 + 1.0d0 !leap second
   IF(iy > 2005) tai93 = tai93 + 1.0d0 !leap second
   IF(iy > 2008) tai93 = tai93 + 1.0d0 !leap second
+  IF(iy > 2012 .OR. (iy==2012 .AND. im > 6)) tai93 = tai93 + 1.0d0 !leap second
 
   RETURN
 END SUBROUTINE com_utc2tai
@@ -697,10 +698,10 @@ END SUBROUTINE com_utc2tai
 !-----------------------------------------------------------------------
 SUBROUTINE com_tai2utc(tai93,iy,im,id,ih,imin,sec)
   IMPLICIT NONE
-  INTEGER,PARAMETER :: n=7 ! number of leap seconds after Jan. 1, 1993
+  INTEGER,PARAMETER :: n=8 ! number of leap seconds after Jan. 1, 1993
   INTEGER,PARAMETER :: leapsec(n) = (/  15638399,  47174400,  94608001,&
                                   &    141868802, 189302403, 410227204,&
-                                  &    504921605/)
+                                  &    504921605, 615254406/)
   REAL(r_size),INTENT(IN) :: tai93
   INTEGER,INTENT(OUT) :: iy,im,id,ih,imin
   REAL(r_size),INTENT(OUT) :: sec
