@@ -1,0 +1,111 @@
+load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/contributed.ncl"
+
+begin
+
+  missing = -9999.9
+
+  nx = 1440
+  ny = 400
+  xlat = fspan(-49.875,49.875,ny)
+  xlon = fspan(-179.875,179.875,nx)
+  pr = new((/nx,ny/),float)
+  prerr = new((/nx,ny/),float)
+  prmw = new((/nx,ny/),float)
+  prir = new((/nx,ny/),float)
+  tdiff = new((/nx,ny/),float)
+
+  filename = "3B42.in.hdf"
+
+  pdata = addfile(filename,"r")
+
+
+;  x = pdata->precipitation
+
+;   dimx  = dimsizes( x )
+;   nlat  = dimx( 0 )                 ; 400   [0.25 x 0.25 ]
+;   mlon  = dimx( 0 )                 ; 1440
+
+   latS  = xlat(0)                  ; south extent of input grid
+   latN  = xlat(ny-1)               ; north extent
+
+  nlati = 720
+
+;  printVarSummary(x)
+;  print(latS)
+;  print(latN)
+;  print(xlat)
+
+
+  pr(:,:) = pdata->precipitation(:,:)
+  prerr(:,:) = pdata->relativeError(:,:)
+  prmw(:,:) = pdata->HQprecipitation(:,:)
+  prir(:,:) = pdata->IRprecipitation(:,:)
+  tdiff(:,:) = int2flt(pdata->satObservationTime(:,:))
+
+
+
+
+
+   opt = True
+
+   NLATT382    = 576                               ; RES   = "T382"    
+   MLONT382    = 1152
+   LATT382     = latGau    (NLATT382, "LATT382", "latitude" , "degrees_north")  
+   LONT382     = lonGlobeF(MLONT382, "LONT382", "longitude", "degrees_east" ) 
+
+   opt@NLATi  = nlati 
+   opt@NLATo  = 576      
+   LAT_REGT382 = LATT382({latS:latN})
+
+
+
+  pr!0  = "longitude"
+  pr!1  = "latitude"
+  pr_g = pr(latitude|:,longitude|:)
+
+  pr_XT382       = area_conserve_remap_Wrap (xlon, xlat, pr_g ,LONT382, LAT_REGT382, opt)
+;  printVarSummary(pr_XT382)
+
+
+  tdiff!0  = "longitude"
+  tdiff!1  = "latitude"
+  tdiff_g = tdiff(latitude|:,longitude|:)
+
+  tdiff_XT382       = area_conserve_remap_Wrap (xlon, xlat, tdiff_g ,LONT382, LAT_REGT382, opt)
+;  printVarSummary(tdiff_XT382)
+
+
+  pr_XT382@_FillValue = missing
+  pr_XT382 = mask(pr_XT382, pr_XT382 .lt. 0., False)
+
+
+;  prerr@_FillValue = missing
+;  prmw@_FillValue = missing
+;  prir@_FillValue = missing
+;  tdiff@_FillValue = missing
+
+;  pr!0  = "longitude"
+;  pr!1  = "latitude"
+;  pr_g = pr(latitude|:,longitude|:)
+
+;  prerr!0 = "longitude"
+;  prerr!1 = "latitude"
+;  prerr_g = prerr(latitude|:,longitude|:)
+;  prmw!0  = "longitude"
+;  prmw!1  = "latitude"
+;  prmw_g = prmw(latitude|:,longitude|:)
+;  prir!0  = "longitude"
+;  prir!1  = "latitude"
+;  prir_g = prir(latitude|:,longitude|:)
+;  tdiff!0  = "longitude"
+;  tdiff!1  = "latitude"
+;  tdiff_g = tdiff(latitude|:,longitude|:)
+
+  fbindirwrite("3B42.out.dat",pr_XT382(:,:))
+;  fbindirwrite("3B42.out.dat",prerr_g(:,:))
+;  fbindirwrite("3B42.out.dat",prmw_g(:,:))
+;  fbindirwrite("3B42.out.dat",prir_g(:,:))
+  fbindirwrite("3B42.out.dat",tdiff_XT382(:,:))
+
+end
+
