@@ -7,7 +7,7 @@
 == Download our LETKF package ==
 Download the latest release version from the [http://code.google.com/p/miyoshi/source/checkout Source tab].
 
-== Prepare the required executables and libraries ==
+== Prepare required executables and libraries ==
 Our LETKF package provides the LETKF assimilation code coupled to the National Centers for Environmental Prediction (NCEP) Global Forecasting System (GFS) model. It requires several executables and libraries from the NCEP, which mainly belong to two NCEP models, GFS and Gridpoint Statistical Interpolation (GSI).
 
  * *GFS*: The GFS model is an operational global NWP model developed by the Environmental Modeling Center (EMC) at the NCEP. It is one of the major state-of-the-art operational NWP models over the world and provides main model guidance for the weather forecast in the United States. It is not a community model, and some of the code may not be open to public, so users interested to run the GFS-LETKF system need to contact NCEP to obtain the GFS model code and the associated libraries.
@@ -15,7 +15,7 @@ Our LETKF package provides the LETKF assimilation code coupled to the National C
   * When you compile the GFS model, you may need to compile the [http://www.earthsystemmodeling.org/ Earth System Modeling Framework (ESMF)] first.
 
  * *GSI*: The GSI is the primary data assimilation system for the GFS model, based on 3-dimensional variational method (3DVar). In our GFS-LETKF implementation, there is an option to use the GSI as an observation operator. Note that we only use the GSI as the observation operator, and the GSI 3DVar solution is not computed in the GFS-LETKF. Besides, if you are not going to assimilate the satellite radiance data, in the GFS-LETKF package there is also a set of built-in observation operators that does not rely on the GSI. In this case, you do not need to install the GSI.
-  * The GSI has been a community model, available at [ http://www.dtcenter.org/com-GSI/users/]
+  * The GSI has been a community model, available at [http://www.dtcenter.org/com-GSI/users/]
 
 === List of required executables and libraries ===
 
@@ -28,15 +28,15 @@ Our LETKF package provides the LETKF assimilation code coupled to the National C
 || {{{global_sfchdr}}} || {{{gfs/run/run_gfs.sh}}}<br>{{{gfs/run/run_gsi.sh}}} || Read the header of the GFS surface input/output files ||
 || {{{global_chgres}}} || {{{gfs/run/run_chgres.sh}}} || Change the resolution of the GFS input/output files ||
 
- * *Libraries required for compiling the GFS-LETKF code*:
+ * *NCEP libraries required for compiling the GFS-LETKF code*:
  These libraries are required for compiling several programs in the GFS-LETKF package. You are asked to put them under the {{{$(GFS_DIR)}}} directory configured in {{{gfs/configure.user}}} following the subdirectory structure below:
-|| *Name* || *List of files required* || *Required by* || *Purpose* ||
-|| {{{bacio}}} || {{{$(GFS_DIR)/lib/libbacio_4.a}}} || {{{gfs/ssio}}}<br>{{{gfs/util/gfsmean*}}} || Basic I/O library for the GFS ||
-|| {{{sigio}}} || {{{$(GFS_DIR)/lib/libsigio_4.a}}}<br>{{{$(GFS_DIR)/incmod/sigio_4/sigio_module.mod}}}<br>{{{$(GFS_DIR)/incmod/sigio_4/sigio_r_module.mod}}} ||  || I/O library for the GFS sigma-level files ||
-|| {{{sfcio}}} || {{{$(GFS_DIR)/lib/libsfcio_4.a}}}<br>{{{$(GFS_DIR)/incmod/sfcio_4/sfcio_module.mod}}} ||  || I/O library for the GFS surface-level files ||
-|| {{{sp}}} || {{{$(GFS_DIR)/lib/libsp_4.a}}} ||  || Spectral transform library ||
+|| *Name* || *List of files required* || *Purpose* ||
+|| {{{bacio}}} || {{{$(GFS_DIR)/lib/libbacio_4.a}}} || Basic I/O library for the GFS ||
+|| {{{sigio}}} || {{{$(GFS_DIR)/lib/libsigio_4.a}}}<br>{{{$(GFS_DIR)/incmod/sigio_4/sigio_module.mod}}}<br>{{{$(GFS_DIR)/incmod/sigio_4/sigio_r_module.mod}}} || I/O library for the GFS sigma-level files ||
+|| {{{sfcio}}} || {{{$(GFS_DIR)/lib/libsfcio_4.a}}}<br>{{{$(GFS_DIR)/incmod/sfcio_4/sfcio_module.mod}}} || I/O library for the GFS surface-level files ||
+|| {{{sp}}} || {{{$(GFS_DIR)/lib/libsp_4.a}}} || Spectral transform library ||
 
- * *Other libraries that may be required for compiling the GFS and GSI*:
+ * *Other NCEP libraries that may be required for compiling the GFS and GSI*:
  These libraries may be required when you compile the GFS and GSI, but they are not directly required in the GFS-LETKF code.
 || *Name* || *Purpose* ||
 || {{{ip}}} || General interpolation library ||
@@ -45,3 +45,10 @@ Our LETKF package provides the LETKF assimilation code coupled to the National C
 || {{{nemsio}}} || NEMS I/O library ||
 || {{{bufr}}} || I/O library for the BUFR file format ||
 || {{{w3lib}}} || I/O library for the GRIB file format ||
+
+ * *Other libraries*:
+|| *Name* || *Purpose* ||
+|| {{{LAPACK}}} ||  ||
+|| {{{BUFRLIB}}} ||  ||
+
+== Prepare fix files for the GFS and GSI ==
