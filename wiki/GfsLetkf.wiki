@@ -5,10 +5,12 @@
 = Getting started =
 
 == Download our LETKF package ==
+
 Download the latest release version from the [http://code.google.com/p/miyoshi/source/checkout Source tab].
 
 == Prepare required executables and libraries ==
-Our LETKF package provides the LETKF assimilation code coupled to the National Centers for Environmental Prediction (NCEP) Global Forecasting System (GFS) model. It requires several executables and libraries from the NCEP, which mainly belong to two NCEP models, GFS and Gridpoint Statistical Interpolation (GSI).
+
+Our LETKF package provides the LETKF assimilation code coupled to the National Centers for Environmental Prediction (NCEP) Global Forecasting System (GFS) model. It requires several executables and libraries from the NCEP, which mainly belong to two NCEP models, GFS and Gridpoint Statistical Interpolation (GSI). Compiling these libraries and models on your computer may not be easy and may take long time.
 
  * *GFS*: The GFS model is an operational global NWP model developed by the Environmental Modeling Center (EMC) at the NCEP. It is one of the major state-of-the-art operational NWP models over the world and provides main model guidance for the weather forecast in the United States. It is not a community model, and some of the code may not be open to public, so users interested to run the GFS-LETKF system need to contact NCEP to obtain the GFS model code and the associated libraries.
   * NCEP/EMC GFS model page: [http://www.emc.ncep.noaa.gov/index.php?branch=GFS]
@@ -19,36 +21,88 @@ Our LETKF package provides the LETKF assimilation code coupled to the National C
 
 === List of required executables and libraries ===
 
- * *Executables*:
- After successfully compiling the GFS and GSI, you are asked to put all executable files together in the {{{$EXECGLOBAL}}} directory configured in {{{gfs/run/configure.sh}}}.
-|| *Name* || *Called from* || *Purpose* ||
-|| {{{global_fcst}}} || {{{gfs/run/run_gfs.sh}}}<br>{{{gfs/run/cycle.sh}}}<br>{{{gfs/run/fcst.sh}}} || GFS main program ||
-|| {{{global_gsi}}} || {{{gfs/run/run_gsi.sh}}}<br>{{{gfs/run/cycle.sh}}} || GSI main program ||
-|| {{{global_sighdr}}} || {{{gfs/run/run_gfs.sh}}}<br>{{{gfs/run/run_gsi.sh}}} || Read the header of the GFS sigma-level input/output files ||
-|| {{{global_sfchdr}}} || {{{gfs/run/run_gfs.sh}}}<br>{{{gfs/run/run_gsi.sh}}} || Read the header of the GFS surface input/output files ||
-|| {{{global_chgres}}} || {{{gfs/run/run_chgres.sh}}} || Change the resolution of the GFS input/output files ||
+ * *NCEP executables*:
+ After successfully compiling the GFS and GSI, you are asked to put all executable files together in the '{{{$EXECGLOBAL}}}' directory configured in '{{{gfs/run/configure.sh}}}'.
+|| *Name* || *Purpose* || *Called from* ||
+|| {{{global_fcst}}} || GFS main program || {{{gfs/run/run_gfs.sh}}}<br>{{{gfs/run/cycle.sh}}}<br>{{{gfs/run/fcst.sh}}} ||
+|| {{{global_gsi}}} || GSI main program || {{{gfs/run/run_gsi.sh}}}<br>{{{gfs/run/cycle.sh}}} ||
+|| {{{global_sighdr}}} || Read the header of the GFS sigma-level input/output files || {{{gfs/run/run_gfs.sh}}}<br>{{{gfs/run/run_gsi.sh}}} ||
+|| {{{global_sfchdr}}} || Read the header of the GFS surface input/output files || {{{gfs/run/run_gfs.sh}}}<br>{{{gfs/run/run_gsi.sh}}} ||
+|| {{{global_chgres}}} || Change the resolution of the GFS input/output files || {{{gfs/run/run_chgres.sh}}} ||
 
  * *NCEP libraries required for compiling the GFS-LETKF code*:
- These libraries are required for compiling several programs in the GFS-LETKF package. You are asked to put them under the {{{$(GFS_DIR)}}} directory configured in {{{gfs/configure.user}}} following the subdirectory structure below:
-|| *Name* || *List of files required* || *Purpose* ||
-|| {{{bacio}}} || {{{$(GFS_DIR)/lib/libbacio_4.a}}} || Basic I/O library for the GFS ||
-|| {{{sigio}}} || {{{$(GFS_DIR)/lib/libsigio_4.a}}}<br>{{{$(GFS_DIR)/incmod/sigio_4/sigio_module.mod}}}<br>{{{$(GFS_DIR)/incmod/sigio_4/sigio_r_module.mod}}} || I/O library for the GFS sigma-level files ||
-|| {{{sfcio}}} || {{{$(GFS_DIR)/lib/libsfcio_4.a}}}<br>{{{$(GFS_DIR)/incmod/sfcio_4/sfcio_module.mod}}} || I/O library for the GFS surface-level files ||
-|| {{{sp}}} || {{{$(GFS_DIR)/lib/libsp_4.a}}} || Spectral transform library ||
+ These libraries are required for compiling several programs in the GFS-LETKF package. The path of these libraries are configured in '{{{gfs/configure.user}}}' :
+|| *Name* || *Purpose* || *List of files required* || *Link* ||
+|| {{{bacio}}} || Basic I/O library for the GFS || {{{$(BACIO_LIB)/libbacio_4.a}}} ||  ||
+|| {{{sigio}}} || I/O library for the GFS sigma-level files || {{{$(SIGIO_LIB)/libsigio_4.a}}}<br>{{{$(SIGIO_INC)/sigio_module.mod}}}<br>{{{$(SIGIO_INC)/sigio_r_module.mod}}} ||  ||
+|| {{{sfcio}}} || I/O library for the GFS surface-level files || {{{$(SFCIO_LIB)/libsfcio_4.a}}}<br>{{{$(SFCIO_INC)/sfcio_module.mod}}} ||  ||
+|| {{{sp}}} || Spectral transform library || {{{$(SP_LIB)/libsp_4.a}}} || [http://www.nco.ncep.noaa.gov/pmb/docs/libs/splib/ncep_splib.shtml] ||
+|| {{{bufrlib}}} || I/O library for the BUFR file format || {{{$(BUFR_LIB)/libbufrlib.a}}} || [http://www.nco.ncep.noaa.gov/sib/decoders/BUFRLIB/] ||
 
  * *Other NCEP libraries that may be required for compiling the GFS and GSI*:
- These libraries may be required when you compile the GFS and GSI, but they are not directly required in the GFS-LETKF code.
+ These libraries may be required when you compile the GFS and GSI, but they are NOT directly required in the GFS-LETKF code.
 || *Name* || *Purpose* ||
 || {{{ip}}} || General interpolation library ||
 || {{{landsfcutil}}} || Land surface library ||
 || {{{gfsio}}} || GFS I/O library ||
 || {{{nemsio}}} || NEMS I/O library ||
-|| {{{bufr}}} || I/O library for the BUFR file format ||
 || {{{w3lib}}} || I/O library for the GRIB file format ||
 
- * *Other libraries*:
-|| *Name* || *Purpose* ||
-|| {{{LAPACK}}} ||  ||
-|| {{{BUFRLIB}}} ||  ||
+ * *Other required libraries*:
+ LAPACK may be required when it is not provided by the Fortran compiler. For example, if you use the Intel Fortran compiler with its Math Kernel Library (MKL), the LAPACK is included and you do not need to install LAPACK by yourself.
+|| *Name* || *Purpose* || *Link* ||
+|| {{{LAPACK}}} || Linear algebra package || [http://www.netlib.org/lapack/] ||
 
 == Prepare fix files for the GFS and GSI ==
+
+To run the GFS and GSI, they require several "fix" data files (e.g., boundary conditions) and CRTM coefficients. These files need to be put in three directories: '{{{$FIXGLOBAL}}}', '{{{$FIXGSI}}}', and '{{{$FIXCRTM}}}', configured in '{{{gfs/run/configure.sh}}}'.
+
+The GFS fix files can be found at [http://www.nco.ncep.noaa.gov/pmb/codes/nwprod/fix/] , but they are more than enough to drive a GFS model. It is recommended to select only the necessary files when putting into '{{{$FIXGLOBAL}}}'.
+
+== Test compiling the GFS-LETKF programs ==
+
+When the required libraries are ready, we can do a test compilation of all GFS-LETKF programs.
+
+ * Go to the gfs main directory:
+{{{
+$ cd gfs
+}}}
+ * Edit the '{{{configure.user}}}' file, specify the compiler flags and paths of the required libraries in your system. In the '{{{arch}}}' directory, there are a few examples of the '{{{configure.user}}}' file using the PGI or Intel compilers.
+ * Compile all GFS-LETKF programs.
+{{{
+$ make
+}}}
+
+If the compilation is successful, you will obtain a number of executable files listed below:
+|| *File path and name* || *Purpose* ||
+|| {{{common/datetime}}} || A utility for date and time computation ||
+|| {{{common/enssize}}} || To simply print the ensemble size ||
+|| {{{letkf/efsoXXX}}} || EFSO mean program ||
+|| {{{letkf/letkfXXX}}} || LETKF main program ||
+|| {{{letkf/meanXXX}}} || To compute the ensemble mean from grid files ||
+|| {{{letkf/obsope}}} || Built-in observation operator for non-radiance data ||
+|| {{{obs/dec_prcp}}} || To convert the gridded precipitation data to the LETKF observation format ||
+|| {{{obs/dec_prepbufr}}} || To convert the NCEP PREPBUFR data to the LETKF observation format ||
+|| {{{readdiag_conv}}} || To convert the GSI diagnostic files to the LETKF observation format with model background values ||
+|| {{{obs/superob}}} || A superobing/thinning utility ||
+|| {{{ssio/grd2ss}}} || To convert a grid file to GFS sig/sfc (spectral) files, and also cycle forecasts into analyses ||
+|| {{{ssio/grdctl}}} || To print GrADS ctl files according to the current grid settings ||
+|| {{{ssio/ss2grd}}} || To convert GFS sig/sfc (spectral) files to a grid file ||
+|| {{{ssio/ss2grdp}}} || To convert GFS sig/sfc (spectral) files to a grid file in pressure coordinates ||
+|| {{{ssio/sscycle}}} || To cycle forecasts into analyses ||
+|| {{{util/gfsmeanXXX}}} || To compute the ensemble mean from GFS sig/sfc (spectral) files ||
+|| {{{verify/verify}}} || A utility to perform verification against observations or other model analyses ||
+
+Note that {{{XXX}}} is the ensemble size that the program is used for.
+
+If some executable files are missing, check the errors and try to fix them.
+
+= Script overview =
+
+= Download model and observation data =
+
+= Run the data assimilation cycle =
+
+= Run the (ensemble) forecasts and verifications =
+
+= Compute the ensemble forecast sensitivity to observations (EFSO) =
