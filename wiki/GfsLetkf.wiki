@@ -172,7 +172,7 @@ There are other variables that can not be configured in the '{{{configure.sh}}}'
 || {{{gfs/letkf/letkf_obs.f90}}} || {{{omb_output}}} || Whether output the (observation - background) statistics? ||
 || {{{gfs/letkf/letkf_obs.f90}}} || {{{oma_output}}} || Whether output the (observation - analysis) statistics? ||
 || {{{gfs/letkf/letkf_obs.f90}}} || {{{obsgues_output}}} || Whether output the observation values in the ensemble model background [H(X^b^)]? ||
-|| {{{gfs/letkf/letkf_obs.f90}}} || {{{oma_output}}} || Whether output the observation values in the ensemble model analyses [H(X^a^)]? This is used for the EFSO computation, and it requires considerable additional computational time of the LETKF main program. ||
+|| {{{gfs/letkf/letkf_obs.f90}}} || {{{obsanal_output}}} || Whether output the observation values in the ensemble model analyses [H(X^a^)]? This is used for the EFSO computation, and it requires considerable additional computational time of the LETKF main program. ||
 || {{{gfs/letkf/letkf_obs.f90}}} || {{{sigma_obs}}} || Horizontal localization length scale ||
 || {{{gfs/letkf/letkf_obs.f90}}} || {{{sigma_obsv}}} || Vertical localization length scale ||
 || {{{gfs/letkf/letkf_obs.f90}}} || {{{gross_error}}} || Quality control with gross errors ||
@@ -210,6 +210,7 @@ Below are several data formats appeared in the GFS-LETKF system:
 
 == Flow chart ==
 
+[http://miyoshi.googlecode.com/svn/wiki/images/gfs-letkf-flowchart.png]
 
 = Download model and observation data =
 
