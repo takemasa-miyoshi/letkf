@@ -145,7 +145,7 @@ The '{{{configure.sh}}}' is the main configuration file. The other scripts are r
 || {{{ANLGFS}}} || Directory of reference model files in the GFS sig/sfc formats. ||
 || {{{ANLGRD}}} || Directory of reference model files in the sigma-level grid format. ||
 || {{{ANLGRDP}}}<br>{{{ANLGRDP2}}} || Directory of reference model files in the pressure-level grid format. They are used for the verification. The verification results against model data in {{{$ANLGRDP}}} will be stored in '{{{$OUTDIR/verfa1}}}'; the verification results against model data in {{{$ANLGRDP2}}} will be stored in '{{{$OUTDIR/verfa2}}}'. ||
-|| {{{INITGFS}}} || Directory of arbitrary initial condition files in the GFS sig/sfc formats. It can be the same as {{{$ANLGFS}}} if the quality of the reference model data in that directory is good. See explanation at [XXX] ||
+|| {{{INITGFS}}} || Directory of arbitrary initial condition files in the GFS sig/sfc formats. It can be the same as {{{$ANLGFS}}} if the quality of the reference model data in that directory is good. ||
 || {{{OBS}}} || Directory of observation data in the LETKF observation format, required when using the built-in observation operator ({{{$OBSOPE_OPT = 1}}}). ||
 || {{{OBSNCEP}}} || Directory of observation data in the NCEP BUFR format, required when using GSI as the observation operator ({{{$OBSOPE_OPT = 2}}}). ||
 || {{{MEMBER}}} || Ensemble size. It should be the same as the '{{{nbv}}}' variable in '{{{common/common_letkf.f90}}}'. ||
@@ -211,6 +211,14 @@ Below are several data formats appeared in the GFS-LETKF system:
 == Flow chart ==
 
 [http://miyoshi.googlecode.com/svn/wiki/images/gfs-letkf-flowchart.png]
+
+In the flow chart, the rectangles represent any kind of files with their formats shown in square brackets ([#Data_formats explanation of the data formats and their abbreviations]). Those rectangles are connected by arrow lines that represent program execution, with corresponding program file names shown in the bold italic font next to the arrow lines. Three main components of the system – the data assimilation cycle, the observation processing module, and the model forecast and verification modules – are boxed by the red dashed rectangles. The data assimilation cycle is illustrated in the lower part of the figure: the 9-hour ensemble GFS model integration is executed based on the GFS sigma/surface file formats (sig/sfc), and the LETKF analysis is executed based on the grid file format (grd). The purpose of conducting 9-hour forecasts is to perform a 4-dimensional LETKF (4D-LETKF) which assimilates asynchronous observation data at their right time within a window from hour 3 to hour 9.
+
+The source of the observation data is from the NCEP PREPBUFR dataset that not only provides the observed values but also the observation errors associated with each observation. These observation errors will be used in our system. There are two routes of the observation processing:
+ # The route 1 shown in green arrows uses the built-in observation operators that can only process conventional (non-radiance) observation data.
+ # The route 2 shown in blue arrows uses the GSI as the observation operator.
+
+A set of reference model analysis data (gray rectangle) is needed in order to provide updated values of some prognostic variables that are not able to be analyzed by the atmospheric data assimilation system, such as ozone concentration and sea surface temperature (SST).
 
 = Download model and observation data =
 
