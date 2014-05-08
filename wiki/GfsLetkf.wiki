@@ -57,7 +57,7 @@ Our LETKF package provides the LETKF assimilation code coupled to the National C
 
 To run the GFS and GSI, they require several "fix" data files (e.g., boundary conditions) and CRTM coefficients. These files need to be put in three directories: '{{{$FIXGLOBAL}}}', '{{{$FIXGSI}}}', and '{{{$FIXCRTM}}}', configured in '{{{gfs/run/configure.sh}}}'.
 
-The GFS fix files can be found at [http://www.nco.ncep.noaa.gov/pmb/codes/nwprod/fix/] , but they are more than enough to drive a GFS model. It is recommended to select only the necessary files when putting into '{{{$FIXGLOBAL}}}'.
+The GFS fix files can be found at [http://www.nco.ncep.noaa.gov/pmb/codes/nwprod/fix/] , but they are much more than enough to drive a GFS model. It is recommended to select only the necessary files when putting into '{{{$FIXGLOBAL}}}'.
 
 == Test compiling the GFS-LETKF programs ==
 
@@ -97,12 +97,126 @@ Note that {{{XXX}}} is the ensemble size that the program is used for.
 
 If some executable files are missing, check the errors and try to fix them.
 
-= Script overview =
+= Package overview =
+
+== List of scripts ==
+All run scripts are located in the "{{{gfs/run}}}" directory, so you will do everything at this directory. The purposes of the scripts are described as follows. Note that for most of the scripts, you can show the usage help by executing them with no arguments.
+
+|| *Script* || *Purpose* ||
+|| {{{configure.sh}}} || Main configurations for GFS-LETKF scripts. ||
+|| {{{datetime.sh}}} || Date and time functions. ||
+|| {{{distribution.sh}}} || Function scripts to adaptively distribute members on nodes. ||
+|| {{{stageinout.sh}}} || Function scripts to copy files between the server node and local disks on computing nodes. ||
+|| {{{get_ncepobs.sh}}} || Download NCEP conventional observation data from UCAR/DSS. ||
+|| {{{run_chgres.sh}}} || Change the resolution of a series of GFS initial conditions. ||
+|| {{{mss2grd.sh}}} || Convert GFS sig/sfc files to GrADS grd/grdp files. ||
+|| {{{outdir.sh}}} || Create necessary subdirectories and files in the output ({{{$OUTDIR}}}) directory. ||
+|| {{{init.sh}}} || Prepare a initial ensemble from a series of analyses at different times. ||
+|| {{{init2.sh}}} || Prepare a initial ensemble from outputs of another experiments. ||
+|| {{{init3.sh}}} || Prepare a series of initial mean analyses from another source, which is useful to run forecast experiments. ||
+|| {{{run_gfs.sh}}} || Prepare a temporary directory for a GFS run, and may run the model. ||
+|| {{{run_gsi.sh}}} || Prepare a temporary directory for a GSI run, and may run the model. ||
+|| {{{cycle.sh}}} || Run a GFS-LETKF forecast/analysis cycle. ||
+|| {{{mcycle.sh}}} || Run multiple cycles. ||
+|| {{{fcst.sh}}} || Run (ensemble) forecasts and may also perform forecast verification. ||
+|| {{{mfcst.sh}}} || Run multiple-cycle ensemble mean forecasts. ||
+|| {{{efsofcst.sh}}} || Run multiple-cycle ensemble forecasts for the EFSO computation. ||
+|| {{{verify.sh}}} || Compute verification of ensemble forecasts. ||
+|| {{{mverify.sh}}} || Run multiple-cycle verification. ||
+|| {{{efso.sh}}} || Compute ensemble forecast sensitivity to observations (EFSO). ||
+|| {{{mefso.sh}}} || Run multiple-cycle EFSO. ||
+|| {{{pbs_example.sh}}} || An example scripts to submit a parallel job with a jobs scheduling system. ||
+
+== Main configuration script ==
+
+The '{{{configure.sh}}}' is the main configuration file. The other scripts are run based on this configuration file. The explanation of all the configurable variables are provided along with the file (using code comments). Selected variables are explained here:
+
+|| *Variable* || *Description* ||
+|| {{{OUTDIR}}} || GFS-LETKF input and output directory. ||
+|| {{{SYSNAME}}} || A unique name in the machine, which is used to identify multiple GFS-LETKF runs. ||
+|| {{{LTMP1}}}<br>{{{LTMP2}}} || Level 1 and 2 local temporary directories on computing nodes. They are only used when {{{$SHAREDISK = 0}}}. They must exist on all computing nodes. The capacity requirement of the level 1 temporary directory is not too big but the I/O speed is very important; therefore, a RAMdisk ({{{/dev/shm}}} in Linux machines) could be assigned to this variable if the memory on your machine is sufficient. The capacity requirement of the level 2 temporary directory is bigger than {{{$LTMP1}}} and the I/O speed is less important than {{{$LTMP1}}}. The {{{$LTMP1}}} and the {{{$LTMP2}}} can be assigned to the same directory if you do not want to separate the location of different temporary files. ||
+|| {{{TMP1}}} || Temporary directory on the server machine. Accessing to this directory from other computing nodes is not required. ||
+|| {{{TMPMPI}}} || Temporary directory on the server machine with shared access from all computing nodes. ||
+|| {{{SHAREDISK}}} || Do we use local disks on computing nodes to store runtime temporary file?<br>0: Yes, use local disks ({{{$LTMP1}}}, {{{$LTMP2}}}) to store temporary files.<br>1: No, the {{{$OUTDIR}}} is a shared disk that can be accessed from all computing nodes. Use this shared disk to store temporary files.||
+|| {{{EXECGLOBAL}}} || Directory of the NCEP executable files (GFS, GSI... etc.). ||
+|| {{{FIXGLOBAL}}} || Directory of GFS fix files. ||
+|| {{{FIXGSI}}} || Directory of GSI fix files, only required when using GSI as the observation operator ({{{$OBSOPE_OPT = 2}}}). ||
+|| {{{FIXCRTM}}} || Directory of CRTM fix files, only required when using GSI as the observation operator ({{{$OBSOPE_OPT = 2}}}). ||
+|| {{{ANLGFS}}} || Directory of reference model files in the GFS sig/sfc formats. ||
+|| {{{ANLGRD}}} || Directory of reference model files in the sigma-level grid format. ||
+|| {{{ANLGRDP}}}<br>{{{ANLGRDP2}}} || Directory of reference model files in the pressure-level grid format. They are used for the verification. The verification results against model data in {{{$ANLGRDP}}} will be stored in '{{{$OUTDIR/verfa1}}}'; the verification results against model data in {{{$ANLGRDP2}}} will be stored in '{{{$OUTDIR/verfa2}}}'. ||
+|| {{{INITGFS}}} || Directory of arbitrary initial condition files in the GFS sig/sfc formats. It can be the same as {{{$ANLGFS}}} if the quality of the reference model data in that directory is good. See explanation at [XXX] ||
+|| {{{OBS}}} || Directory of observation data in the LETKF observation format, required when using the built-in observation operator ({{{$OBSOPE_OPT = 1}}}). ||
+|| {{{OBSNCEP}}} || Directory of observation data in the NCEP BUFR format, required when using GSI as the observation operator ({{{$OBSOPE_OPT = 2}}}). ||
+|| {{{MEMBER}}} || Ensemble size. It should be the same as the '{{{nbv}}}' variable in '{{{common/common_letkf.f90}}}'. ||
+|| {{{MIN_NP_GFS}}}<br>{{{MIN_NP_GSI}}} || Minimum numbers of CPU cores required to run the GFS and GSI. This limit is to avoid using up all available memory per node/core. ||
+|| {{{MAX_NP_GFS}}}<br>{{{MAX_NP_GSI}}} || Maximum numbers of cores suggested to run the GFS and GSI. This limit is to avoid poor parallelization efficiency when using too many nodes/cores. ||
+|| {{{OBSOPE_OPT}}} || Observation operator options:<br>1: use the LETKF built-in observation operators.<br>2: use the GSI as the observation operator. ||
+|| {{{THIN_OPT}}} || Superobing/thinning options:<br>-- Options below (1-2) is for {{{$OBSOPE_OPT = 1}}}<br>1: No superobing/thinning.<br>2: Use superobed/thinned observations processed by the '{{{gfs/obs/superob}}}' program before the LETKF assimilation.<br>-- Options below (3-4) are for {{{$OBSOPE_OPT = 2}}}<br>3: use thinned observations for satellite radiance observations only, processed by the GSI.<br>4: use thinned observations for both conventional and satellite radiance observations, processed by the GSI. ||
+|| {{{ADAPTINFL}}} || Adaptive inflation options:<br>0: OFF, no adaptive inflation.<br>1: ON, using inflation parameter 1 cycle ago as the prior.<br>2: ON, using inflation parameter 2 cycles ago as the prior (leap-frog the adaptive inflation fields). ||
+|| {{{FCSTLEN}}} || GFS forecast length when running the forecast mode '{{{gfs/run/fcst.sh}}}'. ||
+|| {{{OUT_OPT}}}<br>{{{FOUT_OPT}}}<br>{{{OBSOUT_OPT}}}<br>{{{LOG_OPT}}} || How detail do you want to keep for the regular and diagnostic output files in {{{$OUTDIR}}}? See details in the configure script. ||
+|| {{{MPIBIN}}} || The path of the '{{{mpiexec}}}' command to run a parallel program. ||
+
+== Variables in the source code ==
+
+There are other variables that can not be configured in the '{{{configure.sh}}}', but need to be set in the Fortran source code before compiling the GFS-LETKF programs. After changing the values of these variables, the GFS-LETKF programs need to be re-compiled. Some important variables in the source code are listed and explained below:
+
+|| *Source file* || *Variable* || *Description* ||
+|| {{{common/common_letkf.f90}}} || {{{nbv}}} || Ensemble size ||
+|| {{{gfs/common/common_gfs.f90}}} || {{{nlon}}}<br>{{{nlat}}} || Longitude and latitude grid numbers of the GFS model. They correspond to the spectral truncation wavenumbers:<br>For T62, {{{$nlon}}} = 192, {{{$nlat}}} = 94<br>For T126, {{{$nlon}}} = 384, {{{$nlat}}} = 190 ||
+|| {{{gfs/common/common_gfs.f90}}} || {{{nlev}}} || Number of the vertical levels of the GFS model ||
+|| {{{gfs/common/common_gfs.f90}}} || {{{gfs_jcap}}} || Spectral truncation wavenumber of the GFS model ||
+|| {{{gfs/common/common_gfs_pres.f90}}} || {{{nlevp}}} || Number of the vertical levels in the GFS-LETKF pressure-level outputs ||
+|| {{{gfs/common/common_gfs_pres.f90}}} || {{{levp}}} || List of the vertical levels in the GFS-LETKF pressure-level outputs ||
+|| {{{gfs/letkf/letkf_obs.f90}}} || {{{omb_output}}} || Whether output the (observation - background) statistics? ||
+|| {{{gfs/letkf/letkf_obs.f90}}} || {{{oma_output}}} || Whether output the (observation - analysis) statistics? ||
+|| {{{gfs/letkf/letkf_obs.f90}}} || {{{obsgues_output}}} || Whether output the observation values in the ensemble model background [H(X^b^)]? ||
+|| {{{gfs/letkf/letkf_obs.f90}}} || {{{oma_output}}} || Whether output the observation values in the ensemble model analyses [H(X^a^)]? This is used for the EFSO computation, and it requires considerable additional computational time of the LETKF main program. ||
+|| {{{gfs/letkf/letkf_obs.f90}}} || {{{sigma_obs}}} || Horizontal localization length scale ||
+|| {{{gfs/letkf/letkf_obs.f90}}} || {{{sigma_obsv}}} || Vertical localization length scale ||
+|| {{{gfs/letkf/letkf_obs.f90}}} || {{{gross_error}}} || Quality control with gross errors ||
+|| {{{gfs/letkf/letkf_tools.f90}}} || {{{cov_infl_mul}}} || Multiplicative  covariance inflation parameter:<br>> 0: globally constant inflation<br>< 0: 3D inflation values input from the '{{{infl_mul.grd}}}' file ||
+|| {{{gfs/letkf/letkf_tools.f90}}} || {{{sp_infl_mul}}} || Additive covariance inflation parameter ||
+|| {{{gfs/letkf/letkf_tools.f90}}} || {{{var_local}}} || Variable localization matrix ||
+|| {{{gfs/obs/superob.f90}}} || {{{obmethod_g}}}<br>{{{obmethod_v}}}<br>{{{obmethod_t}}}<br>{{{obmethod_h}}} || Superobing and thinning settings. See details in the code comments. ||
+|| {{{gfs/verify/verify.f90}}} || {{{nvrf_obs}}}<br>{{{nvrf_ana}}} || Numbers of the observation datasets and the model analysis datasets used for the verification ||
+|| {{{gfs/verify/verify.f90}}} || {{{narea}}}<br>{{{vlon1}}}<br>{{{vlon2}}}<br>{{{vlat1}}}<br>{{{vlat2}}} || Settings of the verification regions ||
+
+== Data formats ==
+
+Below are several data formats appeared in the GFS-LETKF system:
+
+ * *GFS sigma/surface files*
+ GFS model inputs and outputs.<br>Abbreviation: *sig/sfc*
+
+ * *GrADS grid files in sigma coordinate (same as the GFS model levels)*
+ Gridded files in model levels that can be read by the LETKF main program and plotted with GrADS software.<br>Abbreviation: *grd*
+
+ * *GrADS grid files in pressure coordinate*
+ Gridded files in pressure levels, which is defined by '{{{nlevp}}}' and '{{{levp}}}' in '{{{gfs/common/common_gfs_pres.f90}}}'<br>Abbreviation: *grdp*
+
+ * *NCEP PREPBUFR files*
+ NCEP PREPBUFR observation date format.<br>Abbreviation: *prepbufr*
+
+ * *LETKF observation format*
+ A special observation data format used by the LETKF code.<br>Abbreviation: *letkfobs*
+
+ * *LETKF observation format with model background values*
+ Similar to "letkfobs", but with observation values in model backgrounds appended.<br>Abbreviation: *letkfobs2*
+
+ * *GSI diagnostic files*
+ The format of the GSI diagnostic outputs<br>Abbreviation: *gsidiag*
+
+== Flow chart ==
+
 
 = Download model and observation data =
 
-= Run the data assimilation cycle =
+= Run data assimilation cycles =
 
-= Run the (ensemble) forecasts and verifications =
+= Run (ensemble) forecasts and verification =
 
-= Compute the ensemble forecast sensitivity to observations (EFSO) =
+= Compute EFSO =
+
+Ensemble forecast sensitivity to observations (EFSO)
