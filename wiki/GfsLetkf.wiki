@@ -161,6 +161,7 @@ The '{{{configure.sh}}}' is the main configuration file. The other scripts are r
 || {{{OUT_OPT}}}<br>{{{FOUT_OPT}}}<br>{{{OBSOUT_OPT}}}<br>{{{LOG_OPT}}} || How detail do you want to keep for the regular and diagnostic output files in {{{$OUTDIR}}}? See details in the configure script. ||
 || {{{MPIBIN}}} || The path of the '{{{mpiexec}}}' command to run a parallel program. ||
 || {{{BUFRBIN}}} || The path of the '{{{grabbufr}}}' command. ||
+
 == Variables in the source code ==
 
 There are other variables that can not be configured in the '{{{configure.sh}}}', but need to be set in the Fortran source code before compiling the GFS-LETKF programs. After changing the values of these variables, the GFS-LETKF programs need to be re-compiled. Some important variables in the source code are listed and explained below:
