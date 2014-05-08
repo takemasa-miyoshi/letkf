@@ -63,7 +63,7 @@ The GFS fix files can be found at [http://www.nco.ncep.noaa.gov/pmb/codes/nwprod
 
 When the required libraries are ready, we can do a test compilation of all GFS-LETKF programs.
 
- * Go to the gfs main directory:
+ * Go to the GFS main directory.
 {{{
 $ cd gfs
 }}}
@@ -72,6 +72,8 @@ $ cd gfs
 {{{
 $ make
 }}}
+
+=== List of the GFS-LETKF programs ==
 
 If the compilation is successful, you will obtain a number of executable files listed below:
 || *File path and name* || *Purpose* ||
@@ -97,7 +99,7 @@ Note that {{{XXX}}} is the ensemble size that the program is used for.
 
 If some executable files are missing, check the errors and try to fix them.
 
-= Package overview =
+= Code overview =
 
 == List of scripts ==
 All run scripts are located in the "{{{gfs/run}}}" directory, so you will do everything at this directory. The purposes of the scripts are described as follows. Note that for most of the scripts, you can show the usage help by executing them with no arguments.
@@ -108,6 +110,7 @@ All run scripts are located in the "{{{gfs/run}}}" directory, so you will do eve
 || {{{distribution.sh}}} || Function scripts to adaptively distribute members on nodes. ||
 || {{{stageinout.sh}}} || Function scripts to copy files between the server node and local disks on computing nodes. ||
 || {{{get_ncepobs.sh}}} || Download NCEP conventional observation data from UCAR/DSS. ||
+|| {{{get_cfsr.sh}}} || Download NCEP CFSR data. ||
 || {{{run_chgres.sh}}} || Change the resolution of a series of GFS initial conditions. ||
 || {{{mss2grd.sh}}} || Convert GFS sig/sfc files to GrADS grd/grdp files. ||
 || {{{outdir.sh}}} || Create necessary subdirectories and files in the output ({{{$OUTDIR}}}) directory. ||
@@ -157,7 +160,7 @@ The '{{{configure.sh}}}' is the main configuration file. The other scripts are r
 || {{{FCSTLEN}}} || GFS forecast length when running the forecast mode '{{{gfs/run/fcst.sh}}}'. ||
 || {{{OUT_OPT}}}<br>{{{FOUT_OPT}}}<br>{{{OBSOUT_OPT}}}<br>{{{LOG_OPT}}} || How detail do you want to keep for the regular and diagnostic output files in {{{$OUTDIR}}}? See details in the configure script. ||
 || {{{MPIBIN}}} || The path of the '{{{mpiexec}}}' command to run a parallel program. ||
-
+|| {{{BUFRBIN}}} || The path of the '{{{grabbufr}}}' command. ||
 == Variables in the source code ==
 
 There are other variables that can not be configured in the '{{{configure.sh}}}', but need to be set in the Fortran source code before compiling the GFS-LETKF programs. After changing the values of these variables, the GFS-LETKF programs need to be re-compiled. Some important variables in the source code are listed and explained below:
@@ -218,9 +221,80 @@ The source of the observation data is from the NCEP PREPBUFR dataset that not on
  # The route 1 shown in green arrows uses the built-in observation operators that can only process conventional (non-radiance) observation data.
  # The route 2 shown in blue arrows uses the GSI as the observation operator.
 
-A set of reference model analysis data (gray rectangle) is needed in order to provide updated values of some prognostic variables that are not able to be analyzed by the atmospheric data assimilation system, such as ozone concentration and sea surface temperature (SST).
+A set of reference model analysis data (gray rectangle) is needed in order to provide updated values of some prognostic variables that are not able to be analyzed by the atmospheric data assimilation system, such as ozone concentration and sea surface temperature (SST). It can also be used for the verification.
 
-= Download model and observation data =
+= Prepare model and observation data =
+
+We need to prepare a set of reference model data in order to update some "boundary conditions" such as SST and ozone concentration during the data assimilation cycle. Therefore, this dataset should cover the entire experiment period. The NCEP has put their Climate Forecast System version 2 Reanalysis (CFSR) [http://nomads.ncdc.noaa.gov/data.php#cfs online] over the period of 1979–2011. They provide the model initial conditions in the GFS sig/sfc format at the [http://nomads.ncdc.noaa.gov/modeldata/cmd_LIC/ T126] and the [http://nomads.ncdc.noaa.gov/modeldata/cmd_HIC/ T382] resolutions. It is convenient to use this dataset as the reference model data for the GFS-LETKF.
+
+There are scripts to download the CFSR (sig/sfc) data, to change the resolution, and to convert them to the gridded data in both model levels (grd) and pressure levels (grdp). In the following demonstration, everything will be run at the T62 resolution, so we are going to download the T126 data and convert them to T62.
+
+== Download the reference model data ==
+
+ * Go to the GFS run directory.
+{{{
+$ cd gfs/run
+}}}
+ * Edit the '{{{configure.sh}}}' file. Set '{{{$OUTDIR}}}' to an existing empty directory, and set other variables according to the [#Main_configuration_script variable description]. Pay attention to the '{{{$TMP1}}}', '{{{$EXECGLOBAL}}}', '{{{$FIXGLOBAL}}}', '{{{$ANLGFS}}}', '{{{$ANLGRD}}}', and '{{{$ANLGRDP}}}' variables that will be used in this section. Create empty directories for '{{{$ANLGFS}}}', '{{{$ANLGRD}}}', and '{{{$ANLGRDP}}}'.
+{{{
+$ mkdir $OUTDIR $ANLGFS $ANLGRD $ANLGRDP
+}}}
+ * Create a directory to store the T126 CFSR data.
+{{{
+$ mkdir $CFSR_T126
+}}}
+ * Use the '{{{get_cfsr.sh}}}' script to download the CFSR data. Note that you can run it without any argument to see the usage help.
+{{{
+$ ./get_cfsr.sh
+}}}
+{{{
+$ ./get_cfsr.sh 20080101 20080110 $CFSR_T126
+}}}
+ * Then you will see the CFSR data from January 1 to 10, 2008 will be saved to the '{{{$CFSR_T126}}}' directory following the '{{{YYYYMMDDHH.sig}}}' and '{{{YYYYMMDDHH.sfc}}}' convention.
+
+== Change the resolution of the reference model data ==
+
+ * Create a directory to store the T62 CFSR data.
+{{{
+$ mkdir $CFSR_T62
+}}}
+ * Use the '{{{run_chgres.sh}}}' script to change the resolution of the CFSR data from T126 to T62. The '{{{$ANLGFS}}}' below is the variable in '{{{configure.sh}}}'.
+{{{
+$ ./run_chgres.sh 2008010100 2008011018 62 192 94 $CFSR_T126 $ANLGFS 2
+}}}
+* Then you will see the CFSR data from January 1 to 10, 2008 are converted to the T62 resolution, saved to the '{{{$ANLGFS}}}' directory.
+
+== Convert the reference model data to gridded data ==
+
+ * Use the '{{{mss2grd.sh}}}' script to convert the T62 CFSR sig/sfc data (in '{{{$ANLGFS}}}' directory) to the gridded data in both model levels and pressure levels (grd/grdp; in '{{{$ANLGRD}}}' and '{{{$ANLGRDP}}}' directories). Pay attention to the '{{{$ANLGFS}}}', '{{{$ANLGRD}}}', and '{{{$ANLGRDP}}}' variables in the '{{{configure.sh}}}' file.
+{{{
+$ ./mss2grd.sh 2008010100 2008011018
+}}}
+ * Then you will see the CFSR data from January 1 to 10, 2008 are converted to the gridded data following the '{{{YYYYMMDDHH.grd}}}' convention, saved to the '{{{$ANLGRD}}}' and '{{{$ANLGRDP}}}' directories.
+ * You can create GrADS CTL files by the '{{{grdctl}}}' program and use the GrADS software to visualize those data.
+{{{
+$ ../ssio/grdctl "%y4%m2%d2%h2.grd" "template byteswapped" 00Z01Jan2008 6hr 10000 x > $ANLGRD/yyyymmddhhx.ctl
+$ ../ssio/grdctl "%y4%m2%d2%h2.grd" "template byteswapped" 00Z01Jan2008 6hr 10000 p > $ANLGRDP/yyyymmddhhp.ctl
+}}}
+
+== Download the GFS initial conditions ==
+
+
+
+== Download the NCEP observation data ==
+
+ * Get and compile the '{{{grabbufr}}}' utility that is used to pre-process the NCEP BUFR data. It can be downloaded from [http://ftp.emc.ncep.noaa.gov/gc_wmb/jwoollen/grabbufr/ here]. Please compile it and name the executable file as '{{{grabbufr}}}', put into the '{{{$BUFRBIN}}}' directory set in '{{{configure.sh}}}'.
+
+ * Edit the '{{{configure.sh}}}' file. Pay attention to the '{{{$OBS}}}', '{{{$OBSNCEP}}}', and '{{{$BUFRBIN}}}' variables. Create empty directories for '{{{$OBS}}}' and '{{{$OBSNCEP}}}'.
+{{{
+$ mkdir $OBS $OBSNCEP
+}}}
+ * We are going to download the NCEP PREPBUFR data from the [http://rda.ucar.edu/datasets/ds337.0/ CISL Research Data Archive]. You need to register (free) on this website to get an account.
+ * Use the '{{{get_ncepobs.sh}}}' script to download the NCEP PREPBUFR data and convert them to the LETKF observation format.
+{{{
+$ ./get_ncepobs.sh EMAIL PASSWD 20080101 20080110 1
+}}}
+ * Then you will see the NCEP PREPBUFR data from January 1 to 10, 2008 are saved in the '{{{$OBSNCEP}}}' directory, and they are also converted to the LETKF observation format saved in the '{{{$OBS}}}' directory.
 
 = Run data assimilation cycles =
 
