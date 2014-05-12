@@ -754,6 +754,7 @@ END SUBROUTINE com_tai2utc
 SUBROUTINE com_datetime_reg(iy,im,id,ih,imin,isec)
   IMPLICIT NONE
   INTEGER, INTENT(INOUT) :: iy,im,id,ih,imin,isec
+  INTEGER :: mdays
 
   DO WHILE(im <= 0)
     im = im + 12
@@ -793,15 +794,18 @@ SUBROUTINE com_datetime_reg(iy,im,id,ih,imin,isec)
       im = im + 12
       iy = iy - 1
     END IF
-    id = id + com_mdays(iy,im)
+    CALL com_mdays(iy,im,mdays)
+    id = id + mdays
   END DO
-  DO WHILE(id > com_mdays(iy,im))
-    id = id - com_mdays(iy,im)
+  CALL com_mdays(iy,im,mdays)
+  DO WHILE(id > mdays)
+    id = id - mdays
     im = im + 1
     IF(im > 12) THEN
       im = im - 12
       iy = iy + 1
     END IF
+    CALL com_mdays(iy,im,mdays)
   END DO
 
   RETURN
@@ -809,29 +813,29 @@ END SUBROUTINE com_datetime_reg
 !-----------------------------------------------------------------------
 ! Number of days of the month
 !-----------------------------------------------------------------------
-FUNCTION com_mdays(iy,im)
+SUBROUTINE com_mdays(iy,im,mdays)
   IMPLICIT NONE
-  INTEGER :: com_mdays
   INTEGER, INTENT(IN) :: iy,im
+  INTEGER, INTENT(OUT) :: mdays
 
   SELECT CASE(im)
   CASE(1,3,5,7,8,10,12)
-    com_mdays = 31
+    mdays = 31
   CASE(4,6,9,11)
-    com_mdays = 30
+    mdays = 30
   CASE(2)
-    com_mdays = 28
+    mdays = 28
     IF(MOD(iy,100) == 0) THEN
       IF(MOD(iy,400) == 0) THEN
-        com_mdays = 29
+        mdays = 29
       END IF
     ELSE IF(MOD(iy,4) == 0) THEN
-      com_mdays = 29
+      mdays = 29
     END IF
   CASE DEFAULT
     WRITE(6,'(A)') '[Error] com_mdays: invalid month.'
     STOP
   END SELECT
-END FUNCTION com_mdays
+END SUBROUTINE com_mdays
 
 END MODULE common

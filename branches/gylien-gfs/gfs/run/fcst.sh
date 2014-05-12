@@ -410,7 +410,7 @@ while [ "\$fh" -le "$FCSTLEN" ]; do
     cat $OBS/obs\${Fyyyymmddhh}/t-1.dat >> obs01.dat
     cat $OBS/obs\${Fyyyymmddhh}/t+1.dat >> obs01.dat
     ln -s $ANLGRDP/\${Fyyyymmddhh}.grd ana01.grd
-    ln -s $ANLGRDP2/\${Fyyyymmddhh}.grd ana02.grd
+#    ln -s $ANLGRDP2/\${Fyyyymmddhh}.grd ana02.grd
 ######
     ./verify > /dev/null 2>&1
 
@@ -419,7 +419,7 @@ while [ "\$fh" -le "$FCSTLEN" ]; do
     mkdir -p $ltmpout/verfa2/\${fhhh}/\${mem}
     mv -f vrfobs01.dat $ltmpout/verfo1/\${fhhh}/\${mem}/\${Fyyyymmddhh}.dat
     mv -f vrfana01.dat $ltmpout/verfa1/\${fhhh}/\${mem}/\${Fyyyymmddhh}.dat
-    mv -f vrfana02.dat $ltmpout/verfa2/\${fhhh}/\${mem}/\${Fyyyymmddhh}.dat
+#    mv -f vrfana02.dat $ltmpout/verfa2/\${fhhh}/\${mem}/\${Fyyyymmddhh}.dat
   fi
 fh=\$((fh+$FCSTOUT))
 done

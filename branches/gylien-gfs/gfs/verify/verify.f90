@@ -24,7 +24,7 @@ program verify
 
 
   integer, parameter :: nvrf_obs = 1
-  integer, parameter :: nvrf_ana = 2
+  integer, parameter :: nvrf_ana = 1
 
   integer, parameter :: narea = 4
 !--------------------------------------------- Globe,     NH,     TR,     SH
