@@ -177,17 +177,17 @@ if [ -z "$SYSNAME" ]; then
   echo "[Error] In 'configure.sh': '\$SYSNAME' is empty." 1>&2
   exit 1
 fi
-if [ ! -d "$LTMP1" ]; then
-  echo "[Error] In 'configure.sh': Directory '\$LTMP1' does not exist." 1>&2
-  exit 1
-fi
-if [ ! -d "$LTMP2" ]; then
-  echo "[Error] In 'configure.sh': Directory '\$LTMP2' does not exist." 1>&2
-  exit 1
-fi
-if [ ! -d "$TMP1" ]; then
-  echo "[Error] In 'configure.sh': Directory '\$TMP1' does not exist." 1>&2
-  exit 1
-fi
+#if [ ! -d "$LTMP1" ]; then
+#  echo "[Error] In 'configure.sh': Directory '\$LTMP1' does not exist." 1>&2
+#  exit 1
+#fi
+#if [ ! -d "$LTMP2" ]; then
+#  echo "[Error] In 'configure.sh': Directory '\$LTMP2' does not exist." 1>&2
+#  exit 1
+#fi
+#if [ ! -d "$TMP1" ]; then
+#  echo "[Error] In 'configure.sh': Directory '\$TMP1' does not exist." 1>&2
+#  exit 1
+#fi
 
 #===============================================================================

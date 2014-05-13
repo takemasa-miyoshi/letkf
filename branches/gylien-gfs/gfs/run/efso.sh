@@ -303,7 +303,7 @@ echo "  Done!"
 
 #-------------------------------------------------------------------------------
 
-cat >> efso_23_node1.sh <<EOF
+cat > efso_23_node1.sh << EOF
 mkdir -p $ltmpout/efso/ke
 mkdir -p $ltmpout/efso/pe
 mkdir -p $ltmpout/efso/me
