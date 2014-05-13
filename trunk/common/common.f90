@@ -23,8 +23,11 @@ MODULE common
 !-----------------------------------------------------------------------
   REAL(r_size),PARAMETER :: pi=3.1415926535d0
   REAL(r_size),PARAMETER :: gg=9.81d0
-  REAL(r_size),PARAMETER :: rd=287.0d0
-  REAL(r_size),PARAMETER :: cp=1005.7d0
+  REAL(r_size),PARAMETER :: rd=287.05d0       ! gas constant air (J/kg/K)      GYL
+  REAL(r_size),PARAMETER :: rv=461.50d0       ! gas constant H2O (J/kg/K)      GYL
+  REAL(r_size),PARAMETER :: cp=1005.7d0       ! spec heat air [p] (J/kg/K)
+  REAL(r_size),PARAMETER :: hvap=2.5d6        ! heat of vaporization (J/kg)
+  REAL(r_size),PARAMETER :: fvirt=rv/rd-1.0d0 ! parameter for T/Tv conversion  GYL
   REAL(r_size),PARAMETER :: re=6371.3d3
   REAL(r_size),PARAMETER :: r_omega=7.292d-5
   REAL(r_size),PARAMETER :: t0c=273.15d0
@@ -745,5 +748,94 @@ SUBROUTINE com_tai2utc(tai93,iy,im,id,ih,imin,sec)
 
   RETURN
 END SUBROUTINE com_tai2utc
+!-----------------------------------------------------------------------
+! Date and time regulation
+!-----------------------------------------------------------------------
+SUBROUTINE com_datetime_reg(iy,im,id,ih,imin,isec)
+  IMPLICIT NONE
+  INTEGER, INTENT(INOUT) :: iy,im,id,ih,imin,isec
+  INTEGER :: mdays
+
+  DO WHILE(im <= 0)
+    im = im + 12
+    iy = iy - 1
+  END DO
+  DO WHILE(im > 12)
+    im = im - 12
+    iy = iy + 1
+  END DO
+  DO WHILE(isec < 0)
+    isec = isec + 60
+    imin = imin - 1
+  END DO
+  DO WHILE(isec >= 60)
+    isec = isec - 60
+    imin = imin + 1
+  END DO
+  DO WHILE(imin < 0)
+    imin = imin + 60
+    ih = ih - 1
+  END DO
+  DO WHILE(imin >= 60)
+    imin = imin - 60
+    ih = ih + 1
+  END DO
+  DO WHILE(ih < 0)
+    ih = ih + 24
+    id = id - 1
+  END DO
+  DO WHILE(ih >= 24)
+    ih = ih - 24
+    id = id + 1
+  END DO
+  DO WHILE(id <= 0)
+    im = im - 1
+    IF(im <= 0) THEN
+      im = im + 12
+      iy = iy - 1
+    END IF
+    CALL com_mdays(iy,im,mdays)
+    id = id + mdays
+  END DO
+  CALL com_mdays(iy,im,mdays)
+  DO WHILE(id > mdays)
+    id = id - mdays
+    im = im + 1
+    IF(im > 12) THEN
+      im = im - 12
+      iy = iy + 1
+    END IF
+    CALL com_mdays(iy,im,mdays)
+  END DO
+
+  RETURN
+END SUBROUTINE com_datetime_reg
+!-----------------------------------------------------------------------
+! Number of days of the month
+!-----------------------------------------------------------------------
+SUBROUTINE com_mdays(iy,im,mdays)
+  IMPLICIT NONE
+  INTEGER, INTENT(IN) :: iy,im
+  INTEGER, INTENT(OUT) :: mdays
+
+  SELECT CASE(im)
+  CASE(1,3,5,7,8,10,12)
+    mdays = 31
+  CASE(4,6,9,11)
+    mdays = 30
+  CASE(2)
+    mdays = 28
+    IF(MOD(iy,100) == 0) THEN
+      IF(MOD(iy,400) == 0) THEN
+        mdays = 29
+      END IF
+    ELSE IF(MOD(iy,4) == 0) THEN
+      mdays = 29
+    END IF
+  CASE DEFAULT
+    WRITE(6,'(A)') '[Error] com_mdays: invalid month.'
+    STOP
+  END SELECT
+END SUBROUTINE com_mdays
 
 END MODULE common
