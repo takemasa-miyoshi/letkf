@@ -10,13 +10,13 @@ Download the latest release version from the [http://code.google.com/p/miyoshi/s
 
 == Prepare required executables and libraries ==
 
-Our LETKF package provides the LETKF assimilation code coupled to the National Centers for Environmental Prediction (NCEP) Global Forecasting System (GFS) model. It requires several executables and libraries from the NCEP, which mainly belong to two NCEP models, GFS and Gridpoint Statistical Interpolation (GSI). Compiling these libraries and models on your computer may not be easy and may take long time.
+Our LETKF package provides the LETKF assimilation code coupled to the National Centers for Environmental Prediction (NCEP) Global Forecasting System (GFS) model. It requires several executables and libraries from the NCEP, which mainly belong to two NCEP models: GFS and Gridpoint Statistical Interpolation (GSI). Compiling these libraries and models on your computer may not be easy and may take long time.
 
  * *GFS*: The GFS model is an operational global NWP model developed by the Environmental Modeling Center (EMC) at the NCEP. It is one of the major state-of-the-art operational NWP models over the world and provides main model guidance for the weather forecast in the United States. It is not a community model, and some of the code may not be open to public, so users interested to run the GFS-LETKF system need to contact NCEP to obtain the GFS model code and the associated libraries.
   * NCEP/EMC GFS model page: [http://www.emc.ncep.noaa.gov/index.php?branch=GFS]
   * When you compile the GFS model, you may need to compile the [http://www.earthsystemmodeling.org/ Earth System Modeling Framework (ESMF)] first.
 
- * *GSI*: The GSI is the primary data assimilation system for the GFS model, based on 3-dimensional variational method (3DVar). In our GFS-LETKF implementation, there is an option to use the GSI as an observation operator. Note that we only use the GSI as the observation operator, and the GSI 3DVar solution is not computed in the GFS-LETKF. Besides, if you are not going to assimilate the satellite radiance data, in the GFS-LETKF package there is also a set of built-in observation operators that does not rely on the GSI. In this case, you do not need to install the GSI.
+ * *GSI*: The GSI is the primary data assimilation system for the GFS model, based on 3-dimensional variational method (3DVar). In our GFS-LETKF implementation, there is an option to use the GSI as an observation operator. Note that we only use the GSI as the observation operator, and the GSI 3DVar solution is not computed in the GFS-LETKF. Besides, if you do not plan to assimilate the satellite radiance data, in the GFS-LETKF package there is also a set of built-in observation operators that does not rely on the GSI. In this case, you do not need to install the GSI.
   * The GSI has been a community model, available at [http://www.dtcenter.org/com-GSI/users/]
 
 === List of required executables and libraries ===
@@ -40,7 +40,7 @@ Our LETKF package provides the LETKF assimilation code coupled to the National C
 || {{{bufrlib}}} || I/O library for the BUFR file format || {{{$(BUFR_LIB)/libbufrlib.a}}} || [http://www.nco.ncep.noaa.gov/sib/decoders/BUFRLIB/] ||
 
  * *Other NCEP libraries that may be required for compiling the GFS and GSI*:
- These libraries may be required when you compile the GFS and GSI, but they are NOT directly required in the GFS-LETKF code.
+ These libraries may be required when you compile the GFS and GSI, but they are NOT directly required in the GFS-LETKF.
 || *Name* || *Purpose* ||
 || {{{ip}}} || General interpolation library ||
 || {{{landsfcutil}}} || Land surface library ||
@@ -55,7 +55,7 @@ Our LETKF package provides the LETKF assimilation code coupled to the National C
 
 == Prepare fix files for the GFS and GSI ==
 
-To run the GFS and GSI, they require several "fix" data files (e.g., boundary conditions) and CRTM coefficients. These files need to be put in three directories: '{{{$FIXGLOBAL}}}', '{{{$FIXGSI}}}', and '{{{$FIXCRTM}}}', configured in '{{{gfs/run/configure.sh}}}'.
+To run the GFS and GSI, they require several "fix" data files (e.g., boundary conditions) and CRTM coefficients. These files need to be put in three directories: '{{{$FIXGLOBAL}}}', '{{{$FIXGSI}}}', and '{{{$FIXCRTM}}}', respectively, configured in '{{{gfs/run/configure.sh}}}'.
 
 The GFS fix files can be found at [http://www.nco.ncep.noaa.gov/pmb/codes/nwprod/fix/] , but they are much more than enough to drive a GFS model. It is recommended to select only the necessary files when putting into '{{{$FIXGLOBAL}}}'.
 
@@ -88,7 +88,7 @@ If the compilation is successful, you will obtain a number of executable files l
 || {{{readdiag_conv}}} || To convert the GSI diagnostic files to the LETKF observation format with model background values ||
 || {{{obs/superob}}} || A superobing/thinning utility ||
 || {{{ssio/grd2ss}}} || To convert a grid file to GFS sig/sfc (spectral) files, and also cycle forecasts into analyses ||
-|| {{{ssio/grdctl}}} || To print GrADS ctl files according to the current grid settings ||
+|| {{{ssio/grdctl}}} || To print GrADS CTL files according to the current grid settings ||
 || {{{ssio/ss2grd}}} || To convert GFS sig/sfc (spectral) files to a grid file ||
 || {{{ssio/ss2grdp}}} || To convert GFS sig/sfc (spectral) files to a grid file in pressure coordinates ||
 || {{{ssio/sscycle}}} || To cycle forecasts into analyses ||
@@ -102,14 +102,14 @@ If some executable files are missing, check the errors and try to fix them.
 = Code overview =
 
 == List of scripts ==
-All run scripts are located in the "{{{gfs/run}}}" directory, so you will do everything at this directory. The purposes of the scripts are described as follows. Note that for most of the scripts, you can show the usage help by executing them with no arguments.
+All run scripts are located in the '{{{gfs/run}}}' directory, so you will do every task in this directory. The purposes of the scripts are described as follows. Note that for most of the scripts, you can show the usage help by directly executing them with no arguments.
 
 || *Script* || *Purpose* ||
-|| {{{configure.sh}}} || Main configurations for GFS-LETKF scripts. ||
-|| {{{datetime.sh}}} || Date and time functions. ||
-|| {{{distribution.sh}}} || Function scripts to adaptively distribute members on nodes. ||
-|| {{{stageinout.sh}}} || Function scripts to copy files between the server node and local disks on computing nodes. ||
-|| {{{get_ncepobs.sh}}} || Download NCEP conventional observation data from UCAR/DSS. ||
+|| {{{configure.sh}}} || Main configurations for all GFS-LETKF scripts. ||
+|| {{{datetime.sh}}} || Date and time functions. It uses the Unix 'date' command.<br>If the 'date' command does not work in your system, replace '{{{datetime.sh}}}' by '{{{datetime.sh.no_unix_date}}}' that does not require the 'date' command. ||
+|| {{{distribution.sh}}} || Functions to adaptively distribute members on nodes. ||
+|| {{{stageinout.sh}}} || Functions to copy files between the server node and local disks on computing nodes. ||
+|| {{{get_ncepobs.sh}}} || Download NCEP conventional observation data from the CISL Research Data Archive. ||
 || {{{get_cfsr.sh}}} || Download NCEP CFSR data. ||
 || {{{run_chgres.sh}}} || Change the resolution of a series of GFS initial conditions. ||
 || {{{mss2grd.sh}}} || Convert GFS sig/sfc files to GrADS grd/grdp files. ||
@@ -124,15 +124,15 @@ All run scripts are located in the "{{{gfs/run}}}" directory, so you will do eve
 || {{{fcst.sh}}} || Run (ensemble) forecasts and may also perform forecast verification. ||
 || {{{mfcst.sh}}} || Run multiple-cycle ensemble mean forecasts. ||
 || {{{efsofcst.sh}}} || Run multiple-cycle ensemble forecasts for the EFSO computation. ||
-|| {{{verify.sh}}} || Compute verification of ensemble forecasts. ||
+|| {{{verify.sh}}} || Compute verification of (ensemble) forecasts. ||
 || {{{mverify.sh}}} || Run multiple-cycle verification. ||
-|| {{{efso.sh}}} || Compute ensemble forecast sensitivity to observations (EFSO). ||
+|| {{{efso.sh}}} || Compute the ensemble forecast sensitivity to observations (EFSO). ||
 || {{{mefso.sh}}} || Run multiple-cycle EFSO. ||
-|| {{{pbs_example.sh}}} || An example scripts to submit a parallel job with a jobs scheduling system. ||
+|| {{{pbs_example.sh}}} || An example script to submit a parallel job with the PBS jobs scheduling system. ||
 
 == Main configuration script ==
 
-The '{{{configure.sh}}}' is the main configuration file. The other scripts are run based on this configuration file. The explanation of all the configurable variables are provided along with the file (using code comments). Selected variables are explained here:
+The '{{{configure.sh}}}' is the main configuration file. The other scripts are run based on this file. The explanation of all the configurable variables are provided along with the file (using code comments). Selected variables are explained here:
 
 || *Variable* || *Description* ||
 || {{{OUTDIR}}} || GFS-LETKF input and output directory. ||
@@ -141,24 +141,24 @@ The '{{{configure.sh}}}' is the main configuration file. The other scripts are r
 || {{{TMP1}}} || Temporary directory on the server machine. Accessing to this directory from other computing nodes is not required. ||
 || {{{TMPMPI}}} || Temporary directory on the server machine with shared access from all computing nodes. ||
 || {{{SHAREDISK}}} || Do we use local disks on computing nodes to store runtime temporary file?<br>0: Yes, use local disks ({{{$LTMP1}}}, {{{$LTMP2}}}) to store temporary files.<br>1: No, the {{{$OUTDIR}}} is a shared disk that can be accessed from all computing nodes. Use this shared disk to store temporary files.||
-|| {{{EXECGLOBAL}}} || Directory of the NCEP executable files (GFS, GSI... etc.). ||
+|| {{{EXECGLOBAL}}} || Directory of the [#List_of_required_executables_and_libraries NCEP executable files] (GFS, GSI... etc.). ||
 || {{{FIXGLOBAL}}} || Directory of GFS fix files. ||
 || {{{FIXGSI}}} || Directory of GSI fix files, only required when using GSI as the observation operator ({{{$OBSOPE_OPT = 2}}}). ||
 || {{{FIXCRTM}}} || Directory of CRTM fix files, only required when using GSI as the observation operator ({{{$OBSOPE_OPT = 2}}}). ||
 || {{{ANLGFS}}} || Directory of reference model files in the GFS sig/sfc formats. ||
-|| {{{ANLGRD}}} || Directory of reference model files in the sigma-level grid format. ||
-|| {{{ANLGRDP}}}<br>{{{ANLGRDP2}}} || Directory of reference model files in the pressure-level grid format. They are used for the verification. The verification results against model data in {{{$ANLGRDP}}} will be stored in '{{{$OUTDIR/verfa1}}}'; the verification results against model data in {{{$ANLGRDP2}}} will be stored in '{{{$OUTDIR/verfa2}}}'. ||
+|| {{{ANLGRD}}} || Directory of reference model files in the sigma-level grid format (grd). ||
+|| {{{ANLGRDP}}}<br>{{{ANLGRDP2}}} || Directory of reference model files in the pressure-level grid format (grdp). They are used for verification. The verification results against the model data in {{{$ANLGRDP}}} will be stored in '{{{$OUTDIR/verfa1}}}'; the verification results against the model data in {{{$ANLGRDP2}}} will be stored in '{{{$OUTDIR/verfa2}}}'. ||
 || {{{INITGFS}}} || Directory of arbitrary initial condition files in the GFS sig/sfc formats. It can be the same as {{{$ANLGFS}}} if the quality of the reference model data in that directory is good. See explanation in the [#Prepare_the_GFS_initial_conditions latter section]. ||
 || {{{OBS}}} || Directory of observation data in the LETKF observation format, required when using the built-in observation operator ({{{$OBSOPE_OPT = 1}}}). ||
 || {{{OBSNCEP}}} || Directory of observation data in the NCEP BUFR format, required when using GSI as the observation operator ({{{$OBSOPE_OPT = 2}}}). ||
 || {{{MEMBER}}} || Ensemble size. It should be the same as the '{{{nbv}}}' variable in '{{{common/common_letkf.f90}}}'. ||
-|| {{{MIN_NP_GFS}}}<br>{{{MIN_NP_GSI}}} || Minimum numbers of CPU cores required to run the GFS and GSI. This limit is to avoid using up all available memory per node/core. ||
-|| {{{MAX_NP_GFS}}}<br>{{{MAX_NP_GSI}}} || Maximum numbers of cores suggested to run the GFS and GSI. This limit is to avoid poor parallelization efficiency when using too many nodes/cores. ||
+|| {{{MIN_NP_GFS}}}<br>{{{MIN_NP_GSI}}} || Minimum numbers of CPU cores required to run the GFS and GSI. This limits are to avoid using up all available memory per node/core. ||
+|| {{{MAX_NP_GFS}}}<br>{{{MAX_NP_GSI}}} || Maximum numbers of cores suggested to run the GFS and GSI. This limits are to avoid poor parallelization efficiency when using too many nodes/cores. ||
 || {{{OBSOPE_OPT}}} || Observation operator options:<br>1: use the LETKF built-in observation operators.<br>2: use the GSI as the observation operator. ||
 || {{{THIN_OPT}}} || Superobing/thinning options:<br>-- Options below (1-2) is for {{{$OBSOPE_OPT = 1}}}<br>1: No superobing/thinning.<br>2: Use superobed/thinned observations processed by the '{{{gfs/obs/superob}}}' program before the LETKF assimilation.<br>-- Options below (3-4) are for {{{$OBSOPE_OPT = 2}}}<br>3: use thinned observations for satellite radiance observations only, processed by the GSI.<br>4: use thinned observations for both conventional and satellite radiance observations, processed by the GSI. ||
 || {{{ADAPTINFL}}} || Adaptive inflation options:<br>0: OFF, no adaptive inflation.<br>1: ON, using inflation parameter 1 cycle ago as the prior.<br>2: ON, using inflation parameter 2 cycles ago as the prior (leap-frog the adaptive inflation fields). ||
-|| {{{FCSTLEN}}} || GFS forecast length when running the forecast mode '{{{gfs/run/fcst.sh}}}'. ||
-|| {{{OUT_OPT}}}<br>{{{FOUT_OPT}}}<br>{{{OBSOUT_OPT}}}<br>{{{LOG_OPT}}} || How detail do you want to keep for the regular and diagnostic output files in {{{$OUTDIR}}}? See details in the configure script. ||
+|| {{{FCSTLEN}}} || GFS forecast length when running the (ensemble) forecasts ('{{{gfs/run/fcst.sh}}}'). ||
+|| {{{OUT_OPT}}}<br>{{{FOUT_OPT}}}<br>{{{OBSOUT_OPT}}}<br>{{{LOG_OPT}}} || How detail do you want to keep for the regular and diagnostic output files in '{{{$OUTDIR}}}'? See details in the '{{{configure.sh}}}' script. ||
 || {{{MPIBIN}}} || The path of the '{{{mpiexec}}}' command to run a parallel program. ||
 || {{{BUFRBIN}}} || The path of the '{{{grabbufr}}}' command. ||
 
@@ -195,10 +195,10 @@ Below are several data formats appeared in the GFS-LETKF system:
  GFS model inputs and outputs.<br>Abbreviation: *sig/sfc*
 
  * *GrADS grid files in sigma coordinate (same as the GFS model levels)*
- Gridded files in model levels that can be read by the LETKF main program and plotted with GrADS software.<br>Abbreviation: *grd*
+ Gridded files in model levels that can be read by the LETKF main program and plotted with the GrADS software.<br>Abbreviation: *grd*
 
  * *GrADS grid files in pressure coordinate*
- Gridded files in pressure levels, which is defined by '{{{nlevp}}}' and '{{{levp}}}' in '{{{gfs/common/common_gfs_pres.f90}}}'<br>Abbreviation: *grdp*
+ Gridded files in pressure levels, which is defined by '{{{nlevp}}}' and '{{{levp}}}' in '{{{gfs/common/common_gfs_pres.f90}}}'. It can be plotted with the GrADS software.<br>Abbreviation: *grdp*
 
  * *NCEP PREPBUFR files*
  NCEP PREPBUFR observation date format.<br>Abbreviation: *prepbufr*
@@ -213,31 +213,31 @@ Below are several data formats appeared in the GFS-LETKF system:
 || 3 || Latitude (degree) ||
 || 4 || u,v,t,tv,q,rh: level (hPa)<br>ps: station elevation (m) ||
 || 5 || Observation value:<br>wind (m/s)<br>temperature (K)<br>specific humidity (kg/kg)<br>relative humidity (%)<br>surface pressure (hPa) ||
-|| 6 || Observation error (unit same as observation value) ||
-|| 7 || Observation platform type; see '{{{obtypelist}}}' array in '{{{gfs/common/common_obs_gfs.f90}}}' ||
+|| 6 || Observation error (unit same as the observation value) ||
+|| 7 || Observation platform type; see the '{{{obtypelist}}}' array in '{{{gfs/common/common_obs_gfs.f90}}}' ||
 
  * *LETKF observation format with additional columns*
  It is an extension of the "letkfobs" format with more columns to save the observation value in the model.<br>Abbreviation: *letkfobs2*
 
- However, the meaning of the columns varies in different cases. In the observation data processed by '{{{obsope}}}' or '{{{readdiag_*}}}' programs, or the input data of the LETKF main program:
+ However, the meaning of the additional columns varies in different cases. In the observation data processed by '{{{obsope}}}' or '{{{readdiag_*}}}' programs, or the input data of the LETKF main program:
 || *Column* || *Description* ||
 || 8 || Observation time relative to analysis time (hour; can be positive or negative) ||
 || 9 || h(x) observation in model background (unit same as observation value except surface pressure in Pa) ||
 || 10 || quality control mark (1 = pass; others = do not pass) ||
 
- In the observation diagnostics output by the LETKF program ($OUTDIR/obs/obsdiag):
+ In the observation diagnostics output by the LETKF program ({{{$OUTDIR/obs/obsdiag}}}):
 || *Column* || *Description* ||
 || 8 || Observation time relative to analysis time (hour; can be positive or negative) ||
 || 9 || h(x) observation in model, either background or analysis (unit same as observation value except surface pressure in Pa) ||
 || 10 || 0 (no meaning) ||
 
- In the observation departure statistics output by the LETKF program ($OUTDIR/obs/obsdep):
+ In the observation departure statistics output by the LETKF program ({{{$OUTDIR/obs/obsdep}}}):
 || *Column* || *Description* ||
 || 8 || Observation time relative to analysis time (hour; can be positive or negative) ||
 || 9 || (Observation - background) (O-B) or (Observation - analysis) (O-A) ||
 || 10 || 0 (no meaning) ||
 
- In the observation sensitivity estimates output by the EFSO program ($OUTDIR/efso):
+ In the observation sensitivity estimates output by the EFSO program ({{{$OUTDIR/efso}}}):
 || *Column* || *Description* ||
 || 8 || Observation time relative to analysis time (hour; can be positive or negative) ||
 || 9 || Observation sensitivity estimated by the EFSO (J/kg) ||
@@ -260,7 +260,7 @@ A set of reference model analysis data (gray rectangle) is needed in order to pr
 
 = Prepare model and observation data =
 
-We need to prepare a set of reference model data in order to update some "boundary conditions" such as SST and ozone concentration during the data assimilation cycle. Therefore, this dataset should cover the entire experiment period. The NCEP has put their Climate Forecast System version 2 Reanalysis (CFSR) [http://nomads.ncdc.noaa.gov/data.php#cfs online] over the period of 1979–2011. They provide the model initial conditions in the GFS sig/sfc format at the [http://nomads.ncdc.noaa.gov/modeldata/cmd_LIC/ T126] and the [http://nomads.ncdc.noaa.gov/modeldata/cmd_HIC/ T382] resolutions. It is convenient to use this dataset as the reference model data for the GFS-LETKF.
+We need to prepare a set of reference model data in order to update some "boundary conditions" such as SST and ozone concentration during the data assimilation cycle. Therefore, this dataset should cover the entire experiment period. It can also be used for verification. The NCEP has put their Climate Forecast System version 2 Reanalysis (CFSR) [http://nomads.ncdc.noaa.gov/data.php#cfs online] over the period of 1979–2011. They provide the model initial conditions in the GFS sig/sfc format at the [http://nomads.ncdc.noaa.gov/modeldata/cmd_LIC/ T126] and the [http://nomads.ncdc.noaa.gov/modeldata/cmd_HIC/ T382] resolutions. It is convenient to use this dataset as the reference model data for the GFS-LETKF.
 
 There are scripts to download the CFSR (sig/sfc) data, to change the resolution, and to convert them to the gridded data in both model levels (grd) and pressure levels (grdp). In the following demonstration, everything will be run at the T62 resolution, so we are going to download the T126 data and convert them to T62.
 
@@ -295,15 +295,11 @@ Usage: ./get_cfsr.sh STIME [ETIME] [GFS_DIR]
 
 $ ./get_cfsr.sh 20080101 20080110 $CFSR_T126
 }}}
- * Then you will see the CFSR data from January 1 to 10, 2008 will be saved to the '{{{$CFSR_T126}}}' directory following the '{{{YYYYMMDDHH.sig}}}' and '{{{YYYYMMDDHH.sfc}}}' convention.
+ * Then you will see the CFSR data from January 1 to 10, 2008 are saved to the '{{{$CFSR_T126}}}' directory following the '{{{YYYYMMDDHH.sig}}}' and '{{{YYYYMMDDHH.sfc}}}' convention.
 
 == Change the resolution of the reference model data ==
 
- * Create a directory to store the T62 CFSR data.
-{{{
-$ mkdir $CFSR_T62
-}}}
- * Use the '{{{run_chgres.sh}}}' script to change the resolution of the CFSR data from T126 to T62. The '{{{$ANLGFS}}}' below is the variable in '{{{configure.sh}}}'.
+ * Use the '{{{run_chgres.sh}}}' script to change the resolution of the CFSR data from T126 to T62. The '{{{$ANLGFS}}}' below should be the same directory as the variable in '{{{configure.sh}}}'.
 {{{
 $ ./run_chgres.sh
 
@@ -328,7 +324,7 @@ Usage: ./run_chgres.sh STIME ETIME JCAP_NEW LONB_NEW LATB_NEW GFS_INDIR GFS_OUTD
 
 $ ./run_chgres.sh 2008010100 2008011018 62 192 94 $CFSR_T126 $ANLGFS 2
 }}}
-* Then you will see the CFSR data from January 1 to 10, 2008 are converted to the T62 resolution, saved to the '{{{$ANLGFS}}}' directory.
+ * Then you will see the CFSR data from January 1 to 10, 2008 are converted to the T62 resolution, saved to the '{{{$ANLGFS}}}' directory.
 
 == Convert the reference model data to gridded data ==
 
@@ -365,9 +361,9 @@ $ ../ssio/grdctl "%y4%m2%d2%h2.grd" "template byteswapped" 00Z01Jan2008 6hr 1000
 
 == Prepare the GFS initial conditions ==
 
-On of the simplest ways to create an initial ensemble is using a combination of initial conditions at different times. In this way, a series of reference model data, such as the CFSR, at an unrelated time period could be used to form the initial ensemble. However, when we choose the CFSR to do so, a consistent temperature bias was observed near the tropopause which can be as large as -8 K, especially near the polar region. It was an unacceptable huge bias that can significantly degrade the LETKF data assimilation performance. For this reason, it is recommended to use the operational GFS model analyses to form the initial ensemble.
+One of the simplest ways to create an initial ensemble is using a combination of initial conditions at different times. In this way, a series of reference model data, such as the CFSR, at an unrelated time period could be used to form an initial ensemble. However, when we choose the CFSR to do so, a consistent temperature bias is observed near the tropopause which can be as large as -8 K, especially near the polar region. It is an unacceptable huge bias that can significantly degrade the LETKF data assimilation performance. For this reason, it is recommended to use the operational GFS model analyses to form the initial ensemble.
 
-The latest one month operational GFS model analyses can be download from [http://nomads.ncep.noaa.gov/pub/data/nccf/com/gfs/prod/] . Earlier data may not be found in the public Internet. Please put these data into the '{{{$INITGFS}}}' directory configured in '{{{configure.sh}}}'. Note that these data also need to be converted to the T62 resolution.
+The latest one month operational GFS model analyses can be download from [http://nomads.ncep.noaa.gov/pub/data/nccf/com/gfs/prod/] . Earlier data may not be found via the public Internet. Please put these data into the '{{{$INITGFS}}}' directory configured in '{{{configure.sh}}}'. Note that these data also need to be converted to the T62 resolution before using them.
 
 == Download the NCEP observation data ==
 
@@ -408,7 +404,7 @@ Here we demonstrate how to run the data assimilation cycle with 32 members.
 == Create the initial ensemble ==
 
  * Check the '{{{configure.sh}}}' file, set the '{{{$MEMBER}}}' variable to 32 if it is not.
- * Edit the '{{{common/common_letkf.f90}}}' file, set '{{{nbv}}}' to 32 (default is 20).
+ * Edit the '{{{common/common_letkf.f90}}}' file. Set the '{{{nbv}}}' variable to 32 (default is 20).
  * Recompile all GFS-LETKF programs.
 {{{
 $ cd ..   (go to the 'gfs' top directory)
@@ -457,15 +453,15 @@ Usage: ./mcycle.sh STIME [ETIME]
 
 $ ./mcycle.sh 2008010100 2008010118
 }}}
- * If you use a cluster with a job scheduling system, you need to submit jobs via the system. Instead of doing the above two steps, you need to create a script to submit the job according to your job scheduling system. Copy the machinefile the scheduling system gives to '{{{gfs/run/machinefile}}}' before running the GFS-LETKF scripts. An example of the script for PBS system is provided at '{{{pbs_example.sh}}}'.
- * This data assimilation cycles take a while to finish. You can monitor the progress and (possible) error messages in the '{{{gfs/run/log}}}' directory while the execution. Using 32 cores of the AMD Opteron(tm) 2378 CPU (8 X quad-core processors), it takes roughly 15 minutes for one 6-hour forecast/analysis cycle, and 1 hour for 4 cycles.
+ * If you use a cluster with a job scheduling system, you need to submit jobs via the system. Instead of doing the above two steps, you need to create a script to submit the job according to your job scheduling system. Copy the machinefile the scheduling system gives to '{{{gfs/run/machinefile}}}' before running the GFS-LETKF scripts. An example of the script for the PBS system is provided at '{{{pbs_example.sh}}}'.
+ * The data assimilation cycles take a while to finish. You can monitor the progress and (possible) error messages in the '{{{gfs/run/log}}}' directory while the execution. Using 32 cores of the AMD Opteron(tm) 2378 CPU at 2.4 GHz (8 X quad-core processors), it takes roughly 15 minutes for one 6-hour forecast/analysis cycle, and 1 hour for 4 cycles.
  * Finally you will see the results in the '{{{$OUTDIR}}}' directory. You can use the GrADS software to visualize the results in the '{{{$OUTDIR/guesg}}}', '{{{$OUTDIR/analg}}}' (model levels) and the '{{{$OUTDIR/guesgp}}}', '{{{$OUTDIR/analgp}}}' (pressure levels) directories.
 
 = Run (ensemble) forecasts and verification =
 
 Here we demonstrate how to run the 5-day forecasts initialized from the ensemble mean analysis every cycle.
 
- * Use the '{{{mfcst.sh}}}' script to run multiple 5-day forecasts initialized from the 4-cycle ensemble means we previously got with the data assimilation cycle. The four cycles can be run parallelly in order to accelerate the computation. The last argument '{{{1}}}' means performing verification as well after the forecasts finish. Type the '{{{mfcst.sh}}}' command without any argument to see the usage help.
+ * Use the '{{{mfcst.sh}}}' script to run multiple 5-day forecasts initialized from the 4-cycle ensemble means we previously got with the data assimilation cycles. The four cycles can be run parallelly in order to accelerate the computation. The last argument '{{{1}}}' means performing verification as well after the forecasts finish. Type the '{{{mfcst.sh}}}' command without any argument to see the usage help.
 {{{
 $ ./mfcst.sh
 
@@ -487,9 +483,9 @@ Usage: ./mfcst.sh STIME [ETIME] [CYCLES] [IF_VERF]
 $ ./mfcst.sh 2008010106 2008010200 4 1
 }}}
  * You can monitor the progress and (possible) error messages in the '{{{gfs/run/log}}}' directory while the execution. This ensemble mean forecasts and verification takes roughly 15 minutes using the same configuration of the 32 cores.
- * You will see the results in the '{{{$OUTDIR/fcst*}}}' directory. You can use the GrADS software to visualize the results in the '{{{$OUTDIR/fcstg}}}', '{{{$OUTDIR/fcstgp}}}' (sorted according to the initial times) and the '{{{$OUTDIR/fcstv}}}', '{{{$OUTDIR/fcstvp}}}' (sorted according to the forecast hours) directories. The results of verification against (rawinsonde) observations are saved in the '{{{$OUTDIR/verfo1}}}' directory and verification against reference model analyses are save in the '{{{$OUTDIR/verfa1}}}' directory.
+ * You will see the results in the '{{{$OUTDIR/fcst*}}}' directory. You can use the GrADS software to visualize the results in the '{{{$OUTDIR/fcstg}}}', '{{{$OUTDIR/fcstgp}}}' (sorted according to the initial times) and the '{{{$OUTDIR/fcstv}}}', '{{{$OUTDIR/fcstvp}}}' (sorted according to the forecast hours) directories. The results of verification against (rawinsonde) observations are saved in the '{{{$OUTDIR/verfo1}}}' directory and verification against reference model analyses are saved in the '{{{$OUTDIR/verfa1}}}' directory.
 
-= Compute EFSO =
+= Compute the EFSO =
 
 Here we demonstrate how to compute the ensemble forecast sensitivity to observations (EFSO) with the 6 hour evaluation time. To compute the EFSO at time t = 0, evaluated at t = 6 h, we will use the forecasts from the ensemble mean at t = 0 and t = -6 h, both valid at t = 6 h. This should be already done by the '{{{mfcst.sh}}}' step. Besides, it also needs the *ensemble* forecasts from all members at t = 0, valid at t = 6 h, which can be done by '{{{efsofcst.sh}}}' separately. In addition, we further need the observation values in the analysis at t = 0 [H(X^a^)], which need to be output from the LETKF program with a flag turned on.
 
@@ -506,7 +502,7 @@ $ cd run
 $ ./mcycle.sh 2008010106
 }}}
  * Then the [H(X^a^)] data will be saved to '{{{$OUTDIR/obs/obsdiag/2008010112}}}'. They are in the [#Data_formats "letkfobs2" format].
- * Assuming the ensemble mean forecasts ({{{mfcst.sh}}}) have been conducted, use the '{{{efsofcst.sh}}}' script to conduct the 6-hour ensemble forecasts.
+ * Assuming the ensemble mean forecasts ('{{{mfcst.sh}}}') have been conducted, use the '{{{efsofcst.sh}}}' script to conduct the 6-hour ensemble forecasts.
 {{{
 $ ./efsofcst.sh
 
