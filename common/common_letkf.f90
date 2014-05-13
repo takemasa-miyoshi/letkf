@@ -26,6 +26,8 @@ MODULE common_letkf
 !  LEKF Model Independent Parameters
 !=======================================================================
   INTEGER,PARAMETER :: nbv=20    ! ensemble size
+  REAL(r_size),PARAMETER :: relax_alpha = 0.0d0  ! relaxation parameter     !GYL
+  REAL(r_size),PARAMETER :: min_infl = 0.0d0     ! minimum inlfation factor !GYL
 
 CONTAINS
 !=======================================================================
@@ -93,6 +95,9 @@ SUBROUTINE letkf_core(nobs,nobsl,hdxb,rdiag,rloc,dep,parm_infl,trans)
 !-----------------------------------------------------------------------
 !  hdxb^T Rinv hdxb + (m-1) I / rho (covariance inflation)
 !-----------------------------------------------------------------------
+  IF (min_infl /= 0.0d0 .AND. parm_infl < min_infl) THEN !GYL
+    parm_infl = min_infl                                 !GYL
+  END IF                                                 !GYL
   rho = 1.0d0 / parm_infl
   DO i=1,nbv
     work1(i,i) = work1(i,i) + REAL(nbv-1,r_size) * rho
@@ -163,6 +168,12 @@ SUBROUTINE letkf_core(nobs,nobsl,hdxb,rdiag,rloc,dep,parm_infl,trans)
 !-----------------------------------------------------------------------
 !  T + Pa hdxb_rinv^T dep
 !-----------------------------------------------------------------------
+  IF (relax_alpha /= 0.0d0) THEN            !GYL
+    trans = (1.0d0 - relax_alpha) * trans   !GYL
+    DO i=1,nbv                              !GYL
+      trans(i,i) = relax_alpha + trans(i,i) !GYL
+    END DO                                  !GYL
+  END IF                                    !GYL
   DO j=1,nbv
     DO i=1,nbv
       trans(i,j) = trans(i,j) + work3(i)
