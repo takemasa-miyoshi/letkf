@@ -451,7 +451,7 @@ Usage: ./mcycle.sh STIME [ETIME]
   ETIME   Time of the last  cycle (format: YYYYMMDDHH)
           (default: same as STIME)
 
-$ ./mcycle.sh 2008010100 2008010118
+$ ./mcycle.sh 2008010100 2008010118 &
 }}}
  * If you use a cluster with a job scheduling system, you need to submit jobs via the system. Instead of doing the above two steps, you need to create a script to submit the job according to your job scheduling system. Copy the machinefile the scheduling system gives to '{{{gfs/run/machinefile}}}' before running the GFS-LETKF scripts. An example of the script for the PBS system is provided at '{{{pbs_example.sh}}}'.
  * The data assimilation cycles take a while to finish. You can monitor the progress and (possible) error messages in the '{{{gfs/run/log}}}' directory while the execution. Using 32 cores of the AMD Opteron(tm) 2378 CPU at 2.4 GHz (8 X quad-core processors), it takes roughly 15 minutes for one 6-hour forecast/analysis cycle, and 1 hour for 4 cycles.
@@ -480,7 +480,7 @@ Usage: ./mfcst.sh STIME [ETIME] [CYCLES] [IF_VERF]
            1: Run verification
            (default: 0)
 
-$ ./mfcst.sh 2008010106 2008010200 4 1
+$ ./mfcst.sh 2008010106 2008010200 4 1 &
 }}}
  * You can monitor the progress and (possible) error messages in the '{{{gfs/run/log}}}' directory while the execution. This ensemble mean forecasts and verification takes roughly 15 minutes using the same configuration of the 32 cores.
  * You will see the results in the '{{{$OUTDIR/fcst*}}}' directory. You can use the GrADS software to visualize the results in the '{{{$OUTDIR/fcstg}}}', '{{{$OUTDIR/fcstgp}}}' (sorted according to the initial times) and the '{{{$OUTDIR/fcstv}}}', '{{{$OUTDIR/fcstvp}}}' (sorted according to the forecast hours) directories. The results of verification against (rawinsonde) observations are saved in the '{{{$OUTDIR/verfo1}}}' directory and verification against reference model analyses are saved in the '{{{$OUTDIR/verfa1}}}' directory.
@@ -499,7 +499,7 @@ $ cd run
  * Edit the '{{{configure.sh}}}' file, set '{{{EFSOT}}}' to '{{{6}}}' and set '{{{$OBSOUT_DIAG}}}' to '{{{1}}}'.
  * Run the LETKF data assimilation cycle again with the [H(X^a^)] output flag turned on.
 {{{
-$ ./mcycle.sh 2008010106
+$ ./mcycle.sh 2008010106 &
 }}}
  * Then the [H(X^a^)] data will be saved to '{{{$OUTDIR/obs/obsdiag/2008010112}}}'. They are in the [#Data_formats "letkfobs2" format].
  * Assuming the ensemble mean forecasts ('{{{mfcst.sh}}}') have been conducted, use the '{{{efsofcst.sh}}}' script to conduct the 6-hour ensemble forecasts.
@@ -521,7 +521,7 @@ Usage: ./efsofcst.sh STIME [ETIME] [IF_MEAN] [CYCLES]
   CYCLES   Number of forecast cycles run in parallel
            (default: 1)
 
-$ ./efsofcst.sh 2008010112 2008010112
+$ ./efsofcst.sh 2008010112 2008010112 &
 }}}
  * You can monitor the progress and (possible) error messages in the '{{{gfs/run/log}}}' directory.
  * Compute the EFSO at 12Z January 1, 2008 by the '{{{mefso.sh}}}' script.
@@ -544,6 +544,6 @@ Usage: ./mefso.sh STIME [ETIME] [EFT] [LOCADV_RATE] [WMOIST]
   WMOIST       Wight for the moist term in the energy norm (dimensionless)
                (default: 1)
 
-$ ./mefso.sh 2008010112 2008010112 6
+$ ./mefso.sh 2008010112 2008010112 6 &
 }}}
  * You can monitor the progress and (possible) error messages in the '{{{gfs/run/log}}}' directory, and then the EFSO results will be stored in the '{{{$OUTDIR/efso}}}' directory, also in the [#Data_formats "letkfobs2" format].
