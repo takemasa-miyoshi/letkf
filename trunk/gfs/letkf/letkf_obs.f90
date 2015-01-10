@@ -180,7 +180,7 @@ SUBROUTINE set_letkf_obs
 !        write (6,'(A)') '* Precipitation not used because of the mask file'
 !        write (6,'(A,F6.2,A,F6.2,A)') &
 !              '*  (lon,lat)=(',tmplon(n),',',tmplat(n),')'
-!        cycle
+        cycle
       end if
 
       pp_mem = 0
