@@ -69,6 +69,11 @@ SUBROUTINE letkf_core(nobs,nobsl,hdxb,rdiag,rloc,dep,parm_infl,trans)
     DO i=1,nbv
       trans(i,i) = SQRT(parm_infl)
     END DO
+    IF (relax_alpha /= 0.0d0) THEN                                    !GYL
+      DO i=1,nbv                                                      !GYL
+        trans(i,i) = relax_alpha + (1.0d0 - relax_alpha) * trans(i,i) !GYL
+      END DO                                                          !GYL
+    END IF                                                            !GYL
     RETURN
   ELSE
 !-----------------------------------------------------------------------
