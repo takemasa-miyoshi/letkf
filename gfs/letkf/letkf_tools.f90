@@ -34,6 +34,8 @@ MODULE letkf_tools
 
   INTEGER, PARAMETER :: lev_update_q = 30 !q and qc are only updated below and equal to this model level
   REAL(r_size), PARAMETER :: q_sprd_max = 0.5 !GYL, maximum q (ensemble spread)/(ensemble mean)
+  REAL(r_size), PARAMETER :: relax_alpha = 0.0d0 ! relaxation parameter     !GYL
+  REAL(r_size), PARAMETER :: min_infl = 0.0d0    ! minimum inlfation factor !GYL
 
   REAL(r_size),PARAMETER :: var_local(nv3d+nv2d,6) = RESHAPE( (/ &
 !       U    V    T    Q   QC   PS   
@@ -171,7 +173,8 @@ SUBROUTINE das_letkf(gues3d,gues2d,anal3d,anal2d)
         ELSE
           CALL obs_local(lon1(ij),lat1(ij),pfull(ij,ilev),n,hdxf,rdiag,rloc,dep,nobsl)
           parm = work3d(ij,ilev,n)
-          CALL letkf_core(nobstotal,nobsl,hdxf,rdiag,rloc,dep,parm,trans(:,:,n))
+          CALL letkf_core(nbv,nobstotal,nobsl,hdxf,rdiag,rloc,dep,parm,trans(:,:,n),minfl=min_infl)
+          CALL weight_RTPP(trans(:,:,n))                                     ! GYL
           work3d(ij,ilev,n) = parm
         END IF
         IF((n == iv3d_q .OR. n == iv3d_qc) .AND. ilev > lev_update_q) THEN   ! GYL, do not update upper-level q,qc
@@ -212,7 +215,8 @@ SUBROUTINE das_letkf(gues3d,gues2d,anal3d,anal2d)
           ELSE
             CALL obs_local(lon1(ij),lat1(ij),pfull(ij,ilev),nv3d+n,hdxf,rdiag,rloc,dep,nobsl)
             parm = work2d(ij,n)
-            CALL letkf_core(nobstotal,nobsl,hdxf,rdiag,rloc,dep,parm,trans(:,:,nv3d+n))
+            CALL letkf_core(nbv,nobstotal,nobsl,hdxf,rdiag,rloc,dep,parm,trans(:,:,nv3d+n),minfl=min_infl)
+            CALL weight_RTPP(trans(:,:,nv3d+n))                              ! GYL
             work2d(ij,n) = parm
           END IF
           DO m=1,nbv
@@ -459,7 +463,8 @@ SUBROUTINE das_letkf_obs(v3dinfl,v2dinfl)
     ! LETKF computation
     !
     CALL obs_local(obslon(nn),obslat(nn),rlev,n,hdxf,rdiag,rloc,dep,nobsl)
-    CALL letkf_core(nobstotal,nobsl,hdxf,rdiag,rloc,dep,parm,trans)
+    CALL letkf_core(nbv,nobstotal,nobsl,hdxf,rdiag,rloc,dep,parm,trans,minfl=min_infl)
+    CALL weight_RTPP(trans)
 
     IF(n == iv3d_q .OR. n == iv3d_qc) THEN
       CALL itpl_2d(v3dinflx(:,:,lev_update_q,iv3d_p),ri,rj,p_update_q)
@@ -948,5 +953,20 @@ SUBROUTINE obs_local_sub(imin,imax,jmin,jmax,nn,nobs_use)
 
   RETURN
 END SUBROUTINE obs_local_sub
+!-----------------------------------------------------------------------
+! Relaxation via LETKF weight - RTPP method
+!-----------------------------------------------------------------------
+SUBROUTINE weight_RTPP(w)
+  IMPLICIT NONE
+  REAL(r_size), INTENT(INOUT) :: w(nbv,nbv)
+  INTEGER :: m
+
+  w = (1.0d0 - relax_alpha) * w
+  DO m = 1, nbv
+    w(m,m) = w(m,m) + relax_alpha
+  END DO
+
+  RETURN
+END SUBROUTINE weight_RTPP
 
 END MODULE letkf_tools

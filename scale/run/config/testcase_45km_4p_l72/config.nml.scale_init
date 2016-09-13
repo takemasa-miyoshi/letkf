@@ -1,0 +1,155 @@
+&PARAM_IO
+!--IO_LOG_BASENAME--
+ IO_LOG_ALLNODE  = .false.,
+/
+
+&PARAM_TIME
+!--TIME_STARTDATE--
+ TIME_STARTMS   = 0.D0,
+/
+
+&PARAM_STATISTICS
+ STATISTICS_checktotal     = .true.,
+ STATISTICS_use_globalcomm = .true.,
+/
+
+&PARAM_RESTART
+!--RESTART_OUTPUT--
+!--RESTART_OUT_BASENAME--
+/
+
+&PARAM_TOPO
+!--TOPO_IN_BASENAME--
+/
+
+&PARAM_LANDUSE
+!--LANDUSE_IN_BASENAME--
+/
+
+&PARAM_LAND_PROPERTY
+!--LAND_PROPERTY_IN_FILENAME--
+/
+
+&PARAM_MKINIT
+ MKINIT_initname = "REAL",
+/
+
+&PARAM_MKINIT_REAL_ATMOS
+!--BASENAME_BOUNDARY--
+!--BASENAME_ORG--
+!--FILETYPE_ORG--
+!--NUMBER_OF_FILES--
+!--NUMBER_OF_TSTEPS--
+!--NUMBER_OF_SKIP_TSTEPS--
+!--BOUNDARY_UPDATE_DT--
+/
+
+&PARAM_MKINIT_REAL_WRFARW
+ WRF_FILE_TYPE       = .true.,
+/
+
+!&PARAM_INPUT_ATOM_WRF
+! use_buildrho_real = .true.,
+!/
+
+#################################################
+#
+# model configuration: process
+#
+#################################################
+
+&PARAM_PRC
+ PRC_NUM_X      = 2,
+ PRC_NUM_Y      = 2,
+ PRC_PERIODIC_X = .false.,
+ PRC_PERIODIC_Y = .false.,
+/
+
+#################################################
+#
+# model configuration: region
+#
+#################################################
+
+&PARAM_INDEX
+ KMAX = 72,
+ IMAX = 45,
+ JMAX = 45,
+/
+
+&PARAM_LAND_INDEX
+ LKMAX = 5,
+/
+
+&PARAM_URBAN_INDEX
+ UKMAX = 5,
+/
+
+&PARAM_LAND_GRID
+ LDZ = 0.05D0, 0.15D0, 0.30D0, 0.50D0, 1.00D0,
+/
+
+&PARAM_URBAN_GRID
+ UDZ = 0.01D0, 0.01D0, 0.03D0, 0.05D0, 0.10D0,
+/
+
+&PARAM_GRID
+ DX = 45000.D0,
+ DY = 45000.D0,
+ FZ(:) =    100.0000D0,   200.0000D0,   300.0000D0,   400.0000D0,   500.0000D0,
+            604.8000D0,   714.6304D0,   829.7326D0,   950.3597D0,  1076.7770D0,
+           1209.2622D0,  1348.1067D0,  1493.6157D0,  1646.1093D0,  1805.9225D0,
+           1973.4067D0,  2148.9302D0,  2332.8787D0,  2525.6567D0,  2727.6882D0,
+           2939.4172D0,  3161.3093D0,  3393.8523D0,  3637.5574D0,  3892.9602D0,
+           4160.6226D0,  4441.1328D0,  4735.1074D0,  5043.1929D0,  5366.0664D0,
+           5704.4380D0,  6059.0513D0,  6430.6860D0,  6820.1592D0,  7228.3271D0,
+           7656.0874D0,  8104.3804D0,  8574.1914D0,  9066.5537D0,  9582.5498D0,
+          10123.3135D0, 10690.0342D0, 11283.9570D0, 11906.3887D0, 12558.6973D0,
+          13242.3164D0, 13958.7490D0, 14709.5703D0, 15496.4307D0, 16321.0605D0,
+          16821.0605D0, 17321.0605D0, 17821.0605D0, 18321.0605D0, 18821.0605D0,
+          19321.0605D0, 19821.0605D0, 20321.0605D0, 20821.0605D0, 21321.0605D0,
+          21821.0605D0, 22321.0605D0, 22821.0605D0, 23321.0605D0, 23821.0605D0,
+          24321.0605D0, 24821.0605D0, 25321.0605D0, 25821.0605D0, 26321.0605D0,
+          26821.0605D0, 27321.0605D0,
+ BUFFER_DZ = 5000.D0,
+ BUFFER_DX = 450000.D0,
+ BUFFER_DY = 450000.D0,
+/
+
+&PARAM_MAPPROJ
+ MPRJ_basepoint_lon = 135.0D0,
+ MPRJ_basepoint_lat =  35.0D0,
+ MPRJ_type          = 'LC',
+ MPRJ_LC_lat1       =  30.00D0,
+ MPRJ_LC_lat2       =  40.00D0,
+/
+
+#################################################
+#
+# model configuration: administrator
+#
+#################################################
+
+&PARAM_TRACER
+ TRACER_TYPE = "TOMITA08",
+/
+
+&PARAM_ATMOS
+ ATMOS_DYN_TYPE    = "HEVI",
+ ATMOS_PHY_MP_TYPE = "TOMITA08",
+ ATMOS_PHY_RD_TYPE = "MSTRNX",
+ ATMOS_PHY_SF_TYPE = "COUPLE",
+ ATMOS_PHY_TB_TYPE = "MYNN",
+/
+
+&PARAM_OCEAN
+ OCEAN_TYPE = "CONST",
+/
+
+&PARAM_LAND
+ LAND_TYPE = "SLAB",
+/
+
+&PARAM_URBAN
+ URBAN_TYPE = "SLC",
+/

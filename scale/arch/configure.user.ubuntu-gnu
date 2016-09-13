@@ -1,0 +1,33 @@
+SCALE     = ../../..
+SCALE_INC = -I$(SCALE)/dc_utils \
+            -I$(SCALE)/gtool    \
+            -I$(SCALE)/include
+SCALE_LIB = -L$(SCALE)/lib -lscale -lgtool -ldcutils
+SCALE_RM_OBJDIR = $(SCALE)/scale-rm/src/.libs
+
+include $(SCALE)/sysdep/Makedef.$(SCALE_SYS)
+include $(SCALE)/Mkinclude
+
+#NETCDF_INC = -I/opt/aics/netcdf/k-serial-noszip/include
+#NETCDF_LIB = -L/opt/aics/netcdf/k-serial-noszip/lib-static -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lz -lm
+NETCDF_INC = $(NETCDF_INCLUDE)
+NETCDF_LIB = $(NETCDF_LIBS)
+
+#LAPACK_LIB = -SSL2BLAMP
+LAPACK_LIB = -L/usr/lib/lapack -llapack -L/usr/lib/libblas -lblas
+
+BUFR_LIB  =
+
+#######
+
+#SFC       = frtpx
+#FC        = mpifrtpx
+
+FOPTS_SCALE = $(FFLAGS) -std=gnu
+
+FOPTS     = $(FOPTS_SCALE) -fopenmp
+
+FMCMODEL  =
+FBYTESWAP = 
+FFREE     = -Free
+FFIXED    = -Fixed

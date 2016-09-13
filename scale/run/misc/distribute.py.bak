@@ -1,0 +1,91 @@
+def set_mem_np(nnodes, ppn, member, min_np=None, max_np=None):
+    if nnodes >= member:
+        mem_nodes = nnodes / member
+        mem_np = ppn * mem_nodes
+    else:
+        mem_nodes = 1
+        mempn = (member - 1) / nnodes + 1
+        if mempn > ppn:
+            mem_np = 1
+        else:
+            mem_np = ppn / mempn
+
+    if min_np is not None and mem_np < min_np:
+        mem_np = min_np
+    if max_np is not None and mem_np > max_np:
+        mem_np = max_np
+    if mem_np > ppn:
+        mem_nodes = (mem_np - 1) / ppn + 1
+        if mem_nodes > nnodes:
+            raise ValueError, '# of nodes is insufficient.'
+        mem_np = ppn * mem_nodes
+    else:
+        mem_nodes = 1
+        if (ppn / mem_np) == 1:
+            mem_np = ppn
+
+    return mem_nodes, mem_np
+
+
+def set_mem2proc(nnodes, ppn, member, mem_nodes, mem_np):
+    procs = []
+    mem2proc = [None] * member
+#    mem2proc = [None] * (member + 2)
+
+    m = 0
+    while m < member:
+        for i in xrange(ppn):
+            for n in xrange(nnodes):
+                m += 1
+                if mem_nodes == 1 and m <= member:
+                    mem2proc[m-1] = [n] * mem_np
+                if m <= ppn * nnodes:
+                    procs += [n]
+
+    if mem_nodes > 1:
+        n = 0
+        for m in xrange(member):
+            mem2proc[m] = []
+            for nn in xrange(mem_nodes):
+                mem2proc[m] += [n+nn] * ppn
+            n += mem_nodes
+            if n + mem_nodes > nnodes:
+                n = 0
+
+#    mem2proc[member] = mem2proc[0]
+#    mem2proc[member+1] = mem2proc[0]
+
+    return procs, mem2proc
+
+
+def set_proc2mem(nnodes, ppn, member, mem_nodes, mem_np, procs, mem2proc):
+    if mem_nodes > 1:
+        n_mem = nnodes / mem_nodes
+        nitmax = (member - 1) / n_mem + 1
+        nip = ppn * nnodes
+    else:
+        n_mempn = ppn / mem_np
+        nitmax = (member - 1) / (n_mempn * nnodes) + 1
+        nip = mem_np * n_mempn * nnodes
+
+    proc2mem = [[None for i in range(nitmax)] for j in range(ppn * nnodes)]
+    used = [[False for i in range(mem_np)] for j in range(member)]
+
+    for it in xrange(nitmax):
+        for ip in xrange(nip):
+            found = False
+            for m in xrange(member):
+                for p in xrange(mem_np):
+                    if (not used[m][p]) and mem2proc[m][p] == procs[ip]:
+                        proc2mem[ip][it] = [m, p]
+                        used[m][p] = True
+                        found = True
+                        break
+                if found:
+                    break
+
+    return proc2mem
+
+
+#def name_m
+

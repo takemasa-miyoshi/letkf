@@ -1,0 +1,83 @@
+#!/bin/bash
+#===============================================================================
+#
+#  Settings for cycle.sh
+#
+#===============================================================================
+
+STIME='20130701060000'
+ETIME='20130701060000'
+ISTEP=
+FSTEP=
+TIME_LIMIT='00:40:00'
+
+#===============================================================================
+
+#OBSOPE_OPT=1       # Observation operator options:
+#                   #  1: use LETKF built-in obsope
+#                   #  2: use GSI
+
+#THIN_OPT=2         # Superobing/thinning options:
+#                   # -- Options below (1-2) is for OBSOPE_OPT=1
+#                   #  1: No superobing/thinning
+#                   #  2: Use superobed/thinned observations
+#                   #     Superobed/thinned observations store in $OUTDIR/obs/superob
+#                   # -- Options below (3-4) are for OBSOPE_OPT=2
+#                   #  3: use thinned observations for satellite radiance observations only
+#                   #  4: use thinned observations for both conventional and satellite radiance observations
+
+ADAPTINFL=1         # Adaptive inflation
+                    #  0: OFF
+                    #  1: ON, using inflation parameter 1 cycle  ago as prior
+                    #  2: ON, using inflation parameter 2 cycles ago as prior
+
+#===============================================================================
+
+MAKEINIT=0       # 0: No
+                 # 1: Yes
+PERTURB_BDY=0    # 0: No
+                 # 1: Yes
+THINNING=0       # 0: No
+                 # 1: Yes
+OBSOPE=0         # 0: No    ! obsope options: not finished yet!!
+                 # 1: Yes   !
+
+#===============================================================================
+# Diagnostic output settings
+
+                 #      anal              gues
+                 #      mean/sprd members mean/sprd members history
+OUT_OPT=1        # 1:   o         o       o         o       o
+                 # 2:   o         o       o         o
+                 # 3:   o         o       o
+                 # 4:   o                 o
+
+                 #      topo
+TOPOOUT_OPT=2    # 1:   o
+                 # 2:   (none)
+
+                 #      landuse
+LANDUSEOUT_OPT=2 # 1:   o
+                 # 2:   (none)
+
+                 #      bdy
+                 #      mean members
+BDYOUT_OPT=3     # 1:   o    o
+                 # 2:   o
+                 # 3:   (none)
+
+                 #      obsgues obsanal obsdep
+OBSOUT_OPT=1     # 1:   o       o       o
+                 # 2:   o               o
+                 # 3:                   o
+                 # 4:   (none)
+
+                 #      topo landuse bdy perturb        scale obsope letkf
+                 #      log  log     log (not finished) log   log    log
+LOG_OPT=2        # 1:   o    o       o   o              o     o      o
+                 # 2:   o    o       o                  o     o      o
+                 # 3:                                   o     o      o
+                 # 4:                                         o      o
+                 # 5:   (none)
+
+#===============================================================================

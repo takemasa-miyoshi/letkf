@@ -59,7 +59,7 @@ SUBROUTINE mtx_eigen(imode,n,a,eival,eivec,nrank_eff)
   eivec8 = 0.0d0
   CALL rs(n,n,a8,eival8,imode,eivec8,wrk1,wrk2,ierr)
   IF( ierr/=0 ) THEN
-    WRITE(6,'(A,I)') '!!! ERROR (mtx_eigen): rs error code is ',ierr
+    WRITE(6,'(A,I4)') '!!! ERROR (mtx_eigen): rs error code is ',ierr
     STOP 2
   END IF
 
@@ -139,7 +139,7 @@ SUBROUTINE mtx_inv(n,a,ainv)
 !-----------------------------------------------------------------------
   CALL dspfa(acmp,n,kpvt,info)
   IF(info /= 0) THEN
-    WRITE(6,'(A,I)') '!!! ERROR (mtx_inv): dspfa error code is ',info
+    WRITE(6,'(A,I4)') '!!! ERROR (mtx_inv): dspfa error code is ',info
     STOP 3
   END IF
 !-----------------------------------------------------------------------

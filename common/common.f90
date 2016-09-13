@@ -15,9 +15,13 @@ MODULE common
 !-----------------------------------------------------------------------
 ! Variable size definitions
 !-----------------------------------------------------------------------
-  INTEGER,PARAMETER :: r_size=kind(0.0d0)
   INTEGER,PARAMETER :: r_dble=kind(0.0d0)
   INTEGER,PARAMETER :: r_sngl=kind(0.0e0)
+!#ifdef SINGLE
+!  INTEGER,PARAMETER :: r_size=r_sngl
+!#else
+  INTEGER,PARAMETER :: r_size=r_dble
+!#endif
 !-----------------------------------------------------------------------
 ! Constants
 !-----------------------------------------------------------------------
@@ -32,6 +36,8 @@ MODULE common
   REAL(r_size),PARAMETER :: r_omega=7.292d-5
   REAL(r_size),PARAMETER :: t0c=273.15d0
   REAL(r_size),PARAMETER :: undef=-9.99d33
+  REAL(r_size),PARAMETER :: deg2rad=pi/180.0d0 ! GYL
+  REAL(r_size),PARAMETER :: rad2deg=180.0d0/pi ! GYL
 
 CONTAINS
 !-----------------------------------------------------------------------
@@ -837,5 +843,110 @@ SUBROUTINE com_mdays(iy,im,mdays)
     STOP
   END SELECT
 END SUBROUTINE com_mdays
+
+!-----------------------------------------------------------------------
+! GAMMA FUNCTION
+!-----------------------------------------------------------------------
+
+!==================================================
+!       Purpose: Compute the gamma function â(x)
+!       Input :  x  --- Argument of â(x)
+!                       ( x is not equal to 0,-1,-2,úúú )
+!       Output:  GA --- â(x)
+!==================================================
+! Proff. Jianming Jin
+! Department of Electrical and Computer Engineering
+! University of Illinois
+
+SUBROUTINE com_gamma(x,ga)
+
+        IMPLICIT NONE
+        REAL(r_size) :: X , GA
+        REAL(r_size) :: G(26)
+        REAL(r_size) :: Z , R , GR
+        INTEGER      :: M1, K , M
+
+        !DIMENSION G(26)
+        IF (X.EQ.INT(X)) THEN
+           IF (X.GT.0.0D0) THEN
+              GA=1.0D0
+              M1=X-1
+              DO 10 K=2,M1
+10               GA=GA*K
+           ELSE
+              GA=1.0D+300
+           ENDIF
+        ELSE
+           IF (DABS(X).GT.1.0D0) THEN
+              Z=DABS(X)
+              M=INT(Z)
+              R=1.0D0
+              DO 15 K=1,M
+15               R=R*(Z-K)
+              Z=Z-M
+           ELSE
+              Z=X
+           ENDIF
+           DATA G/1.0D0,0.5772156649015329D0,                 &
+            -0.6558780715202538D0, -0.420026350340952D-1,     &
+            0.1665386113822915D0,-.421977345555443D-1,        &
+            -.96219715278770D-2, .72189432466630D-2,          &
+            -.11651675918591D-2, -.2152416741149D-3,          &
+            .1280502823882D-3, -.201348547807D-4,             &
+            -.12504934821D-5, .11330272320D-5,                &
+            -.2056338417D-6, .61160950D-8,                    &
+            .50020075D-8, -.11812746D-8,                      &
+            .1043427D-9, .77823D-11,                          &
+            -.36968D-11, .51D-12,                             &
+            -.206D-13, -.54D-14, .14D-14, .1D-15/
+           GR=G(26)
+           DO 20 K=25,1,-1
+20            GR=GR*Z+G(K)
+           GA=1.0D0/(GR*Z)
+           IF (DABS(X).GT.1.0D0) THEN
+              GA=GA*R
+              IF (X.LT.0.0D0) GA=-PI/(X*GA*DSIN(PI*X))
+           ENDIF
+        ENDIF
+        RETURN
+END SUBROUTINE com_gamma
+
+!-----------------------------------------------------------------------
+! Lon , lat moving in a certain direction.
+!-----------------------------------------------------------------------
+
+!-------------------------------------------------------------------------------------
+! Compute the lat and lon reached by moving a certain distance in a certain direction
+!        Formula from Map Projections - a working manual.  USGS paper
+!        1395.  Equations (5-5) and (5-6).
+!-------------------------------------------------------------------------------------
+! Note: This routine should be moved to the common module
+! Input azimuth in degrees with respect to North
+! Input distance in meters
+! Input and output lat lon in degrees
+
+SUBROUTINE com_ll_arc_distance(ini_lon,ini_lat,distance,azimuth,final_lon,final_lat)
+IMPLICIT NONE
+REAL(r_size), INTENT(IN)  :: ini_lon,ini_lat,distance,azimuth
+REAL(r_size), INTENT(OUT) :: final_lon,final_lat
+REAL(r_size)  :: cdist,sdist,sinll1,cosll1
+
+
+ IF ( distance .EQ. 0d0 )THEN
+    final_lon=ini_lon
+    final_lat=ini_lat
+ ELSE
+
+ cdist = cos(distance/Re)
+ sdist = sin(distance/Re)
+
+ sinll1 = sin(ini_lat*deg2rad)
+ cosll1 = cos(ini_lat*deg2rad)
+
+ final_lat=asin(sinll1*cdist + cosll1*sdist*cos(azimuth*deg2rad))/deg2rad
+ final_lon=ini_lon + (1/deg2rad)*atan2(sdist*sin(azimuth*deg2rad),cosll1*cdist - sinll1*sdist*cos(azimuth*deg2rad))
+
+ ENDIF
+END SUBROUTINE com_ll_arc_distance
 
 END MODULE common

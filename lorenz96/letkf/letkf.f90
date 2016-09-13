@@ -252,7 +252,7 @@ PROGRAM letkf
             END IF
           END DO
         END DO
-        CALL letkf_core(ny*nwindow,ny_loc,hdxf_loc,rdiag_loc,rloc_loc,d_loc,parm,trans)
+        CALL letkf_core(nbv,ny*nwindow,ny_loc,hdxf_loc,rdiag_loc,rloc_loc,d_loc,parm,trans)
         IF(msw_infl > 0.0d0) parm = msw_infl
         DO j=1,nbv
           xa(ix,j,nn) = xm(ix,nn)
