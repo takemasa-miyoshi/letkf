@@ -1,0 +1,178 @@
+&PARAM_IO
+!--IO_LOG_BASENAME--
+ IO_LOG_ALLNODE  = .false.,
+/
+
+&PARAM_TIME
+!--TIME_STARTDATE--
+ TIME_STARTMS   = 0.D0,
+/
+
+&PARAM_STATISTICS
+ STATISTICS_checktotal     = .true.,
+ STATISTICS_use_globalcomm = .true.,
+/
+
+&PARAM_TOPO
+!--TOPO_OUT_BASENAME--
+/
+
+&PARAM_LANDUSE
+!--LANDUSE_OUT_BASENAME--
+/
+
+&PARAM_CONVERT
+!--CONVERT_TOPO--
+!--CONVERT_LANDUSE--
+/
+
+&PARAM_CNVTOPO
+!--CNVTOPO_name--
+ CNVTOPO_SMOOTH_MAXSLOPE = 10.00D0,
+ CNVTOPO_SMOOTH_local    = .true.,
+ CNVTOPO_SMOOTH_itelim   = 10000,
+ CNVTOPO_copy_parent     = .true.,
+/
+
+&PARAM_COPYTOPO
+!--COPYTOPO_IN_BASENAME--
+ COPYTOPO_ENTIRE_REGION = .false.,
+ COPYTOPO_LINEAR_H      = .true.,
+/
+
+&PARAM_CNVTOPO_GTOPO30
+ GTOPO30_IN_CATALOGUE = "GTOPO30_catalogue.txt",
+!--GTOPO30_IN_DIR--
+/
+
+&PARAM_CNVTOPO_DEM50M
+ DEM50M_IN_CATALOGUE = "DEM50M_catalogue.txt",
+!--DEM50M_IN_DIR--
+/
+
+&PARAM_CNVLANDUSE
+!--CNVLANDUSE_name--
+/
+
+&PARAM_CNVLANDUSE_GLCCv2
+ GLCCv2_IN_CATALOGUE = "GLCCv2_catalogue.txt",
+!--GLCCv2_IN_DIR--
+/
+
+&PARAM_CNVLANDUSE_LU100M
+ LU100M_IN_CATALOGUE = "LU100M_catalogue.txt",
+!--LU100M_IN_DIR--
+/
+
+&PARAM_NEST
+!--USE_NESTING--
+!--OFFLINE--
+ OFFLINE_PARENT_PRC_NUM_X  = 8,
+ OFFLINE_PARENT_PRC_NUM_Y  = 8,
+ OFFLINE_PARENT_KMAX       = 60,
+ OFFLINE_PARENT_IMAX       = 32,
+ OFFLINE_PARENT_JMAX       = 32,
+ OFFLINE_PARENT_LKMAX      = 5,
+!--LATLON_CATALOGUE_FNAME--
+/
+
+#################################################
+#
+# model configuration: process
+#
+#################################################
+
+&PARAM_PRC
+ PRC_NUM_X      = 3,
+ PRC_NUM_Y      = 3,
+ PRC_PERIODIC_X = .false.,
+ PRC_PERIODIC_Y = .false.,
+/
+
+#################################################
+#
+# model configuration: region
+#
+#################################################
+
+&PARAM_INDEX
+ KMAX = 59,
+ IMAX = 60,
+ JMAX = 60,
+/
+
+&PARAM_LAND_INDEX
+ LKMAX = 5,
+/
+
+&PARAM_URBAN_INDEX
+ UKMAX = 5,
+/
+
+&PARAM_LAND_GRID
+ LDZ = 0.05D0, 0.15D0, 0.30D0, 0.50D0, 1.00D0,
+/
+
+&PARAM_URBAN_GRID
+ UDZ = 0.01D0, 0.01D0, 0.03D0, 0.05D0, 0.10D0,
+/
+
+&PARAM_GRID
+ DX = 1000.D0,
+ DY = 1000.D0,
+ FZ(:) =    140.0000D0,   280.0000D0,   420.0000D0,   560.0000D0,   700.0000D0,
+            840.0000D0,   980.0000D0,  1120.0000D0,  1260.0000D0,  1407.0000D0,
+           1561.3500D0,  1723.4175D0,  1893.5884D0,  2072.2678D0,  2259.8813D0,
+           2456.8755D0,  2663.7192D0,  2880.9053D0,  3108.9507D0,  3348.3984D0,
+           3599.8186D0,  3863.8098D0,  4141.0005D0,  4432.0508D0,  4737.6538D0,
+           5058.5371D0,  5395.4644D0,  5749.2378D0,  6120.6997D0,  6510.7349D0,
+           6920.2720D0,  7350.2861D0,  7801.8008D0,  8275.8916D0,  8773.6865D0,
+           9296.3711D0,  9845.1895D0, 10421.4492D0, 11026.5215D0, 11661.8477D0,
+          12328.9404D0, 13029.3877D0, 13764.8574D0, 14537.1006D0, 15327.1006D0,
+          16117.1006D0, 16907.1016D0, 17697.1016D0, 18487.1016D0, 19277.1016D0,
+          20067.1016D0, 20857.1016D0, 21647.1016D0, 22437.1016D0, 23227.1016D0,
+          24017.1016D0, 24807.1016D0, 25597.1016D0, 26387.1016D0,
+ BUFFER_DZ = 5000.D0,
+ BUFFER_DX = 20000.D0,
+ BUFFER_DY = 20000.D0,
+/
+
+&PARAM_MAPPROJ
+ MPRJ_basepoint_lon = 135.523D0,
+ MPRJ_basepoint_lat =  34.823D0,
+ MPRJ_basepoint_x   = 90000.0D0,
+ MPRJ_basepoint_y   = 90000.0D0,
+ MPRJ_type          = 'LC',
+ MPRJ_LC_lat1       =  32.5D0,
+ MPRJ_LC_lat2       =  37.5D0,
+/
+
+#################################################
+#
+# model configuration: administrator
+#
+#################################################
+
+&PARAM_TRACER
+ TRACER_TYPE = "TOMITA08",
+/
+
+&PARAM_ATMOS
+ ATMOS_DYN_TYPE    = "HEVI",
+ ATMOS_PHY_MP_TYPE = "TOMITA08",
+ ATMOS_PHY_RD_TYPE = "MSTRNX",
+ ATMOS_PHY_SF_TYPE = "COUPLE",
+ ATMOS_PHY_TB_TYPE = "MYNN",
+/
+
+&PARAM_OCEAN
+ OCEAN_TYPE = "CONST",
+/
+
+&PARAM_LAND
+ LAND_TYPE = "SLAB",
+/
+
+&PARAM_URBAN
+ URBAN_TYPE = "SLC",
+/

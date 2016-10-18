@@ -1,0 +1,26 @@
+&PARAM_ENSEMBLE
+!--MEMBER--
+/
+
+&PARAM_OBSOPE
+!--OBS_IN_NUM--
+!--OBS_IN_NAME--
+ OBS_IN_FORMAT = 1, 2, 3,
+!--OBSDA_RUN--
+!--OBSDA_OUT_BASENAME--
+!--HISTORY_IN_BASENAME--
+!--SLOT_START--
+!--SLOT_END--
+!--SLOT_BASE--
+!--SLOT_TINTERVAL--
+/
+
+&PARAM_LETKF_PRC
+!--NNODES--
+!--PPN--
+!--MEM_NODES--
+!--MEM_NP--
+/
+
+!*** Attach SCALE configuration below ***
+

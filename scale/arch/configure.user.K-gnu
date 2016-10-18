@@ -1,0 +1,58 @@
+SCALE     = ../../..
+SCALE_INC = -I$(SCALE)/dc_utils \
+            -I$(SCALE)/gtool    \
+            -I$(SCALE)/include
+SCALE_LIB = -L$(SCALE)/lib -lscale -lgtool -ldcutils
+SCALE_RM_OBJDIR = $(SCALE)/scale-rm/src/.libs
+
+include $(SCALE)/sysdep/Makedef.$(SCALE_SYS)
+include $(SCALE)/Mkinclude
+
+NETCDF_INC = $(NETCDF_INCLUDE)
+NETCDF_LIB = $(NETCDF_LIBS)
+
+LAPACK_LIB = $(LAPACK_LIBS)
+
+BUFR_LIB  = -L/data/opt/bufrlib/10.1.0_intel/lib -lbufrlib
+
+######
+
+SFC       = gfortran
+FC        = mpif90
+
+FOPTS_SCALE = -O3 -mtune=native \
+            -m64 \
+            -fall-intrinsics -pedantic -fimplicit-none \
+            -fconvert=big-endian -frecord-marker=4 \
+            -cpp \
+            -funroll-loops -finline-functions -fprefetch-loop-arrays
+
+FOPTS     = -O3 -mtune=native \
+            -m64 \
+            -fall-intrinsics -pedantic -fimplicit-none \
+            -fconvert=big-endian -frecord-marker=4 \
+            -cpp \
+            -funroll-loops -finline-functions -fprefetch-loop-arrays
+
+#FOPTS_SCALE = -O3 -fconvert=big-endian -frecord-marker=4 -cpp
+#FOPTS     = $(FOPTS_SCALE)
+
+FMCMODEL  = -mcmodel=medium
+FBYTESWAP = -fconvert=little_endian
+FFREE     = -ffree-form
+FFIXED    = -ffixed-form
+
+# -- for Himawari-8 assimilatin on the K computer (T.Honda)
+# -- If you want to compile without RTTOV (Himawari assimilation),
+# -- you should set "H08 = F".
+H08       = F
+
+DIR_RTTOV = /home/honda/local/RTTOV
+RT_LDFLAGS = -L$(DIR_RTTOV)/lib -lrttov11.2.0_test -lrttov11.2.0_other \
+             -lrttov11.2.0_coef_io -lrttov11.2.0_parallel -lrttov11.2.0_main
+RT_INCLUDE = -I$(DIR_RTTOV)/mod -I$(DIR_RTTOV)/include
+
+ifeq ($(H08),T)
+FOPTS     += -DH08
+FOPTS_SCALE += -DH08
+endif

@@ -1,0 +1,202 @@
+#!/bin/bash
+#===============================================================================
+#
+#  Machine-independent source file
+#
+#===============================================================================
+# Filename format
+
+PROCESS_FMT='%06d'
+MEMBER_FMT='%04d'
+CYCLE_FMT='%04d'
+
+SCALE_SFX=".pe${PROCESS_FMT}.nc"
+SCALE_LOG_SFX='.pe000000'
+
+#===============================================================================
+# Preset
+
+#new variables:
+# STG_TYPE: 'K', 'K_rankdir', 'builtin', (other: no stageing)
+# DISK_ALL_LOCAL: 1, (other)
+# NODELIST_TYPE: 'nodefile', 'K'
+# MPI_TYPE: 'K', 'sgimpt', 'openmpi'
+
+if [ "$PRESET" = 'K' ]; then
+  STG_TYPE='K'
+  TMPDAT_MODE=2
+  TMPRUN_MODE=2
+#  DISK_MODE_TOPO_LANDUSE_DB=2
+#  DISK_MODE_DATA_BDY=2
+#  DISK_MODE_DATA_TOPO=2
+#  DISK_MODE_DATA_LANDUSE=2
+#  DISK_MODE_DATA_BDYPREP=2
+  ONLINE_STGOUT=0
+  NODELIST_TYPE='K'
+  MPI_TYPE='K'
+elif [ "$PRESET" = 'K_rankdir' ]; then
+  STG_TYPE='K_rankdir'
+#  DISK_ALL_LOCAL=1
+  TMPDAT_MODE=3
+  TMPRUN_MODE=3
+  DISK_MODE_TOPO_LANDUSE_DB=2
+  DISK_MODE_DATA_BDY=2
+  DISK_MODE_DATA_TOPO=2
+  DISK_MODE_DATA_LANDUSE=2
+  DISK_MODE_DATA_BDYPREP=2
+  ONLINE_STGOUT=0
+  NODELIST_TYPE='K'
+  MPI_TYPE='K'
+elif [ "$PRESET" = 'K_micro' ]; then
+  STG_TYPE=
+  TMPDAT_MODE=2
+  TMPRUN_MODE=2
+#  DISK_MODE_TOPO_LANDUSE_DB=2
+#  DISK_MODE_DATA_BDY=2
+#  DISK_MODE_DATA_TOPO=2
+#  DISK_MODE_DATA_LANDUSE=2
+#  DISK_MODE_DATA_BDYPREP=2
+  NODELIST_TYPE='K'
+  MPI_TYPE='K'
+#  if ((ENABLE_SET == 1)); then
+#    NNODES_all=$((NNODES*3))
+#  fi
+#elif [ "$PRESET" = 'K_interact' ]; then
+#  STG_TYPE=
+#  TMPDAT_MODE=2
+#  TMPRUN_MODE=2
+##  DISK_MODE_TOPO_LANDUSE_DB=2
+##  DISK_MODE_DATA_BDY=2
+##  DISK_MODE_DATA_TOPO=2
+##  DISK_MODE_DATA_LANDUSE=2
+##  DISK_MODE_DATA_BDYPREP=2
+#  NODELIST_TYPE='K'
+#  MPI_TYPE='K'
+elif [ "$PRESET" = 'Linux' ]; then
+  STG_TYPE='builtin'
+  NODELIST_TYPE='nodefile'
+elif [ "$PRESET" = 'Linux_torque' ]; then
+  STG_TYPE='builtin'
+  NODELIST_TYPE='nodefile'
+else
+  echo "[Error] Preset '$PRESET' not found" 1>&2
+  exit 1
+fi
+
+#===============================================================================
+# Default values
+
+DATA_TOPO="${DATA_TOPO:-$OUTDIR}"
+DATA_LANDUSE="${DATA_LANDUSE:-$OUTDIR}"
+DATA_BDY_SCALE_PREP="${DATA_BDY_SCALE_PREP:-$OUTDIR}"
+
+BDY_SCALE_DIR="${BDY_SCALE_DIR:-hist}"
+
+BDYINT=${BDYINT:-$LCYCLE}
+BDYCYCLE_INT=${BDYCYCLE_INT:-$BDYINT}
+
+#-------------------------------------------------------------------------------
+
+OBSOPE_RUN=0
+for iobs in $(seq $OBSNUM); do
+  if [ -n "${OBSOPE_SEPARATE[$iobs]}" ] && ((${OBSOPE_SEPARATE[$iobs]} == 1)); then
+    OBSOPE_RUN=1
+    break
+  fi
+done
+
+#-------------------------------------------------------------------------------
+
+ADAPTINFL=${ADAPTINFL:-0}
+RTPS_INFL_OUT=${RTPS_INFL_OUT:-0}
+NOBS_OUT=${NOBS_OUT:-0}
+
+#-------------------------------------------------------------------------------
+
+DISK_MODE_TOPO_LANDUSE_DB=${DISK_MODE_TOPO_LANDUSE_DB:-2}
+
+DISK_MODE_DATA_BDY=${DISK_MODE_DATA_BDY:-2}
+
+DISK_MODE_DATA_TOPO=${DISK_MODE_DATA_TOPO:-2}
+DISK_MODE_DATA_LANDUSE=${DISK_MODE_DATA_LANDUSE:-2}
+DISK_MODE_DATA_BDYPREP=${DISK_MODE_DATA_BDYPREP:-2}
+
+#-------------------------------------------------------------------------------
+
+TMPOUT_MODE=$TMPRUN_MODE
+
+if ((TMPRUN_MODE <= 2)); then
+  PROC_OPT='one'
+else
+  PROC_OPT='alln'
+fi
+
+#===============================================================================
+# Definition of sub-directories
+
+SCRP_DIR="$DIR/run"              # Job script directory
+COMMON_DIR="$DIR/common"         # Common program directory
+LETKF_DIR="$DIR/letkf"           # LETKF program directory
+OBSUTIL_DIR="$DIR/obs"           # Observation program directory
+VERIFY_DIR="$DIR/verify"         # Verification program directory
+UTIL_DIR="$DIR/util"             # Other utility program directory
+ENSMODEL_DIR="$DIR/ensmodel"
+
+#-------------------------------------------------------------------------------
+
+if [ "$STG_TYPE" = 'K' ]; then
+  TMP="$(pwd)"
+#  echo "\$STG_TYPE = 'K': \$TMP reset to '$TMP'" 1>&2
+  TMP_STG='.'
+elif [ "$STG_TYPE" = 'K_rankdir' ]; then
+  TMP="$(pwd)/.."
+  TMPL="$(pwd)"
+#  echo "\$STG_TYPE = 'K_rankdir': \$TMP reset to '$TMP'" 1>&2
+#  echo "\$STG_TYPE = 'K_rankdir': \$TMPL reset to '$TMPL'" 1>&2
+  TMP_STG='..'
+  TMPL_STG='.'
+fi
+
+#-------------------------------------------------------------------------------
+
+STAGING_DIR="$TMP/staging"
+NODEFILE_DIR="$TMP/node"
+
+TMPDAT_S="$TMP/dat"              #
+TMPDAT_S_STG="$TMP_STG/dat"      #
+TMPDAT_L="$TMPL/dat"             #
+TMPDAT_L_STG="$TMPL_STG/dat"     #
+
+if ((TMPDAT_MODE <= 2)); then    # The 'dat' temporary directory (input data)
+  TMPDAT="$TMP/dat"              #
+  TMPDAT_STG="$TMP_STG/dat"      #
+else                             #
+  TMPDAT="$TMPL/dat"             #
+  TMPDAT_STG="$TMPL_STG/dat"     #
+fi                               #
+if ((TMPRUN_MODE <= 2)); then    # The 'run' temporary directory (runtime files)
+  TMPRUN="$TMP/run"              #
+  TMPRUN_STG="$TMP_STG/run"      #
+else                             #
+  TMPRUN="$TMPL/run"             #
+  TMPRUN_STG="$TMPL_STG/run"     #
+fi                               #
+if ((TMPOUT_MODE <= 2)); then    # The 'out' temporary directory (output)
+  TMPOUT="$TMP/out"              #
+  TMPOUT_STG="$TMP_STG/out"      #
+else                             #
+  TMPOUT="$TMPL/out"             #
+  TMPOUT_STG="$TMPL_STG/out"     #
+fi                               #
+
+#-------------------------------------------------------------------------------
+
+###### to be replaced by a variable: PROCESS_ALL_LOCAL ######
+if ((MACHINE_TYPE == 12)); then
+  NNODES_real=$NNODES
+  PPN_real=$PPN
+  NNODES=$((NNODES*PPN))
+  PPN=1
+fi
+
+#===============================================================================

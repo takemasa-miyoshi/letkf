@@ -128,7 +128,7 @@ SUBROUTINE das_letkf(gues3d,gues2d,anal3d,anal2d)
       IF( nobsl /= 0 ) THEN
 !!!!! INFLATION SETTING !!!!!
         parm = parm_infl
-        CALL letkf_core(nobstotal,nobsl,hdxf,rdiag,dep,parm,trans)
+        CALL letkf_core(nbv,nobstotal,nobsl,hdxf,rdiag,dep,parm,trans)
 
         DO n=1,nv3d
           DO m=1,nbv
@@ -174,7 +174,7 @@ SUBROUTINE das_letkf(gues3d,gues2d,anal3d,anal2d)
 !!!!! INFLATION SETTING !!!!!
         parm = parm_infl
 !        parm = parm_infl * parm_infl_damp(ilev)
-        CALL letkf_core(nobstotal,nobsl,hdxf,rdiag,dep,parm,trans)
+        CALL letkf_core(nbv,nobstotal,nobsl,hdxf,rdiag,dep,parm,trans)
 
         DO n=1,nv3d
           DO m=1,nbv

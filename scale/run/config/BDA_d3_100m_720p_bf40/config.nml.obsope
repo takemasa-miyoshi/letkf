@@ -1,0 +1,32 @@
+&PARAM_ENSEMBLE
+!--MEMBER--
+/
+
+&PARAM_OBSOPE
+!--OBS_IN_NUM--
+!--OBS_IN_NAME--
+ OBS_IN_FORMAT = 1, 2, 3,
+!--OBSDA_RUN--
+!--OBSDA_OUT_BASENAME--
+!--HISTORY_IN_BASENAME--
+!--SLOT_START--
+!--SLOT_END--
+!--SLOT_BASE--
+!--SLOT_TINTERVAL--
+/
+
+&PARAM_LETKF_PRC
+!--NNODES--
+!--PPN--
+!--MEM_NODES--
+!--MEM_NP--
+/
+
+&PARAM_LETKF_RADAR
+ MIN_RADAR_REF_DBZ = 0.0D0,
+! LOW_REF_SHIFT = -5.0D0,
+ RADAR_ZMAX = 11.0D3,
+/
+
+!*** Attach SCALE configuration below ***
+

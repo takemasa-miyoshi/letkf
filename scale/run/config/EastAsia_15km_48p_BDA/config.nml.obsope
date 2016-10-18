@@ -1,0 +1,23 @@
+&PARAM_ENSEMBLE
+[MEMBER]
+/
+
+&PARAM_LETKF
+[SLOT_START]
+[SLOT_END]
+[SLOT_BASE]
+[SLOT_TINTERVAL]
+/
+
+&PARAM_LETKF_PRC
+[NNODES]
+[PPN]
+[MEM_NODES]
+[MEM_NP]
+/
+
+&PARAM_LETKF_OBS
+/
+
+!*** Attach SCALE configuration below ***
+

@@ -137,7 +137,7 @@ SUBROUTINE das_letkf(gues3d,gues2d,anal3d,anal2d)
     DO ij=1,nij1
       CALL obs_local(ij,ilev,depth(ij,ilev),hdxf,rdiag,rloc,dep,nobsl)
       parm = work3d(ij,ilev,iv3d_t)
-      CALL letkf_core(nobstotal,nobsl,hdxf,rdiag,rloc,dep,parm,trans)
+      CALL letkf_core(nbv,nobstotal,nobsl,hdxf,rdiag,rloc,dep,parm,trans)
       DO n=1,nv3d
         DO m=1,nbv
           anal3d(ij,ilev,m,n) = mean3d(ij,ilev,n)

@@ -156,7 +156,7 @@ SUBROUTINE das_letkf(gues3d,gues2d,anal3d,anal2d)
         ELSE
           CALL obs_local(ij,ilev,n,hdxf,rdiag,rloc,dep,nobsl,logpfm)
           parm = work3d(ij,ilev,n)
-          CALL letkf_core(nobstotal,nobsl,hdxf,rdiag,rloc,dep,parm,trans(:,:,n))
+          CALL letkf_core(nbv,nobstotal,nobsl,hdxf,rdiag,rloc,dep,parm,trans(:,:,n))
           work3d(ij,ilev,n) = parm
         END IF
         DO m=1,nbv
@@ -178,7 +178,7 @@ SUBROUTINE das_letkf(gues3d,gues2d,anal3d,anal2d)
           ELSE
             CALL obs_local(ij,ilev,n,hdxf,rdiag,rloc,dep,nobsl,logpfm)
             parm = work2d(ij,n)
-            CALL letkf_core(nobstotal,nobsl,hdxf,rdiag,rloc,dep,parm,trans(:,:,nv3d+n))
+            CALL letkf_core(nbv,nobstotal,nobsl,hdxf,rdiag,rloc,dep,parm,trans(:,:,nv3d+n))
             work2d(ij,n) = parm
           END IF
           DO m=1,nbv

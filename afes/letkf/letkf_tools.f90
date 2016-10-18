@@ -143,7 +143,7 @@ write(6,*) 'ilev =',ilev
     DO ij=1,nij1
       CALL obs_local(ij,ilev,hdxf,rdiag,dep,nobsl,logpfm)
       IF( nobsl /= 0 ) THEN
-        CALL letkf_core(nobstotal,nobsl,hdxf,rdiag,dep,0.0d0,trans)
+        CALL letkf_core(nbv,nobstotal,nobsl,hdxf,rdiag,dep,0.0d0,trans)
         DO n=1,nv3d
           DO m=1,nbv
             anal3d(ij,ilev,m,n) = mean3d(ij,ilev,n)
@@ -171,7 +171,7 @@ write(6,*) 'ilev =',ilev
     DO ij=1,nij1
       CALL obs_local(ij,ilev,hdxf,rdiag,dep,nobsl,logpfm)
       IF( nobsl /= 0 ) THEN
-        CALL letkf_core(nobstotal,nobsl,hdxf,rdiag,dep,0.0d0,trans)
+        CALL letkf_core(nbv,nobstotal,nobsl,hdxf,rdiag,dep,0.0d0,trans)
         DO n=1,nv3d
           DO m=1,nbv
             anal3d(ij,ilev,m,n) = mean3d(ij,ilev,n)
